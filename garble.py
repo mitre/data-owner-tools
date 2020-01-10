@@ -1,13 +1,28 @@
 import os
+import sys
+import getpass
 from zipfile import ZipFile
+import argparse
 
-schema = ['name-sex-dob-zip.json', 'name-sex-dob-phone.json', 'name-sex-dob-addr.json']
+parser = argparse.ArgumentParser(description='Tool for garbling PII in for PPRL purposes in the CODI project')
+parser.add_argument('--source', nargs=1, required=True, help='Source PII CSV file')
+parser.add_argument('--schema', nargs=1, required=True, help='Directory of linkage schema')
+args = parser.parse_args()
 command = "clkutil hash {source_file} {secret_one} {secret_two} {schema_path} {output_file}"
 
-schema_dir = '/Users/andrewg/projects/anonlink-multiparty/data/mulit-round/siblings/'
-source_file = '/Users/andrewg/projects/anonlink-multiparty/data/siblings/system-a.csv'
-secret_one = 'foo'
-secret_two = 'bar'
+schema_dir = args.schema[0]
+
+if not schema_dir.endswith('/'):
+  schema_dir = schema_dir + '/'
+
+if not os.path.exists(schema_dir):
+  sys.exit('Unable to find directory: ' + schema_dir)
+
+schema = filter(lambda f: f.endswith('.json'), os.listdir(schema_dir))
+
+source_file = args.source[0]
+secret_one = getpass.getpass('First salt value: ')
+secret_two = getpass.getpass('Second salt value: ')
 clk_files = []
 
 if not os.path.exists('output'):
@@ -15,7 +30,7 @@ if not os.path.exists('output'):
 
 for s in schema:
   schema_path = schema_dir + s
-  output_file = 'output/' + s.replace('.json', '') + '.json'
+  output_file = 'output/' + s
   to_execute = command.format(source_file=source_file, secret_one=secret_one,
     secret_two=secret_two, schema_path=schema_path, output_file=output_file)
   os.system(to_execute)
