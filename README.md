@@ -32,7 +32,7 @@ optional arguments:
   --schema SCHEMA  Directory of linkage schema
 ```
 
-`garble.py` will package up the garbled PII files into a (zip file)[https://en.wikipedia.org/wiki/Zip_(file_format)] called `garbled.zip`.
+`garble.py` will package up the garbled PII files into a [zip file](https://en.wikipedia.org/wiki/Zip_(file_format)) called `garbled.zip`.
 
 Example execution of `garble.py` is shown below:
 
