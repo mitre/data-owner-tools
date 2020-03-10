@@ -58,7 +58,7 @@ connection_string = args.db[0]
 
 engine = create_engine(connection_string)
 with engine.connect() as connection:
-  with open('pii.csv', 'w', newline='') as csvfile:
+  with open('pii.csv', 'w', newline='', encoding='utf-8') as csvfile:
     writer = csv.writer(csvfile)
     writer.writerow(header)
 
