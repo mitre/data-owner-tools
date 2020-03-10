@@ -1,2 +1,3 @@
 SQLAlchemy>=1.3.13
 clkhash>=0.14.0
+psycopg2>=2.8.3
