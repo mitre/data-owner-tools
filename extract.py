@@ -22,7 +22,7 @@ def clean_name(name):
 def clean_phone(phone):
   if phone is None:
     return None
-  return filter(lambda x: x.isdigit(), phone.strip())
+  return ''.join(filter(lambda x: x.isdigit(), phone.strip()))
 
 def clean_address(address):
   if address is None:
@@ -47,6 +47,8 @@ report = {}
 for h in header:
   report[h] = Counter()
 
+export_count = 0
+
 engine = create_engine('postgresql://codi:codi@localhost/codi')
 with engine.connect() as connection:
   with open('pii.csv', 'w', newline='') as csvfile:
@@ -69,7 +71,7 @@ with engine.connect() as connection:
       output_row.append(row['birth_date'].isoformat())
       sex = row['sex']
       validate(report, 'sex', sex)
-      output_row.append(sex)
+      output_row.append(sex.strip())
       phone_number = row['household_phone']
       validate(report, 'phone_number', phone_number)
       output_row.append(clean_phone(phone_number))
@@ -79,7 +81,6 @@ with engine.connect() as connection:
       household_zip = row['household_zip']
       validate(report, 'household_zip', household_zip)
       output_row.append(clean_zip(household_zip))
-      writer.writerow(output_row)
       parent_given_name = row['parent_given_name']
       validate(report, 'parent_given_name', parent_given_name)
       output_row.append(clean_name(parent_given_name))
@@ -89,8 +90,16 @@ with engine.connect() as connection:
       parent_email = row['household_email']
       validate(report, 'parent_email', parent_email)
       output_row.append(clean_email(parent_email))
+      writer.writerow(output_row)
+      export_count += 1
+
+print('Total records exported: {}'.format(export_count))
+print('')
 
 for field, counter in report.items():
   print(field)
-  print(counter)
+  print('--------------------')
+  for issue, count in counter.items():
+    print("{}: {}".format(issue, count))
+  print('')
 
