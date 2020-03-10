@@ -1,4 +1,5 @@
 import csv
+import argparse
 from collections import Counter
 from sqlalchemy import create_engine, MetaData, Table
 from sqlalchemy.sql import select
@@ -49,7 +50,13 @@ for h in header:
 
 export_count = 0
 
-engine = create_engine('postgresql://codi:codi@localhost/codi')
+parser = argparse.ArgumentParser(description='Tool for extracting, validating and cleaning data for CODI PPRL')
+parser.add_argument('--db', nargs=1, required=True, help='Database connection string')
+args = parser.parse_args()
+
+connection_string = args.db[0]
+
+engine = create_engine(connection_string)
 with engine.connect() as connection:
   with open('pii.csv', 'w', newline='') as csvfile:
     writer = csv.writer(csvfile)
