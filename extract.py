@@ -1,5 +1,6 @@
 import csv
 import argparse
+import unicodedata
 from collections import Counter
 from sqlalchemy import create_engine, MetaData, Table
 from sqlalchemy.sql import select
@@ -18,7 +19,8 @@ def validate(report, field, value):
 def clean_name(name):
   if name is None:
     return None
-  return name.strip().upper()
+  ascii_name = unicodedata.normalize('NFKD', name).encode('ascii', 'ignore')
+  return ascii_name.strip().upper()
 
 def clean_phone(phone):
   if phone is None:
@@ -28,7 +30,8 @@ def clean_phone(phone):
 def clean_address(address):
   if address is None:
     return None
-  return address.strip().upper()
+  ascii_address = unicodedata.normalize('NFKD', address).encode('ascii', 'ignore')
+  return ascii_address.strip().upper()
 
 def clean_zip(zip):
   if zip is None:
@@ -38,7 +41,8 @@ def clean_zip(zip):
 def clean_email(email):
   if email is None:
     return None
-  return email.strip().upper()
+  ascii_email = unicodedata.normalize('NFKD', email).encode('ascii', 'ignore')
+  return ascii_email.strip().upper()
 
 header = ['record_id', 'given_name', 'family_name', 'DOB', 'sex', 'phone_number',
   'household_street_address', 'household_zip', 'parent_given_name' , 'parent_family_name',
