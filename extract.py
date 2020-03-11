@@ -67,7 +67,7 @@ with engine.connect() as connection:
     writer.writerow(header)
 
     meta = MetaData()
-    identity = Table('identifier', meta, autoload=True, autoload_with=engine)
+    identity = Table('identifier', meta, autoload=True, autoload_with=engine, schema='codi')
 
     query = select([identity])
     results = connection.execute(query)
