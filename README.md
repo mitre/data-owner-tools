@@ -137,3 +137,9 @@ CLK data written to output/name-sex-dob-parents.json
 generating CLKs:  21%|▏| 52.0/252 [00:00<00:00, 423clk/s, mean=1.17e+3, std=23.7generating CLKs: 100%|███| 252/252 [00:00<00:00, 532clk/s, mean=1.17e+3, std=34]
 CLK data written to output/name-sex-dob-addr.json
 ```
+
+## Notice
+
+Copyright 2020 The MITRE Corporation.
+
+Approved for Public Release; Distribution Unlimited. Case Number 19-2008
