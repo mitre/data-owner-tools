@@ -35,19 +35,76 @@ clkhash is a part of the [anonlink](https://github.com/data61/anonlink) suite of
 
 ## Overall Process
 
+![Data Flow Diagram](data-flow.png)
+
 ## Extract PII
+
+The CODI PPRL process depends on information pulled from a database structured to match the CODI Data Model. `extract.py` connects to a database and extracts information, cleaning and validating it to prepare it for the PPRL process. The script will output a `pii.csv` file that contains the PII ready for garbling.
+
+`extract.py` requires a database connection string to connect. Consult the [SQLAlchemy documentation](https://docs.sqlalchemy.org/en/13/core/engines.html#database-urls) to determine the exact string for the database in use.
+
+When finished, the script will print a report to the terminal, documening various issues it found when extracting the data. An example execution of the script is included below:
+
+```
+$python3 extract.py --db postgresql://codi:codi@localhost/codi
+Total records exported: 5476
+
+record_id
+--------------------
+
+given_name
+--------------------
+Contains Non-ASCII Characters: 226
+Contains Non-printable Characters: 3
+
+family_name
+--------------------
+Contains Non-ASCII Characters: 2
+
+DOB
+--------------------
+
+sex
+--------------------
+
+phone_number
+--------------------
+
+household_street_address
+--------------------
+Contains Non-ASCII Characters: 1
+Contains Non-printable Characters: 1
+
+household_zip
+--------------------
+NULL Value: 9
+
+parent_given_name
+--------------------
+Contains Non-ASCII Characters: 386
+Contains Non-printable Characters: 4
+
+parent_family_name
+--------------------
+NULL Value: 19
+Contains Non-ASCII Characters: 4
+
+parent_email
+--------------------
+NULL Value: 238
+Contains Non-ASCII Characters: 12
+```
 
 ## Garbling PII
 
-clkhash will garble personally identifiable information (PII) in a way that it can be used for linkage later on. The CODI PPRL process garbles information a number of different ways. The `garble.py` script will manage
-executing clkhash multiple times and package the information for transmission to the DCC.
+clkhash will garble personally identifiable information (PII) in a way that it can be used for linkage later on. The CODI PPRL process garbles information a number of different ways. The `garble.py` script will manage executing clkhash multiple times and package the information for transmission to the DCC.
 
 `garble.py` requires 3 different inputs:
 1. The location of a directory of clkhash linkage schema files
-1. The salt values to use in the garbling process
+1. The salt value to use in the garbling process
 1. The location of a CSV file containing the PII to garble
 
-`garble.py` requires that the location of the PII and schema files are provided via command line flags. The salt values are collected while the application is running, to avoid them being captured in command line execution history.
+`garble.py` requires that the location of the PII and schema files are provided via command line flags. The salt value are collected while the application is running, to avoid them being captured in command line execution history.
 
 `garble.py` will provide usage information with the `-h` flag:
 
