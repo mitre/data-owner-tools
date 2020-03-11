@@ -18,11 +18,12 @@ clkhash is a part of the [anonlink](https://github.com/data61/anonlink) suite of
 1. Unzip the file.
 1. From the unzipped directory run:
 
-    pip install -r requirements.txt
+    `pip install -r requirements.txt`
 
 ### Installing with Anaconda
 
 1. Install Anaconda by following the [install instructions](https://docs.anaconda.com/anaconda/install/).
+    1. Depending on user account permissions, Anaconda may not install the latest version or may not be available to all users. If that is the case, try running `conda update -n base -c defaults conda`
 1. Download the tools as a zip file using the "Clone or download" button on GitHub.
 1. Unzip the file.
 1. Open an Anaconda Powershell Prompt
@@ -46,7 +47,7 @@ The CODI PPRL process depends on information pulled from a database structured t
 When finished, the script will print a report to the terminal, documening various issues it found when extracting the data. An example execution of the script is included below:
 
 ```
-$python3 extract.py --db postgresql://codi:codi@localhost/codi
+$ python extract.py --db postgresql://codi:codi@localhost/codi
 Total records exported: 5476
 
 record_id
@@ -109,7 +110,7 @@ clkhash will garble personally identifiable information (PII) in a way that it c
 `garble.py` will provide usage information with the `-h` flag:
 
 ```
-$ python3 garble.py -h
+$ python garble.py -h
 usage: garble.py [-h] --source SOURCE --schema SCHEMA
 
 Tool for garbling PII in for PPRL purposes in the CODI project
