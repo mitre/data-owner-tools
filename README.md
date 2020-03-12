@@ -107,6 +107,8 @@ clkhash will garble personally identifiable information (PII) in a way that it c
 
 `garble.py` requires that the location of the PII and schema files are provided via command line flags. The salt value are collected while the application is running, to avoid them being captured in command line execution history.
 
+The [clkhash schema files](https://clkhash.readthedocs.io/en/latest/schema.html) specify the fields that will be used in the hashing process as well as assigning weights to those fields. The `example-schema` directory contains a set of example schema that can be used to test the tools.
+
 `garble.py` will provide usage information with the `-h` flag:
 
 ```
@@ -122,6 +124,8 @@ optional arguments:
 ```
 
 `garble.py` will package up the garbled PII files into a [zip file](https://en.wikipedia.org/wiki/Zip_(file_format)) called `garbled.zip`.
+
+Example ana
 
 Example execution of `garble.py` is shown below:
 

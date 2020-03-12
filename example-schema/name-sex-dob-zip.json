@@ -1,0 +1,105 @@
+{
+  "version": 2,
+  "clkConfig": {
+    "l": 4096,
+    "k": 30,
+    "hash": {
+      "type": "doubleHash"
+    },
+    "kdf": {
+      "type": "HKDF",
+      "hash": "SHA256",
+      "keySize": 64
+    }
+  },
+  "features": [
+    {
+      "identifier": "record_id",
+      "ignored": true
+    },
+    {
+      "identifier": "given_name",
+      "format": { "type": "string", "encoding": "utf-8", "case": "mixed"},
+      "hashing": {
+        "ngram": 2,
+        "strategy": {
+            "numBits": 300
+        },
+        "hash": {"type": "doubleHash"}
+      }
+    },
+    {
+      "identifier": "family_name",
+      "format": { "type": "string", "encoding": "utf-8", "case": "mixed"},
+      "hashing": {
+      "ngram": 2,
+        "strategy": {
+            "numBits": 300
+        },
+        "hash": {"type": "doubleHash"}
+      }
+    },
+    {
+      "identifier": "DOB",
+      "format": { "type": "string", "encoding": "utf-8"},
+      "hashing": {
+        "ngram": 2,
+        "strategy": {
+          "numBits": 300
+        },
+        "missingValue": {
+          "sentinel": ""
+        },
+        "hash": {"type": "doubleHash"}
+      }
+    },
+    {
+      "identifier": "sex",
+      "format": {
+        "type": "enum",
+        "values": ["M", "F", "UN"]
+      },
+      "hashing": {
+        "ngram": 1,
+        "strategy": {
+          "numBits": 200
+        },
+        "missingValue": {
+          "sentinel": ""
+        },
+        "hash": {"type": "doubleHash"}
+      }
+    },
+    {
+      "identifier": "phone_number",
+      "ignored": true
+    },
+    {
+      "identifier": "household_street_address",
+      "ignored": true
+    },
+    {
+      "identifier": "household_zip",
+      "format": { "type": "string", "encoding": "utf-8"},
+      "hashing": {
+        "ngram": 2,
+        "strategy": {
+            "numBits": 300
+        },
+        "hash": {"type": "doubleHash"}
+      }
+    },
+    {
+      "identifier": "parent_given_name",
+      "ignored": true
+    },
+    {
+      "identifier": "parent_family_name",
+      "ignored": true
+    },
+    {
+      "identifier": "parent_email",
+      "ignored": true
+    }
+  ]
+}
