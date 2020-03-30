@@ -142,6 +142,17 @@ generating CLKs:  21%|▏| 52.0/252 [00:00<00:00, 423clk/s, mean=1.17e+3, std=23
 CLK data written to output/name-sex-dob-addr.json
 ```
 
+## Mapping LINK_IDs to PATIDs
+
+When anonlink matches across data owners / partners, it identifies records by their position in the file. It essentially uses the line number in the extracted PII file as the identifier for the record. When results are returned from the DCC, it will assign a LINK_ID to a line number in the PII CSV file.
+
+To map the LINK_IDs back to PATIDs, use the `linkidtopatid.py` script. The script takes two arguments:
+
+1. The path to the PII CSV file
+1. THe path to the LINK_ID CSV file provided by the DCC
+
+The script will create a file called `linkidtopatid.csv` with the mapping of LINK_IDs to PATIDs.
+
 ## Notice
 
 Copyright 2020 The MITRE Corporation.
