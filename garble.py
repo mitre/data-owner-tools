@@ -1,5 +1,6 @@
 import os
 import sys
+import subprocess
 import getpass
 from zipfile import ZipFile
 from pathlib import Path
@@ -9,7 +10,6 @@ parser = argparse.ArgumentParser(description='Tool for garbling PII in for PPRL 
 parser.add_argument('--source', nargs=1, required=True, help='Source PII CSV file')
 parser.add_argument('--schema', nargs=1, required=True, help='Directory of linkage schema')
 args = parser.parse_args()
-command = "clkutil hash {source_file} {secret_one} {schema_path} {output_file}"
 
 schema_dir = Path(args.schema[0])
 
@@ -28,10 +28,7 @@ if not os.path.exists('output'):
 for s in schema:
   schema_path = schema_dir.joinpath(s)
   output_file = Path('output', s)
-  to_execute = command.format(source_file=source_file, secret_one=secret_one,
-    schema_path=schema_path, output_file=output_file)
-  print(to_execute)
-  os.system(to_execute)
+  subprocess.run(["clkutil", "hash", source_file, secret_one, schema_path, output_file])
   clk_files.append(output_file)
 
 with ZipFile('garbled.zip', 'w') as garbled_zip:
