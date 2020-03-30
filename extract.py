@@ -20,7 +20,7 @@ def clean_name(name):
   if name is None:
     return None
   ascii_name = unicodedata.normalize('NFKD', name).encode('ascii', 'ignore')
-  return ascii_name.strip().upper()
+  return ascii_name.strip().upper().decode('ascii')
 
 def clean_phone(phone):
   if phone is None:
@@ -31,7 +31,7 @@ def clean_address(address):
   if address is None:
     return None
   ascii_address = unicodedata.normalize('NFKD', address).encode('ascii', 'ignore')
-  return ascii_address.strip().upper()
+  return ascii_address.strip().upper().decode('ascii')
 
 def clean_zip(zip):
   if zip is None:
@@ -42,7 +42,7 @@ def clean_email(email):
   if email is None:
     return None
   ascii_email = unicodedata.normalize('NFKD', email).encode('ascii', 'ignore')
-  return ascii_email.strip().upper()
+  return ascii_email.strip().upper().decode('ascii')
 
 header = ['record_id', 'given_name', 'family_name', 'DOB', 'sex', 'phone_number',
   'household_street_address', 'household_zip', 'parent_given_name' , 'parent_family_name',
