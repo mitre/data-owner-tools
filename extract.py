@@ -2,6 +2,7 @@ import csv
 import argparse
 import unicodedata
 from collections import Counter
+from random import shuffle
 from sqlalchemy import create_engine, MetaData, Table
 from sqlalchemy.sql import select
 
@@ -60,49 +61,55 @@ args = parser.parse_args()
 
 connection_string = args.db[0]
 
+output_rows = []
+
 engine = create_engine(connection_string)
 with engine.connect() as connection:
-  with open('pii.csv', 'w', newline='', encoding='utf-8') as csvfile:
-    writer = csv.writer(csvfile)
-    writer.writerow(header)
+  meta = MetaData()
+  identity = Table('identifier', meta, autoload=True, autoload_with=engine, schema='codi')
 
-    meta = MetaData()
-    identity = Table('identifier', meta, autoload=True, autoload_with=engine, schema='codi')
+  query = select([identity])
+  results = connection.execute(query)
+  for row in results:
+    output_row = [row['patid']]
+    given_name = row['given_name']
+    validate(report, 'given_name', given_name)
+    output_row.append(clean_name(given_name))
+    family_name = row['family_name']
+    validate(report, 'family_name', family_name)
+    output_row.append(clean_name(family_name))
+    output_row.append(row['birth_date'].isoformat())
+    sex = row['sex']
+    validate(report, 'sex', sex)
+    output_row.append(sex.strip())
+    phone_number = row['household_phone']
+    validate(report, 'phone_number', phone_number)
+    output_row.append(clean_phone(phone_number))
+    household_street_address = row['household_street_address']
+    validate(report, 'household_street_address', household_street_address)
+    output_row.append(clean_address(household_street_address))
+    household_zip = row['household_zip']
+    validate(report, 'household_zip', household_zip)
+    output_row.append(clean_zip(household_zip))
+    parent_given_name = row['parent_given_name']
+    validate(report, 'parent_given_name', parent_given_name)
+    output_row.append(clean_name(parent_given_name))
+    parent_family_name = row['parent_family_name']
+    validate(report, 'parent_family_name', parent_family_name)
+    output_row.append(clean_name(parent_family_name))
+    parent_email = row['household_email']
+    validate(report, 'parent_email', parent_email)
+    output_row.append(clean_email(parent_email))
+    output_rows.append(output_row)
+    export_count += 1
 
-    query = select([identity])
-    results = connection.execute(query)
-    for row in results:
-      output_row = [row['patid']]
-      given_name = row['given_name']
-      validate(report, 'given_name', given_name)
-      output_row.append(clean_name(given_name))
-      family_name = row['family_name']
-      validate(report, 'family_name', family_name)
-      output_row.append(clean_name(family_name))
-      output_row.append(row['birth_date'].isoformat())
-      sex = row['sex']
-      validate(report, 'sex', sex)
-      output_row.append(sex.strip())
-      phone_number = row['household_phone']
-      validate(report, 'phone_number', phone_number)
-      output_row.append(clean_phone(phone_number))
-      household_street_address = row['household_street_address']
-      validate(report, 'household_street_address', household_street_address)
-      output_row.append(clean_address(household_street_address))
-      household_zip = row['household_zip']
-      validate(report, 'household_zip', household_zip)
-      output_row.append(clean_zip(household_zip))
-      parent_given_name = row['parent_given_name']
-      validate(report, 'parent_given_name', parent_given_name)
-      output_row.append(clean_name(parent_given_name))
-      parent_family_name = row['parent_family_name']
-      validate(report, 'parent_family_name', parent_family_name)
-      output_row.append(clean_name(parent_family_name))
-      parent_email = row['household_email']
-      validate(report, 'parent_email', parent_email)
-      output_row.append(clean_email(parent_email))
-      writer.writerow(output_row)
-      export_count += 1
+shuffle(output_rows)
+
+with open('pii.csv', 'w', newline='', encoding='utf-8') as csvfile:
+  writer = csv.writer(csvfile)
+  writer.writerow(header)
+  for output_row in output_rows:
+    writer.writerow(output_row)
 
 print('Total records exported: {}'.format(export_count))
 print('')
