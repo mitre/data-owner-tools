@@ -45,7 +45,7 @@ def clean_email(email):
   ascii_email = unicodedata.normalize('NFKD', email).encode('ascii', 'ignore')
   return ascii_email.strip().upper().decode('ascii')
 
-header = ['record_id', 'given_name', 'family_name', 'DOB', 'sex', 'phone_number',
+header = ['record_id', 'given_name', 'family_name', 'DOB', 'birth_year_sex', 'phone_number',
   'household_street_address', 'household_zip', 'parent_given_name' , 'parent_family_name',
   'parent_email']
 
@@ -78,10 +78,11 @@ with engine.connect() as connection:
     family_name = row['family_name']
     validate(report, 'family_name', family_name)
     output_row.append(clean_name(family_name))
-    output_row.append(row['birth_date'].isoformat())
+    day_of_birth = "{}-{}".format(row['birth_date'].month, row['birth_date'].day)
+    output_row.append(day_of_birth)
     sex = row['sex']
     validate(report, 'sex', sex)
-    output_row.append(sex.strip())
+    output_row.append(str(row['birth_date'].year) + sex.strip())
     phone_number = row['household_phone']
     validate(report, 'phone_number', phone_number)
     output_row.append(clean_phone(phone_number))

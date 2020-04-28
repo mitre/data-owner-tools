@@ -4,7 +4,7 @@
     "l": 4096,
     "k": 30,
     "hash": {
-      "type": "doubleHash"
+      "type": "blakeHash"
     },
     "kdf": {
       "type": "HKDF",
@@ -25,7 +25,7 @@
         "strategy": {
             "numBits": 300
         },
-        "hash": {"type": "doubleHash"}
+        "hash": {"type": "blakeHash"}
       }
     },
     {
@@ -36,7 +36,7 @@
         "strategy": {
             "numBits": 300
         },
-        "hash": {"type": "doubleHash"}
+        "hash": {"type": "blakeHash"}
       }
     },
     {
@@ -50,24 +50,21 @@
         "missingValue": {
           "sentinel": ""
         },
-        "hash": {"type": "doubleHash"}
+        "hash": {"type": "blakeHash"}
       }
     },
     {
-      "identifier": "sex",
-      "format": {
-        "type": "enum",
-        "values": ["M", "F", "UN"]
-      },
+      "identifier": "birth_year_sex",
+      "format": { "type": "string", "encoding": "utf-8"},
       "hashing": {
-        "ngram": 1,
+        "ngram": 5,
         "strategy": {
-          "numBits": 200
+          "numBits": 300
         },
         "missingValue": {
           "sentinel": ""
         },
-        "hash": {"type": "doubleHash"}
+        "hash": {"type": "blakeHash"}
       }
     },
     {
@@ -78,7 +75,7 @@
         "strategy": {
             "numBits": 300
         },
-        "hash": {"type": "doubleHash"}
+        "hash": {"type": "blakeHash"}
       }
     },
     {
