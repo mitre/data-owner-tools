@@ -27,6 +27,10 @@ if not os.path.exists('output'):
 
 for s in schema:
   schema_path = schema_dir.joinpath(s)
+  with open(schema_path, 'r') as schema_file:
+    file_contents = schema_file.read()
+    if 'doubleHash' in file_contents:
+      sys.exit('The following schema uses doubleHash, which is insecure: ' + str(schema_path))
   output_file = Path('output', s)
   subprocess.run(["clkutil", "hash", source_file, secret_one, schema_path, output_file])
   clk_files.append(output_file)
