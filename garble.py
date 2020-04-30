@@ -14,7 +14,7 @@ args = parser.parse_args()
 schema_dir = Path(args.schema[0])
 
 if not schema_dir.exists():
-  sys.exit('Unable to find directory: ' + schema_dir)
+  sys.exit('Unable to find directory: ' + str(schema_dir))
 
 schema = filter(lambda f: f.endswith('.json'), os.listdir(schema_dir))
 
