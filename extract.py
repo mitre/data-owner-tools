@@ -53,7 +53,7 @@ def case_insensitive_lookup(row, desired_key):
       if actual_key.lower() == desired_key:
         return row[actual_key]
 
-header = ['record_id', 'given_name', 'family_name', 'DOB', 'birth_year_sex', 'phone_number',
+header = ['record_id', 'given_name', 'family_name', 'DOB', 'sex', 'phone_number',
   'household_street_address', 'household_zip', 'parent_given_name' , 'parent_family_name',
   'parent_email']
 
@@ -87,11 +87,10 @@ with engine.connect() as connection:
     validate(report, 'family_name', family_name)
     output_row.append(clean_name(family_name))
     birth_date = case_insensitive_lookup(row, 'birth_date')
-    day_of_birth = "{}-{}".format(birth_date.month, birth_date.day)
-    output_row.append(day_of_birth)
+    output_row.append(birth_date.isoformat())
     sex = case_insensitive_lookup(row, 'sex')
     validate(report, 'sex', sex)
-    output_row.append(str(birth_date.year) + sex.strip())
+    output_row.append(sex.strip())
     phone_number = case_insensitive_lookup(row, 'household_phone')
     validate(report, 'phone_number', phone_number)
     output_row.append(clean_phone(phone_number))

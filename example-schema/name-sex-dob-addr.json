@@ -54,12 +54,15 @@
       }
     },
     {
-      "identifier": "birth_year_sex",
-      "format": { "type": "string", "encoding": "utf-8"},
+      "identifier": "sex",
+      "format": {
+        "type": "enum",
+        "values": ["M", "F", "UN"]
+      },
       "hashing": {
-        "ngram": 5,
+        "ngram": 1,
         "strategy": {
-          "numBits": 300
+          "numBits": 200
         },
         "missingValue": {
           "sentinel": ""
