@@ -43,7 +43,7 @@ for s in schema:
     if 'doubleHash' in file_contents:
       sys.exit('The following schema uses doubleHash, which is insecure: ' + str(schema_path))
   output_file = Path('output', s)
-  subprocess.run(["clkutil", "hash", source_file, secret, str(schema_path), str(output_file)])
+  subprocess.run(["anonlink", "hash", source_file, secret, str(schema_path), str(output_file)])
   clk_files.append(output_file)
 
 with ZipFile('garbled.zip', 'w') as garbled_zip:

@@ -20,6 +20,9 @@ clkhash is a part of the [anonlink](https://github.com/data61/anonlink) suite of
 
     `pip install -r requirements.txt`
 
+N.B. If the install fails during install of psycopg2 due to a clang error, you may need to run the following to resolve:
+    `env LDFLAGS='-L/usr/local/lib -L/usr/local/opt/openssl/lib -L/usr/local/opt/readline/lib' pip install psycopg2==2.8.4`
+
 ### Installing with Anaconda
 
 1. Install Anaconda by following the [install instructions](https://docs.anaconda.com/anaconda/install/).
@@ -113,19 +116,20 @@ The [clkhash schema files](https://clkhash.readthedocs.io/en/latest/schema.html)
 
 ```
 $ python garble.py -h
-usage: garble.py [-h] --source SOURCE --schema SCHEMA
+usage: garble.py [-h] --source SOURCE --schema SCHEMA --secretfile SECRET_FILE
 
 Tool for garbling PII in for PPRL purposes in the CODI project
 
-optional arguments:
-  -h, --help       show this help message and exit
+required arguments:
   --source SOURCE  Source PII CSV file
   --schema SCHEMA  Directory of linkage schema
+  --secretfile SECRET_FILE  Location of de-identification secret file
+
+optional arguments:
+  -h, --help       show this help message and exit
 ```
 
 `garble.py` will package up the garbled PII files into a [zip file](https://en.wikipedia.org/wiki/Zip_(file_format)) called `garbled.zip`.
-
-Example ana
 
 Example execution of `garble.py` is shown below:
 
