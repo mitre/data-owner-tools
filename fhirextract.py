@@ -2,6 +2,7 @@ import csv
 import argparse
 import unicodedata
 import ndjson
+from  dataownertools import clean, report
 from collections import Counter
 from random import shuffle
 
@@ -9,9 +10,7 @@ header = ['record_id', 'given_name', 'family_name', 'DOB', 'sex', 'phone_number'
   'household_street_address', 'household_zip', 'parent_given_name' , 'parent_family_name',
   'parent_email']
 
-report = {}
-for h in header:
-  report[h] = Counter()
+report = report.Report(header)
 
 export_count = 0
 
@@ -23,19 +22,33 @@ bulkfile_path = args.bulkfile[0]
 
 output_rows = []
 
-
 with open(bulkfile_path) as f:
   reader = ndjson.reader(f)
 
+  # TODO: null safe search when digging through the Patient resource
   for patient in reader:
     patient_row = []
-    patient_row.append(patient['id'])
-    patient_row.append(patient['name'][0]['given'][0])
-    patient_row.append(patient['name'][0]['family'])
+    record_id = patient['id']
+    patient_row.append(record_id)
+    given_name = patient['name'][0]['given'][0]
+    report.validate('given_name', given_name)
+    patient_row.append(clean.name(given_name))
+    family_name = patient['name'][0]['family']
+    report.validate('family_name', family_name)
+    patient_row.append(clean.name(family_name))
     patient_row.append(patient['birthDate'])
-    patient_row.append(patient['gender'])
-    patient_row.append(patient['address'][0]['line'][0])
-    patient_row.append(patient['address'][0].get('postalCode'))
+    sex = patient['gender']
+    report.validate('sex', sex)
+    patient_row.append(sex[0].upper())
+    phone_number = patient['telecom'][0]['value']
+    report.validate('phone_number', phone_number)
+    patient_row.append(clean.phone(phone_number))
+    household_street_address = patient['address'][0]['line'][0]
+    report.validate('household_street_address', household_street_address)
+    patient_row.append(clean.address(household_street_address))
+    household_zip = patient['address'][0].get('postalCode')
+    report.validate('household_zip', household_zip)
+    patient_row.append(clean.zip(household_zip))
     patient_row.append("")
     patient_row.append("")
     patient_row.append("")
