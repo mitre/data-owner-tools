@@ -14,6 +14,7 @@ pii_lines = []
 
 with open(source_file) as source:
   source_reader = csv.reader(source)
+  next(source)
   pii_lines = list(source_reader)
 
 links_file = Path(args.links[0])
