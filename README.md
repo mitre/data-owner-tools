@@ -22,3 +22,9 @@ Fork of https://github.com/mitre/data-owner-tools. All python files should confo
 ### Link-IDs-Executable.py
 - WxPython GUI wrapper for functions inside linkidtopatid.py
 - Able to be built into single executable using pyinstaller
+
+## Build Instructions
+Clone the repository. From the cloned directory run the following commands:  
+`pip install -r requirements.txt`  
+`pyinstaller Link-IDs-Executable.py --onefile -w`  
+`pyinstaller GarbleExecutable.py  --onefile -w --add-data ./venv/Lib/site-packages/clkhash/data;clkhash/data --add-data ./venv/Lib/site-packages/clkhash/schemas;clkhash/schemas --add-data ./example-schema;example-schema --add-data ./secret-file/secret-file.txt;secret-file`  
