@@ -22,7 +22,6 @@ def garble_data(source_file, schema_dir, secret_file, output_dir):
     schema = filter(lambda f: f.endswith('.json'), os.listdir(schema_dir))
 
     for s in schema:
-        print("here")
         schema_path = schema_dir.joinpath(s)
         with open(schema_path, 'r') as schema_file:
             file_contents = schema_file.read()
@@ -61,4 +60,4 @@ if __name__ == "__main__":
     if not secret_file.exists():
         sys.exit('Unable to find secret file' + str(secret_file))
 
-    sys.exit(garbleData(source_file, schema_dir, secret_file, "./output"))
+    sys.exit(garble_data(source_file, schema_dir, secret_file, "./output"))
