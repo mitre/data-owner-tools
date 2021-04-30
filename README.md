@@ -28,4 +28,4 @@ Clone the repository. From the cloned directory run the following commands:
 `pip install -r requirements.txt`  
 `pyinstaller Link-IDs-Executable.py --onefile -w`  
 `pyinstaller GarbleExecutable.py  --onefile -w --add-data ./venv/Lib/site-packages/clkhash/data;clkhash/data --add-data ./venv/Lib/site-packages/clkhash/schemas;clkhash/schemas --add-data ./example-schema;example-schema --add-data ./secret-file/secret-file.txt;secret-file`  
-The built executables will appear in /dist
+The built executables will appear in /dist.
