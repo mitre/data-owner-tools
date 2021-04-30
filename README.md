@@ -12,6 +12,8 @@ Fork of https://github.com/mitre/data-owner-tools. All python files should confo
 - Moved argparse code into \_\_name\_\_ == "\_\_main\_\_" check
 - Function returns messages instead of printing
 - No longer requires headerless PII csv file
+
+## Additions
 ### GarbleExecutable.py
 - WxPython GUI wrapper for functions inside garble.py
 - Able to be built into single executable using pyinstaller
