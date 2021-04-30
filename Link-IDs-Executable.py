@@ -1,8 +1,10 @@
 import wx
-from ownertools import linkidtopatid
+import linkidtopatid
 from multiprocessing import freeze_support
 import sys
 import os
+
+#pyinstaller Link-IDs-Executable.py --onefile -w
 
 if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
     os.chdir(sys._MEIPASS)
