@@ -5,7 +5,7 @@ Fork of https://github.com/mitre/data-owner-tools. All python files should confo
 - Moved majority of code into callable function
 - Moved argparse code into \_\_name\_\_ == "\_\_main\_\_" check
 - Added parameter for output directory
-- Changed subprocess call to call cli.hash from anonlinkclient import
+- Changed subprocess call to call cli.hash(...) from anonlinkclient import
 - Added return text for successful write
 ### linkidtopatid.py
 - Moved majority of code into callable function
