@@ -16,15 +16,16 @@ Fork of https://github.com/mitre/data-owner-tools. All python files should confo
 ## Additions
 ### GarbleExecutable.py
 - WxPython GUI wrapper for functions inside garble.py
-- Able to be built into single executable using pyinstaller
+- Able to be built into a one-file executable using pyinstaller
 - Currently includes Salt and Schema files inside the exe
 - Runs multiprocessing.freeze_support() to enable multiprocessing in the built executable.
 ### Link-IDs-Executable.py
 - WxPython GUI wrapper for functions inside linkidtopatid.py
-- Able to be built into single executable using pyinstaller
+- Able to be built into a one-file executable using pyinstaller
 
 ## Build Instructions
 Clone the repository. From the cloned directory run the following commands:  
 `pip install -r requirements.txt`  
 `pyinstaller Link-IDs-Executable.py --onefile -w`  
 `pyinstaller GarbleExecutable.py  --onefile -w --add-data ./venv/Lib/site-packages/clkhash/data;clkhash/data --add-data ./venv/Lib/site-packages/clkhash/schemas;clkhash/schemas --add-data ./example-schema;example-schema --add-data ./secret-file/secret-file.txt;secret-file`  
+The built executables will appear in /dist
