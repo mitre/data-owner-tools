@@ -4,6 +4,8 @@ garbled.zip
 links.csv
 linkidtopatid.csv
 /commit.bat
+.idea
+/secret-file
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

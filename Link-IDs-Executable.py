@@ -10,16 +10,16 @@ if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
     os.chdir(sys._MEIPASS)
 
 
-class CSVManager(wx.Frame):
+class LinkIDsWindow(wx.Frame):
     def __init__(self, *args, **kwargs):
-        super(CSVManager, self).__init__(*args, **kwargs)
-        self.PII_path = ""
+        super(LinkIDsWindow, self).__init__(*args, **kwargs)
+        self.pii_path = ""
         self.link_ids_path = ""
         self.output_dir = ""
-        self.txt1 = None
-        self.txt2 = None
-        self.txt3 = None
-        self.txt4 = None
+        self.pii_path_text = None
+        self.link_ids_path_text = None
+        self.output_dir_text = None
+        self.match_text = None
         self.InitUI()
 
     def InitUI(self):
@@ -29,25 +29,25 @@ class CSVManager(wx.Frame):
         hbox = wx.BoxSizer()
         sizer = wx.GridSizer(4, 2, 2, 300)
 
-        btn1 = wx.Button(panel, label='Open CSV File')
-        btn2 = wx.Button(panel, label='Open Link-Id file')
-        btn3 = wx.Button(panel, label='Select Output')
-        btn4 = wx.Button(panel, label='Match')
+        open_csv_btn = wx.Button(panel, label='Open CSV File')
+        open_link_id_btn = wx.Button(panel, label='Open Link-Id file')
+        open_output_btn = wx.Button(panel, label='Select Output')
+        match_btn = wx.Button(panel, label='Match')
 
-        self.txt1 = wx.StaticText(panel, label="Select PII CSV file (used to generate gabled data)")
-        self.txt2 = wx.StaticText(panel, label="Select Link-ids file (provided by Data Integrator)")
-        self.txt3 = wx.StaticText(panel, label="Select output directory")
-        self.txt4 = wx.StaticText(panel, label="Match Link-ids to Patient IDs")
+        self.pii_path_text = wx.StaticText(panel, label="Select PII CSV file (used to generate gabled data)")
+        self.link_ids_path_text = wx.StaticText(panel, label="Select Link-ids file (provided by Data Integrator)")
+        self.output_dir_text = wx.StaticText(panel, label="Select output directory")
+        self.match_text = wx.StaticText(panel, label="Match Link-ids to Patient IDs")
 
-        sizer.AddMany([self.txt1, btn1, self.txt2, btn2, self.txt3, btn3, self.txt4, btn4])
+        sizer.AddMany([self.pii_path_text, open_csv_btn, self.link_ids_path_text, open_link_id_btn, self.output_dir_text, open_output_btn, self.match_text, match_btn])
 
         hbox.Add(sizer, 0, wx.ALL, 15)
         panel.SetSizer(hbox)
 
-        btn1.Bind(wx.EVT_BUTTON, self.OnOpenPII)
-        btn2.Bind(wx.EVT_BUTTON, self.OnOpenLinkIds)
-        btn3.Bind(wx.EVT_BUTTON, self.OnOpenOutput)
-        btn4.Bind(wx.EVT_BUTTON, self.OnMatch)
+        open_csv_btn.Bind(wx.EVT_BUTTON, self.OnOpenPII)
+        open_link_id_btn.Bind(wx.EVT_BUTTON, self.OnOpenLinkIds)
+        open_output_btn.Bind(wx.EVT_BUTTON, self.OnOpenOutput)
+        match_btn.Bind(wx.EVT_BUTTON, self.OnMatch)
 
         self.SetSize((850, 200))
         self.SetTitle('Messages')
@@ -60,8 +60,8 @@ class CSVManager(wx.Frame):
                 return  # the user changed their mind
 
             # Proceed loading the file chosen by the user
-            self.PII_path = fileDialog.GetPath()
-            self.txt1.SetLabel(self.PII_path)
+            self.pii_path = fileDialog.GetPath()
+            self.pii_path_text.SetLabel(self.pii_path)
 
     def OnOpenLinkIds(self, event):
         with wx.FileDialog(self, "Open csv file", wildcard="CSV files (*.csv)|*.csv",
@@ -71,7 +71,7 @@ class CSVManager(wx.Frame):
 
             # Proceed loading the file chosen by the user
             self.link_ids_path = fileDialog.GetPath()
-            self.txt2.SetLabel(self.link_ids_path)
+            self.link_ids_path_text.SetLabel(self.link_ids_path)
 
 
     def OnOpenOutput(self, event):
@@ -81,16 +81,16 @@ class CSVManager(wx.Frame):
 
             # Proceed loading the file chosen by the user
             self.output_dir = dirDialog.GetPath()
-            self.txt3.SetLabel(self.output_dir)
+            self.output_dir_text.SetLabel(self.output_dir)
 
     def OnMatch(self, event):
-        self.txt4.SetLabel("Processing PII Data...")
+        self.match_text.SetLabel("Processing PII Data...")
         self.Update()
-        self.txt4.SetLabel(linkidtopatid.linkids_to_patids(self.PII_path, self.link_ids_path, self.output_dir))
+        self.match_text.SetLabel(linkidtopatid.linkids_to_patids(self.pii_path, self.link_ids_path, self.output_dir))
 
 def main():
     app = wx.App()
-    ex = CSVManager(None)
+    ex = LinkIDsWindow(None)
     ex.Show()
     app.MainLoop()
 

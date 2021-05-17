@@ -12,17 +12,16 @@ if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
     os.chdir(sys._MEIPASS)
 
 
-class CSVManager(wx.Frame):
+class GarbleWindow(wx.Frame):
     def __init__(self, *args, **kwargs):
-        super(CSVManager, self).__init__(*args, **kwargs)
-        self.PII_path = ""
+        super(GarbleWindow, self).__init__(*args, **kwargs)
+        self.pii_path = ""
         self.output_dir = ""
         self.schema_dir = "example-schema"
         self.salt_path = "secret-file/secret-file.txt"
-        self.txt1 = None
-        self.txt2 = None
-        self.txt3 = None
-        self.txt2 = None
+        self.pii_path_text = None
+        self.output_dir_text = None
+        self.garble_text = None
         self.InitUI()
 
     def InitUI(self):
@@ -32,22 +31,22 @@ class CSVManager(wx.Frame):
         hbox = wx.BoxSizer()
         sizer = wx.GridSizer(5, 2, 2, 300)
 
-        btn1 = wx.Button(panel, label='Open CSV File')
-        btn2 = wx.Button(panel, label='Open Output Directory')
-        btn3 = wx.Button(panel, label='Garble')
+        open_csv_btn = wx.Button(panel, label='Open CSV File')
+        open_output_btn = wx.Button(panel, label='Open Output Directory')
+        garble_btn = wx.Button(panel, label='Garble')
 
-        self.txt1 = wx.StaticText(panel, label="Select PII CSV file")
-        self.txt2 = wx.StaticText(panel, label="Select output directory")
-        self.txt3 = wx.StaticText(panel, label="")
+        self.pii_path_text = wx.StaticText(panel, label="Select PII CSV file")
+        self.output_dir_text = wx.StaticText(panel, label="Select output directory")
+        self.garble_text = wx.StaticText(panel, label="")
 
-        sizer.AddMany([self.txt1, btn1, self.txt2, btn2, self.txt3, btn3])
+        sizer.AddMany([self.pii_path_text, open_csv_btn, self.output_dir_text, open_output_btn, self.garble_text, garble_btn])
 
         hbox.Add(sizer, 0, wx.ALL, 15)
         panel.SetSizer(hbox)
 
-        btn1.Bind(wx.EVT_BUTTON, self.OnOpenPII)
-        btn2.Bind(wx.EVT_BUTTON, self.OnOpenOutput)
-        btn3.Bind(wx.EVT_BUTTON, self.OnGarble)
+        open_csv_btn.Bind(wx.EVT_BUTTON, self.OnOpenPII)
+        open_output_btn.Bind(wx.EVT_BUTTON, self.OnOpenOutput)
+        garble_btn.Bind(wx.EVT_BUTTON, self.OnGarble)
 
         self.SetSize((850, 200))
         self.SetTitle('Messages')
@@ -60,8 +59,8 @@ class CSVManager(wx.Frame):
                 return  # the user changed their mind
 
             # Proceed loading the file chosen by the user
-            self.PII_path = fileDialog.GetPath()
-            self.txt1.SetLabel(self.PII_path)
+            self.pii_path = fileDialog.GetPath()
+            self.pii_path_text.SetLabel(self.pii_path)
 
 
     def OnOpenOutput(self, event):
@@ -71,16 +70,16 @@ class CSVManager(wx.Frame):
 
             # Proceed loading the file chosen by the user
             self.output_dir = dirDialog.GetPath()
-            self.txt2.SetLabel(self.output_dir)
+            self.output_dir_text.SetLabel(self.output_dir)
 
     def OnGarble(self, event):
-        self.txt3.SetLabel("Processing PII Data...")
+        self.garble_text.SetLabel("Processing PII Data...")
         self.Update()
-        self.txt3.SetLabel(garble.garble_data(Path(self.PII_path), Path(self.schema_dir), Path(self.salt_path), Path(self.output_dir)))
+        self.garble_text.SetLabel(garble.garble_data(Path(self.pii_path), Path(self.schema_dir), Path(self.salt_path), Path(self.output_dir)))
 
 def main():
     app = wx.App()
-    ex = CSVManager(None)
+    ex = GarbleWindow(None)
     ex.Show()
     app.MainLoop()
 
