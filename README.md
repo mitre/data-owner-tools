@@ -164,7 +164,7 @@ Copyright 2020 The MITRE Corporation.
 Approved for Public Release; Distribution Unlimited. Case Number 19-2008
 
 # Data Owner Tools Executables
-Fork of https://github.com/mitre/data-owner-tools. All python files should conform to existing command line documentation. Command line and GUI tools should be interoperable. Executables built using pyinstaller version 4.2.
+Fork of https://github.com/mitre/data-owner-tools. All python files should conform to existing command line documentation. Command line and GUI tools should be interoperable. Executables built using pyinstaller version 4.2. Only Windows executables availible in releases.
 
 ## Basic End User Instructions:
 To use the garble tool, download GarbleExecutable.exe from: https://github.com/Sam-Gresh/data-owner-tools/releases/tag/v0.0.3. Optionally, create an output directory. Run the executable. Select the PII csv file, and the output directory, then click the Garble button. The garbled files will be created in the output directory.
@@ -193,6 +193,7 @@ To use the garble tool, download GarbleExecutable.exe from: https://github.com/S
 - Able to be built into a one-file executable using pyinstaller
 
 ## Build Instructions
+This will automatically target the platform you are running it on (Windows/OSx/Linux).
 Clone the repository. From the cloned directory run the following commands:  
 `pip install -r requirements.txt`  
 `pyinstaller Link-IDs-Executable.py --onefile -w`  
