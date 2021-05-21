@@ -6,6 +6,10 @@ linkidtopatid.csv
 /commit.bat
 .idea
 /secret-file
+download_azure_fhir.py
+download_azure_FHIR_executable.py
+azure_token.py
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

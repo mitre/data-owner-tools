@@ -8,7 +8,7 @@ import argparse
 from anonlinkclient import cli
 
 
-def garble_data(source_file, schema_dir, secret_file, output_dir):
+def garble_data(source_file, schema_dir, secret_file, output_dir, file_name="garbled.zip"):
     with open(secret_file, 'r') as secret_text:
         secret = secret_text.read()
         if len(secret) < 256:
@@ -35,10 +35,10 @@ def garble_data(source_file, schema_dir, secret_file, output_dir):
                 raise
         clk_files.append(output_file)
 
-    with ZipFile(Path(output_dir, 'garbled.zip'), 'w') as garbled_zip:
+    with ZipFile(Path(output_dir, file_name), 'w') as garbled_zip:
         for clk_file in clk_files:
             garbled_zip.write(clk_file, arcname="output/" + os.path.basename(clk_file))
-    return f"garbled.zip written to {output_dir}"
+    return f"{file_name} written to {output_dir}"
 
 
 if __name__ == "__main__":

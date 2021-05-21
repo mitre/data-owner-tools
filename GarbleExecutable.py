@@ -19,6 +19,7 @@ class GarbleWindow(wx.Frame):
         self.output_dir = ""
         self.schema_dir = "example-schema"
         self.salt_path = "secret-file/secret-file.txt"
+        self.salt_path_text = None
         self.pii_path_text = None
         self.output_dir_text = None
         self.garble_text = None
@@ -34,25 +35,28 @@ class GarbleWindow(wx.Frame):
         open_csv_btn = wx.Button(panel, label='Open CSV File')
         open_output_btn = wx.Button(panel, label='Open Output Directory')
         garble_btn = wx.Button(panel, label='Garble')
+        salt_btn = wx.Button(panel, label='Secret File')
 
         self.pii_path_text = wx.StaticText(panel, label="Select PII CSV file")
+        self.salt_path_text = wx.StaticText(panel, label="Select Secret File")
         self.output_dir_text = wx.StaticText(panel, label="Select output directory")
         self.garble_text = wx.StaticText(panel, label="")
 
-        sizer.AddMany([self.pii_path_text, open_csv_btn, self.output_dir_text, open_output_btn, self.garble_text, garble_btn])
+        sizer.AddMany([self.pii_path_text, open_csv_btn, self.salt_path_text, salt_btn, self.output_dir_text, open_output_btn, self.garble_text, garble_btn])
 
         hbox.Add(sizer, 0, wx.ALL, 15)
         panel.SetSizer(hbox)
 
-        open_csv_btn.Bind(wx.EVT_BUTTON, self.OnOpenPII)
-        open_output_btn.Bind(wx.EVT_BUTTON, self.OnOpenOutput)
-        garble_btn.Bind(wx.EVT_BUTTON, self.OnGarble)
+        open_csv_btn.Bind(wx.EVT_BUTTON, self.on_open_pii)
+        open_output_btn.Bind(wx.EVT_BUTTON, self.on_open_output)
+        garble_btn.Bind(wx.EVT_BUTTON, self.on_garble)
+        salt_btn.Bind(wx.EVT_BUTTON, self.on_open_salt)
 
         self.SetSize((850, 200))
         self.SetTitle('Messages')
         self.Centre()
 
-    def OnOpenPII(self, event):
+    def on_open_pii(self, event):
         with wx.FileDialog(self, "Open csv file", wildcard="CSV files (*.csv)|*.csv",
                            style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST) as fileDialog:
             if fileDialog.ShowModal() == wx.ID_CANCEL:
@@ -62,8 +66,16 @@ class GarbleWindow(wx.Frame):
             self.pii_path = fileDialog.GetPath()
             self.pii_path_text.SetLabel(self.pii_path)
 
+    def on_open_salt(self, event):
+        with wx.FileDialog(self, "Open Secret file", style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST) as fileDialog:
+            if fileDialog.ShowModal() == wx.ID_CANCEL:
+                return  # the user changed their mind
 
-    def OnOpenOutput(self, event):
+            # Proceed loading the file chosen by the user
+            self.salt_path = fileDialog.GetPath()
+            self.salt_path_text.SetLabel(self.salt_path)
+
+    def on_open_output(self, event):
         with wx.DirDialog(self, "Choose Output Directory", style=wx.FD_OPEN | wx.DD_DIR_MUST_EXIST) as dirDialog:
             if dirDialog.ShowModal() == wx.ID_CANCEL:
                 return  # the user changed their mind
@@ -72,7 +84,7 @@ class GarbleWindow(wx.Frame):
             self.output_dir = dirDialog.GetPath()
             self.output_dir_text.SetLabel(self.output_dir)
 
-    def OnGarble(self, event):
+    def on_garble(self, event):
         self.garble_text.SetLabel("Processing PII Data...")
         self.Update()
         self.garble_text.SetLabel(garble.garble_data(Path(self.pii_path), Path(self.schema_dir), Path(self.salt_path), Path(self.output_dir)))
