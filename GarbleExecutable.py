@@ -96,7 +96,7 @@ class GarbleWindow(wx.Frame):
             self.Update()
             output_dir, file_name = os.path.split(pathname)
             self.garble_text.SetLabel(
-                garble.garble_data(Path(self.pii_path), Path(self.schema_dir), Path(self.salt_path), Path(output_dir), file_name))
+                garble.garble_data(Path(self.pii_path), Path(self.schema_dir), Path(self.salt_path), Path(output_dir), file_name, rm_json=True))
 
 
 def main():
