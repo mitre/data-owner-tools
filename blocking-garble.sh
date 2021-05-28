@@ -6,17 +6,6 @@
 # Script assumes folder contains synthetic denver
 # pii extracted into 'pii_*.csv'
 
-# python extract.py --db postgresql://apellitieri:codi@localhost/ch
-# mv pii.csv pii_ch.csv
-# python extract.py --db postgresql://apellitieri:codi@localhost/dh
-# mv pii.csv pii_dh.csv
-# python extract.py --db postgresql://apellitieri:codi@localhost/gotr
-# mv pii.csv pii_gotr.csv
-# python extract.py --db postgresql://apellitieri:codi@localhost/hfc
-# mv pii.csv pii_hfc.csv
-# python extract.py --db postgresql://apellitieri:codi@localhost/kp
-# mv pii.csv pii_kp.csv
-
 parent_path=$( cd "$(dirname "${BASH_SOURCE[0]}")" ; pwd -P )
 
 cd "$parent_path"
@@ -27,30 +16,35 @@ INBOX_PATH=$2
 echo 'Cleaning inbox...'
 rm -r $INBOX_PATH/*
 
-echo 'Running garble.py and block.py for CH'
-python garble.py --source pii_ch.csv --schema example-schema/ --secretfile ../deidentification_secret.txt
-mv garbled.zip $INBOX_PATH/ch.zip
+echo 'Running garble.py for A'
+python garble.py --source pii_site_a.csv --schema example-schema/ --secretfile ../deidentification_secret.txt
+mv garbled.zip $INBOX_PATH/site_a.zip
 python block.py --schema $SCHEMA_FILE
-mv garbled-blocked.zip $INBOX_PATH/ch-block.zip
-echo 'Running garble.py and block.py for DH'
-python garble.py --source pii_dh.csv --schema example-schema/ --secretfile ../deidentification_secret.txt
-mv garbled.zip $INBOX_PATH/dh.zip
+mv garbled-blocked.zip $INBOX_PATH/site_a-block.zip
+echo 'Running garble.py for B'
+python garble.py --source pii_site_b.csv --schema example-schema/ --secretfile ../deidentification_secret.txt
+mv garbled.zip $INBOX_PATH/site_b.zip
 python block.py --schema $SCHEMA_FILE
-mv garbled-blocked.zip $INBOX_PATH/dh-block.zip
-echo 'Running garble.py and block.py for GotR'
-python garble.py --source pii_gotr.csv --schema example-schema/ --secretfile ../deidentification_secret.txt
-mv garbled.zip $INBOX_PATH/gotr.zip
+mv garbled-blocked.zip $INBOX_PATH/site_b-block.zip
+echo 'Running garble.py for C'
+python garble.py --source pii_site_c.csv --schema example-schema/ --secretfile ../deidentification_secret.txt
+mv garbled.zip $INBOX_PATH/site_c.zip
 python block.py --schema $SCHEMA_FILE
-mv garbled-blocked.zip $INBOX_PATH/gotr-block.zip
-echo 'Running garble.py and block.py for HFC'
-python garble.py --source pii_hfc.csv --schema example-schema/ --secretfile ../deidentification_secret.txt
-mv garbled.zip $INBOX_PATH/hfc.zip
+mv garbled-blocked.zip $INBOX_PATH/site_c-block.zip
+echo 'Running garble.py for D'
+python garble.py --source pii_site_d.csv --schema example-schema/ --secretfile ../deidentification_secret.txt
+mv garbled.zip $INBOX_PATH/site_d.zip
 python block.py --schema $SCHEMA_FILE
-mv garbled-blocked.zip $INBOX_PATH/hfc-block.zip
-echo 'Running garble.py and block.py for KP'
-python garble.py --source pii_kp.csv --schema example-schema/ --secretfile ../deidentification_secret.txt
-mv garbled.zip $INBOX_PATH/kp.zip
+mv garbled-blocked.zip $INBOX_PATH/site_d-block.zip
+echo 'Running garble.py for E'
+python garble.py --source pii_site_e.csv --schema example-schema/ --secretfile ../deidentification_secret.txt
+mv garbled.zip $INBOX_PATH/site_e.zip
 python block.py --schema $SCHEMA_FILE
-mv garbled-blocked.zip $INBOX_PATH/kp-block.zip
+mv garbled-blocked.zip $INBOX_PATH/site_e-block.zip
+echo 'Running garble.py for F'
+python garble.py --source pii_site_f.csv --schema example-schema/ --secretfile ../deidentification_secret.txt
+mv garbled.zip $INBOX_PATH/site_f.zip
+python block.py --schema $SCHEMA_FILE
+mv garbled-blocked.zip $INBOX_PATH/site_f-block.zip
 echo 'Garbled and blocked zip files created:'
 ls $INBOX_PATH

@@ -3,3 +3,5 @@ pii_*.csv
 output
 blocking-output
 garbled.zip
+households_pii.csv
+households.csv
