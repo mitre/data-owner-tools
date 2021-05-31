@@ -17,7 +17,7 @@ class GarbleWindow(wx.Frame):
         super(GarbleWindow, self).__init__(*args, **kwargs)
         self.pii_path = ""
         self.schema_dir = "example-schema"
-        self.salt_path = "secret-file/secret-file.txt"
+        self.salt_path = ""
         self.pii_path_text = None
         self.pii_path_btn = None
         self.salt_path_text = None
@@ -31,10 +31,10 @@ class GarbleWindow(wx.Frame):
         panel = wx.Panel(self)
 
         hbox = wx.BoxSizer()
-        sizer = wx.GridSizer(5, 2, 2, 300)
+        sizer = wx.FlexGridSizer(5, 2, 2, 250)
 
 
-        self.pii_path_text = wx.StaticText(panel, label="Select PII CSV file")
+        self.pii_path_text = wx.StaticText(panel, label="Select PII CSV file:")
         self.pii_path_btn = wx.Button(panel, label='Open CSV File')
         self.pii_path_btn.Bind(wx.EVT_BUTTON, self.on_open_pii)
 
@@ -42,7 +42,7 @@ class GarbleWindow(wx.Frame):
 
 
 
-        self.salt_path_text = wx.StaticText(panel, label="Select Secret File")
+        self.salt_path_text = wx.StaticText(panel, label="Select Secret File:")
         self.salt_path_btn = wx.Button(panel, label='Open Secret File')
         self.salt_path_btn.Bind(wx.EVT_BUTTON, self.on_open_salt)
 
@@ -60,8 +60,8 @@ class GarbleWindow(wx.Frame):
 
 
 
-        self.SetSize((850, 200))
-        self.SetTitle('Messages')
+        self.SetSize((500, 150))
+        self.SetTitle('Garble Tool')
         self.Centre()
 
     def on_open_pii(self, event):

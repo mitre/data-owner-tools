@@ -9,7 +9,8 @@ linkidtopatid.csv
 download_azure_fhir.py
 download_azure_FHIR_executable.py
 azure_token.py
-
+generic_oauth_token.py
+config.json
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
