@@ -33,8 +33,8 @@ with open(secret_file, 'r') as secret_text:
   if len(secret) < 256:
     sys.exit('Secret length not long enough to ensure proper de-identification')
 
-headers = ['HOUSEHOLD_ID','PAT_CLK_POSITIONS']
-household_pii_headers = ['HOUSEHOLD_ID','family_name','phone_number','household_street_address', 'household_zip']
+headers = ['HOUSEHOLD_POSITION','PAT_CLK_POSITIONS']
+household_pii_headers = ['family_name','phone_number','household_street_address', 'household_zip']
 pii_lines = []
 output_rows = []
 MATCH_THRESHOLD = 0.7
@@ -46,6 +46,7 @@ if not os.path.exists('output/households'):
 
 with open(source_file) as source:
   source_reader = csv.reader(source)
+  next(source_reader)
   pii_lines = list(source_reader)
 
 def addr_parse(addr):
@@ -161,6 +162,7 @@ with open('output/households/households.csv', 'w', newline='', encoding='utf-8')
   writer = csv.writer(csvfile)
   writer.writerow(headers)
   already_added = []
+  hclk_position = 0
   # Match households
   for position, line in enumerate(pii_lines):
     if position in already_added:
@@ -169,9 +171,11 @@ with open('output/households/households.csv', 'w', newline='', encoding='utf-8')
     pat_clks = [position]
     match_households(already_added, pat_clks, line)
     print(pat_clks)
-    household_id = uuid.uuid1()
-    writer.writerow([household_id, pat_clks])
-    output_row = [household_id, line[2],line[5],line[6],line[7]]
+    string_pat_clks = [str(int) for int in pat_clks]
+    pat_string = ','.join(string_pat_clks)
+    writer.writerow([hclk_position, pat_string])
+    output_row = [line[2],line[5],line[6],line[7]]
+    hclk_position += 1
     output_rows.append(output_row)
 
 with open('households_pii.csv', 'w', newline='', encoding='utf-8') as house_csv:

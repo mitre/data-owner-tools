@@ -14,10 +14,6 @@
   },
   "features": [
     {
-      "identifier": "HOUSEHOLD_ID",
-      "ignored": true
-    },
-    {
       "identifier": "family_name",
       "format": {
         "type": "string",
