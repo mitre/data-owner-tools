@@ -157,17 +157,11 @@ To map the LINK_IDs back to PATIDs, use the `linkidtopatid.py` script. The scrip
 
 The script will create a file called `linkidtopatid.csv` with the mapping of LINK_IDs to PATIDs.
 
-## Notice
-
-Copyright 2020 The MITRE Corporation.
-
-Approved for Public Release; Distribution Unlimited. Case Number 19-2008
-
 # Data Owner Tools Executables
-Fork of https://github.com/mitre/data-owner-tools. All python files should conform to existing command line documentation. Command line and GUI tools should be interoperable. Executables built using pyinstaller version 4.2. Only Windows executables availible in releases.
+GUI versions of the command line tools are availible in the releases section. The GUI tools do not have any dependancies. Command line and GUI tools are interoperable. Executables built using pyinstaller version 4.2. Only Windows executables availible in releases.
 
 ## Basic End User Instructions:
-To use the garble tool, download GarbleExecutable.exe from: https://github.com/Sam-Gresh/data-owner-tools/releases/tag/v0.0.3. Optionally, create an output directory. Run the executable. Select the PII csv file, and the output directory, then click the Garble button. The garbled files will be created in the output directory.
+To use the garble tool, download GarbleExecutable.exe from: https://github.com/Sam-Gresh/data-owner-tools/releases/tag/v0.0.3. Optionally, create an output directory. Run the executable. Select the PII csv file, and the secret file, then click the Garble button. Save the garbled file in your output directory.
 
 ## Change Log
 ### garble.py
@@ -199,3 +193,13 @@ Clone the repository. From the cloned directory run the following commands:
 `pyinstaller Link-IDs-Executable.py --onefile -w`  
 `pyinstaller GarbleExecutable.py  --onefile -w --add-data ./venv/Lib/site-packages/clkhash/data;clkhash/data --add-data ./venv/Lib/site-packages/clkhash/schemas;clkhash/schemas --add-data ./example-schema;example-schema --add-data ./secret-file/secret-file.txt;secret-file`  
 The built executables will appear in /dist.
+
+
+
+## Notice
+
+Copyright 2020 The MITRE Corporation.
+
+Approved for Public Release; Distribution Unlimited. Case Number 19-2008
+
+
