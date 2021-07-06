@@ -35,6 +35,9 @@ with open(secret_file, 'r') as secret_text:
 
 headers = ['HOUSEHOLD_POSITION','PAT_CLK_POSITIONS']
 household_pii_headers = ['family_name','phone_number','household_street_address', 'household_zip']
+household_pos_pid_headers = ['household_position','pid']
+pos_pid_rows = []
+hid_pat_id_rows = []
 pii_lines = []
 output_rows = []
 MATCH_THRESHOLD = 0.7
@@ -145,7 +148,7 @@ def address_distance(a1, a2):
   score = max(score, textdistance.jaro_winkler(a1, a2) * (weight_number + weight_street_name) * 0.6) + (secondary_score * weight_secondary)
   return score
 
-def match_households(already_added, pat_clks, line):
+def match_households(already_added, pat_clks, pat_ids, line):
   for position, line_compare in enumerate(pii_lines):
     if position in already_added:
       continue
@@ -156,6 +159,7 @@ def match_households(already_added, pat_clks, line):
     total_distance = weighted_fn + weighted_zip + weighted_addr + weighted_phone
     if total_distance > MATCH_THRESHOLD:
       pat_clks.append(position)
+      pat_ids.append(line_compare[0])
       already_added.append(position)
 
 with open('output/households/households.csv', 'w', newline='', encoding='utf-8') as csvfile:
@@ -169,11 +173,15 @@ with open('output/households/households.csv', 'w', newline='', encoding='utf-8')
       continue
     already_added.append(position)
     pat_clks = [position]
-    match_households(already_added, pat_clks, line)
+    pat_ids = [line[0]]
+    match_households(already_added, pat_clks, pat_ids, line)
     print(pat_clks)
     string_pat_clks = [str(int) for int in pat_clks]
     pat_string = ','.join(string_pat_clks)
     writer.writerow([hclk_position, pat_string])
+    pos_pid_rows.append([hclk_position,line[0]])
+    for patid in pat_ids:
+      hid_pat_id_rows.append([hclk_position, patid])
     output_row = [line[2],line[5],line[6],line[7]]
     hclk_position += 1
     output_rows.append(output_row)
@@ -182,6 +190,18 @@ with open('households_pii.csv', 'w', newline='', encoding='utf-8') as house_csv:
   writer = csv.writer(house_csv)
   writer.writerow(household_pii_headers)
   for output_row in output_rows:
+    writer.writerow(output_row)
+
+with open('hh_pos_patids.csv', 'w', newline='', encoding='utf-8') as hpos_pat_csv:
+  writer = csv.writer(hpos_pat_csv)
+  writer.writerow(household_pos_pid_headers)
+  for output_row in hid_pat_id_rows:
+    writer.writerow(output_row)
+
+with open('household_pos_pid.csv', 'w', newline='', encoding='utf-8') as house_pos_csv:
+  writer = csv.writer(house_pos_csv)
+  writer.writerow(household_pos_pid_headers)
+  for output_row in pos_pid_rows:
     writer.writerow(output_row)
 
 with open(schema_file, 'r') as schema:

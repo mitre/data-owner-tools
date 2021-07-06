@@ -1,7 +1,7 @@
 {
   "version": 3,
   "clkConfig": {
-    "l": 4096,
+    "l": 1024,
     "k": 30,
     "hash": {
       "type": "blakeHash"
@@ -22,7 +22,7 @@
       },
       "hashing": {
         "strategy": {
-          "bitsPerFeature": 300
+          "bitsPerFeature": 200
         },
         "hash": {
           "type": "blakeHash"
@@ -42,7 +42,7 @@
       },
       "hashing": {
         "strategy": {
-          "bitsPerFeature": 300
+          "bitsPerFeature": 200
         },
         "hash": {
           "type": "blakeHash"
