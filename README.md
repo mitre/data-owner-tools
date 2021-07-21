@@ -192,18 +192,26 @@ Clone the repository. From the cloned directory run the following commands:
 
 Windows:
 
-`python -m venv ./`
-`./venv/Scripts/activate.bat`
+`python -m venv ./venv`
+
+`.\venv\Scripts\activate.bat`
+
 `pip install -r requirements.txt`  
+
 `pyinstaller Link-IDs-Executable.py --onefile -w`  
+
 `pyinstaller GarbleExecutable.py  --onefile -w --add-data ./venv/Lib/site-packages/clkhash/data;clkhash/data --add-data ./venv/Lib/site-packages/clkhash/schemas;clkhash/schemas --add-data ./example-schema;example-schema`
 
 Ubuntu:
 
-`python3 -m venv ./`
+`python3 -m venv ./venv`
+
 `source ./venv/bin/activate`
+
 `pip3 install -r requirements.txt`  
+
 `pyinstaller Link-IDs-Executable.py --onefile -w`  
+
 `pyinstaller GarbleExecutable.py  --onefile -w --add-data ./venv/lib/python3.8/site-packages/clkhash/data:clkhash/data --add-data ./venv/lib/python3.8/site-packages/clkhash/schemas:clkhash/schemas --add-data ./example-schema:example-schema`
 
 The built executables will appear in /dist.
