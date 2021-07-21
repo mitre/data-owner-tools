@@ -188,10 +188,24 @@ To use the garble tool, download GarbleExecutable.exe from: https://github.com/S
 
 ## Build Instructions
 This will automatically target the platform you are running it on (Windows/OSx/Linux).
-Clone the repository. From the cloned directory run the following commands:  
+Clone the repository. From the cloned directory run the following commands:
+
+Windows:
+
+`python -m venv ./`
+`./venv/Scripts/activate.bat`
 `pip install -r requirements.txt`  
 `pyinstaller Link-IDs-Executable.py --onefile -w`  
-`pyinstaller GarbleExecutable.py  --onefile -w --add-data ./venv/Lib/site-packages/clkhash/data;clkhash/data --add-data ./venv/Lib/site-packages/clkhash/schemas;clkhash/schemas --add-data ./example-schema;example-schema`  
+`pyinstaller GarbleExecutable.py  --onefile -w --add-data ./venv/Lib/site-packages/clkhash/data;clkhash/data --add-data ./venv/Lib/site-packages/clkhash/schemas;clkhash/schemas --add-data ./example-schema;example-schema`
+
+Ubuntu:
+
+`python3 -m venv ./`
+`source ./venv/bin/activate`
+`pip3 install -r requirements.txt`  
+`pyinstaller Link-IDs-Executable.py --onefile -w`  
+`pyinstaller GarbleExecutable.py  --onefile -w --add-data ./venv/lib/python3.8/site-packages/clkhash/data:clkhash/data --add-data ./venv/lib/python3.8/site-packages/clkhash/schemas:clkhash/schemas --add-data ./example-schema:example-schema`
+
 The built executables will appear in /dist.
 
 **note about Linux: If the wxpython pip installation fails, you may need to install some extra dependencies listed here: https://wxpython.org/blog/2017-08-17-builds-for-linux-with-pip/index.html
