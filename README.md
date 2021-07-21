@@ -191,7 +191,7 @@ This will automatically target the platform you are running it on (Windows/OSx/L
 Clone the repository. From the cloned directory run the following commands:  
 `pip install -r requirements.txt`  
 `pyinstaller Link-IDs-Executable.py --onefile -w`  
-`# pyinstaller download_FHIR_executable.py  --onefile -w --add-data ./venv/Lib/site-packages/clkhash/data;clkhash/data --add-data ./venv/Lib/site-packages/clkhash/schemas;clkhash/schemas --add-data ./example-schema;example-schema`  
+`pyinstaller download_FHIR_executable.py  --onefile -w --add-data ./venv/Lib/site-packages/clkhash/data;clkhash/data --add-data ./venv/Lib/site-packages/clkhash/schemas;clkhash/schemas --add-data ./example-schema;example-schema`  
 The built executables will appear in /dist.
 
 **note about Linux: If the wxpython pip installation fails, you may need to install some extra dependencies listed here: https://wxpython.org/blog/2017-08-17-builds-for-linux-with-pip/index.html
