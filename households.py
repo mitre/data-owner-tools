@@ -1,10 +1,10 @@
-import os
-import sys
-import subprocess
-from pathlib import Path
 import argparse
-from zipfile import ZipFile
 import csv
+import os
+from pathlib import Path
+import subprocess
+import sys
+from zipfile import ZipFile
 
 from households.matching import match_households
 

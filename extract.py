@@ -1,8 +1,9 @@
-import csv
 import argparse
-import unicodedata
 from collections import Counter
+import csv
 from random import shuffle
+import unicodedata
+
 from sqlalchemy import create_engine, MetaData, Table
 from sqlalchemy.sql import select
 

@@ -1,9 +1,9 @@
-import os
-import sys
-import subprocess
-from zipfile import ZipFile
-from pathlib import Path
 import argparse
+import os
+from pathlib import Path
+import subprocess
+import sys
+from zipfile import ZipFile
 
 parser = argparse.ArgumentParser(
     description="Tool for garbling PII for PPRL purposes in the CODI project"
