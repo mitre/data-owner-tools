@@ -5,3 +5,4 @@ anonlink-client>=0.1.4
 ijson>=3.1.2
 textdistance>=4.2.1
 usaddress>=0.5.10
+pylint>=2.4.2

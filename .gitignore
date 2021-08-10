@@ -1,7 +1,8 @@
 pii.csv
 pii_*.csv
-output
-blocking-output
+output/*
+blocking-output/*
 garbled.zip
 households_pii.csv
 households.csv
+temp-data/*

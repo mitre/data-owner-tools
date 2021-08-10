@@ -114,7 +114,7 @@ with engine.connect() as connection:
 
 shuffle(output_rows)
 
-with open('pii.csv', 'w', newline='', encoding='utf-8') as csvfile:
+with open('temp-data/pii.csv', 'w', newline='', encoding='utf-8') as csvfile:
   writer = csv.writer(csvfile)
   writer.writerow(header)
   for output_row in output_rows:
@@ -129,4 +129,3 @@ for field, counter in report.items():
   for issue, count in counter.items():
     print("{}: {}".format(issue, count))
   print('')
-

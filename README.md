@@ -10,7 +10,7 @@ These tools were created and tested on Python 3.7.4. The tools rely on two libra
 
 SQLAlchemy is a library that allows the tools to connect to a database in a vendor independent fashion. This allows the tools to connect to a database that conforms to the CODI Identity Data Model implented in PostgreSQL or Microsoft SQLServer (and a number of others).
 
-clkhash is a part of the [anonlink](https://github.com/data61/anonlink) suite of tools. It is repsonsible for garbling the PII so that it can be de-identified prior to transmission to the DCC.
+clkhash is a part of the [anonlink](https://github.com/data61/anonlink) suite of tools. It is repsonsible for garbling the PII so that it can be de-identified prior to transmission to the DCC. Note: you may have to specify the latest anonlink docker image when pulling, to ensure you are on the right version as registry may have old version (tested on v1.14)
 
 ### Installing with an existing Python install
 
@@ -39,11 +39,11 @@ N.B. If the install fails during install of psycopg2 due to a clang error, you m
 
 ## Overall Process
 
-![Data Flow Diagram](data-flow.png)
+![Data Flow Diagram](img/data-flow.png)
 
 ## Extract PII
 
-The CODI PPRL process depends on information pulled from a database structured to match the CODI Data Model. `extract.py` connects to a database and extracts information, cleaning and validating it to prepare it for the PPRL process. The script will output a `pii.csv` file that contains the PII ready for garbling.
+The CODI PPRL process depends on information pulled from a database structured to match the CODI Data Model. `extract.py` connects to a database and extracts information, cleaning and validating it to prepare it for the PPRL process. The script will output a `temp-data/pii.csv` file that contains the PII ready for garbling.
 
 `extract.py` requires a database connection string to connect. Consult the [SQLAlchemy documentation](https://docs.sqlalchemy.org/en/13/core/engines.html#database-urls) to determine the exact string for the database in use.
 
@@ -105,7 +105,7 @@ clkhash will garble personally identifiable information (PII) in a way that it c
 
 `garble.py` requires 3 different inputs:
 1. The location of a directory of clkhash linkage schema files
-1. The salt value to use in the garbling process
+1. The location of a secret file to use in the garbling process (you have to generate this file yourself creating a secret with 128 bit length)
 1. The location of a CSV file containing the PII to garble
 
 `garble.py` requires that the location of the PII and schema files are provided via command line flags. The salt value are collected while the application is running, to avoid them being captured in command line execution history.
@@ -129,7 +129,7 @@ optional arguments:
   -h, --help       show this help message and exit
 ```
 
-`garble.py` will package up the garbled PII files into a [zip file](https://en.wikipedia.org/wiki/Zip_(file_format)) called `garbled.zip`.
+`garble.py` will package up the garbled PII files into a [zip file](https://en.wikipedia.org/wiki/Zip_(file_format)) called `garbled.zip` and place it in the `output/` folder.
 
 Example execution of `garble.py` is shown below:
 
@@ -145,17 +145,28 @@ CLK data written to output/name-sex-dob-parents.json
 generating CLKs:  21%|▏| 52.0/252 [00:00<00:00, 423clk/s, mean=1.17e+3, std=23.7generating CLKs: 100%|███| 252/252 [00:00<00:00, 532clk/s, mean=1.17e+3, std=34]
 CLK data written to output/name-sex-dob-addr.json
 ```
+### [Optional] Household Extract and Garble
+
+You may now run `households.py` with the same arguments as the `garble.py` script, with the only difference being specifying a specific schema file instead of a schema directory (use `-h` flag for more information).
+
+The households script will do the following:
+  1. Attempt to group individuals into households and store those records in a csv file in temp-date
+  2. Create a mapping file to be sent to the linkage agent, along with a zip file of household specific garbled information.
+
+This information must be provided to the linkage agent if you would like to get a household linkages table as well.
 
 ## Mapping LINK_IDs to PATIDs
 
 When anonlink matches across data owners / partners, it identifies records by their position in the file. It essentially uses the line number in the extracted PII file as the identifier for the record. When results are returned from the DCC, it will assign a LINK_ID to a line number in the PII CSV file.
 
-To map the LINK_IDs back to PATIDs, use the `linkidtopatid.py` script. The script takes two arguments:
+To map the LINK_IDs back to PATIDs, use the `linkid_to_patid.py` script. The script takes two arguments:
 
 1. The path to the PII CSV file
-1. THe path to the LINK_ID CSV file provided by the DCC
+1. The path to the LINK_ID CSV file provided by the DCC
+1. [Optional] The path to the `temp-data/*_hid_mapping.csv` file created by the `testing-and-tuning/answer_key_map.py` script (this should only be used if running with household linkage and testing against an answer key / ground truth)
+1. [Optional] The path to the HOUSEHOLD_LINK_ID CSV file provided by the DCC if you provided household information
 
-The script will create a file called `linkidtopatid.csv` with the mapping of LINK_IDs to PATIDs.
+The script will create a file called `linkid_to_patid.csv` with the mapping of LINK_IDs to PATIDs in the `output/` folder. If you are testing and running household linkage this will also create a `linkid_to_hid.csv` file in the `output/` folder.
 
 ## Notice
 

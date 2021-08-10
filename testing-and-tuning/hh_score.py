@@ -5,9 +5,9 @@ from itertools import combinations
 true_positives = 0
 false_positives = 0
 
-hid_csv_path = Path("hh_pos_patids.csv")
-key_csv_path = Path("site_f-key.csv")
-map_csv_path = Path("site_f-hid-mapping.csv")
+hid_csv_path = Path("../temp-data/hh_pos_patids.csv")
+key_csv_path = Path("../temp-data/site_f_key.csv")
+map_csv_path = Path("../temp-data/site_f_hid_mapping.csv")
 
 answer_key_dict = {}
 mapping_dict = {}
@@ -46,4 +46,4 @@ for hpos, pid in hpos_pid_dict.items():
 precision = true_positives / (true_positives + false_positives)
 recall = true_positives / household_answer_count
 fscore = 2 * ((precision * recall) / (precision + recall))
-print("Data owner linkage scoring:\nPrecision: {} Recall: {} F-Score: {}".format(precision, recall, fscore))
+print("Data owner household linkage scoring:\nPrecision: {} Recall: {} F-Score: {}".format(precision, recall, fscore))

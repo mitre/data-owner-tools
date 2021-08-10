@@ -5,7 +5,7 @@ from zipfile import ZipFile
 from pathlib import Path
 import argparse
 
-parser = argparse.ArgumentParser(description='Tool for garbling PII in for PPRL purposes in the CODI project')
+parser = argparse.ArgumentParser(description='Tool for garbling PII for PPRL purposes in the CODI project')
 parser.add_argument('--schema', nargs=1, required=True, help='Path to blocking schema')
 args = parser.parse_args()
 
@@ -29,6 +29,6 @@ for clk in clk_files:
   subprocess.run(["anonlink", "block", str(clk_path), str(schema_file), str(output_file)])
   blocked_files.append(output_file)
 
-with ZipFile('garbled-blocked.zip', 'w') as garbled_zip:
+with ZipFile('garbled_blocked.zip', 'w') as garbled_zip:
   for blocked_file in blocked_files:
     garbled_zip.write(blocked_file)

@@ -1,3 +1,6 @@
+# Creates an answer key for all data owners specified
+# to be consumed by the scoring and evaluation tools for tuning
+
 import csv
 from pathlib import Path
 
@@ -6,16 +9,16 @@ systems = ["site_a", "site_b", "site_c", "site_d", "site_e", "site_f"]
 # output is clk_pos | h_id
 header = ['HOUSEHOLD_POSITION','HOUSEHOLD_ID']
 household_dict = {}
-full_answer_key_path = Path('/Users/apellitieri/Desktop/CDC/CODI/data-owner-tools/full_answer_key.csv')
+full_answer_key_path = Path('../temp-data/full_answer_key.csv')
 
 for s in systems:
   hid_line_map = []
   pos_pid_map = []
   output_lines = []
   hid_dict = {}
-  key_path = Path('/Users/apellitieri/Desktop/CDC/CODI/data-owner-tools') / "{}-key.csv".format(s)
-  pos_pid_path = Path('/Users/apellitieri/Desktop/CDC/CODI/data-owner-tools') / "{}_household_pos_pid.csv".format(s)
-  hid_out_path = Path('/Users/apellitieri/Desktop/CDC/CODI/data-owner-tools') / "{}-hid-mapping.csv".format(s)
+  key_path = Path('../temp-data') / "{}_key.csv".format(s)
+  pos_pid_path = Path('../temp-data') / "{}_household_pos_pid.csv".format(s)
+  hid_out_path = Path('../temp-data') / "{}_hid_mapping.csv".format(s)
 
   with open(key_path) as key_csv:
     key_reader = csv.reader(key_csv)

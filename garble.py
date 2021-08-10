@@ -1,7 +1,6 @@
 import os
 import sys
 import subprocess
-import getpass
 from zipfile import ZipFile
 from pathlib import Path
 import argparse
@@ -13,18 +12,16 @@ parser.add_argument('--secretfile', nargs=1, required=True, help='Location of de
 args = parser.parse_args()
 
 schema_dir = Path(args.schema[0])
-
-if not schema_dir.exists():
-  sys.exit('Unable to find directory: ' + str(schema_dir))
-
-schema = filter(lambda f: f.endswith('.json'), os.listdir(schema_dir))
-
 source_file = args.source[0]
 secret = None
 secret_file = Path(args.secretfile[0])
 
+if not schema_dir.exists():
+  sys.exit('Unable to find directory: ' + str(schema_dir))
 if not secret_file.exists():
   sys.exit('Unable to find secret file' + str(secret_file))
+if not os.path.exists('output'):
+  os.mkdir('output')
 
 with open(secret_file, 'r') as secret_text:
   secret = secret_text.read()
@@ -32,9 +29,7 @@ with open(secret_file, 'r') as secret_text:
     sys.exit('Secret length not long enough to ensure proper de-identification')
 
 clk_files = []
-
-if not os.path.exists('output'):
-  os.mkdir('output')
+schema = filter(lambda f: f.endswith('.json'), os.listdir(schema_dir))
 
 for s in schema:
   schema_path = schema_dir.joinpath(s)
@@ -46,6 +41,6 @@ for s in schema:
   subprocess.run(["anonlink", "hash", source_file, secret, str(schema_path), str(output_file)])
   clk_files.append(output_file)
 
-with ZipFile('garbled.zip', 'w') as garbled_zip:
+with ZipFile('output/garbled.zip', 'w') as garbled_zip:
   for clk_file in clk_files:
     garbled_zip.write(clk_file)
