@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import csv
 from itertools import combinations
 from pathlib import Path

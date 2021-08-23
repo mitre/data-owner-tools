@@ -26,9 +26,9 @@ rm -r $INBOX_PATH/*
 
 for site in ${DATA_OWNER_NAMES[@]}; do
   echo "Running garble.py for ${site}"
-  python garble.py --source temp-data/pii_${site}.csv --schema example-schema/ --secretfile $SECRET_FILE
+  python garble.py temp-data/pii_${site}.csv example-schema/ $SECRET_FILE
   mv output/garbled.zip $INBOX_PATH/${site}.zip
-  python block.py --schema $SCHEMA_FILE
+  python block.py $SCHEMA_FILE output/
   mv output/garbled_blocked.zip $INBOX_PATH/${site}_block.zip
 done
 

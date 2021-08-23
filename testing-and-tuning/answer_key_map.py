@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 # Creates an answer key for all data owners specified
 # to be consumed by the scoring and evaluation tools for tuning
 

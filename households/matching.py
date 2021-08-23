@@ -2,6 +2,10 @@ import textdistance
 import usaddress
 
 MATCH_THRESHOLD = 0.7
+FN_WEIGHT = 0.2
+PHONE_WEIGHT = 0.2
+ADDR_WEIGHT = 0.3
+ZIP_WEIGHT = 0.3
 
 
 def addr_parse(addr):
@@ -212,11 +216,11 @@ def match_households(already_added, pat_clks, pat_ids, line, pii_lines):
     for position, line_compare in enumerate(pii_lines):
         if position in already_added:
             continue
-        weighted_fn = textdistance.jaro_winkler(line[2], line_compare[2]) * 0.2
-        weighted_phone = textdistance.jaro_winkler(line[5], line_compare[5]) * 0.2
-        weighted_addr = address_distance(line[6], line_compare[6]) * 0.3
+        weighted_fn = textdistance.jaro_winkler(line[2], line_compare[2]) * FN_WEIGHT
+        weighted_phone = textdistance.jaro_winkler(line[5], line_compare[5]) * PHONE_WEIGHT
+        weighted_addr = address_distance(line[6], line_compare[6]) * ADDR_WEIGHT
         weighted_zip = (
-            textdistance.hamming.normalized_similarity(line[7], line_compare[7]) * 0.3
+            textdistance.hamming.normalized_similarity(line[7], line_compare[7]) * ZIP_WEIGHT
         )
         total_distance = weighted_fn + weighted_zip + weighted_addr + weighted_phone
         if total_distance > MATCH_THRESHOLD:
