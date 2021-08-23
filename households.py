@@ -93,7 +93,7 @@ def write_mapping_file(pos_pid_rows, hid_pat_id_rows, args):
         already_added = []
         hclk_position = 0
         # Match households
-        for position, line in tqdm(enumerate(pii_lines), desc="Grouping individuals into households"):
+        for position, line in enumerate(tqdm(pii_lines, desc="Grouping individuals into households")):
             if position in already_added:
                 continue
             already_added.append(position)
