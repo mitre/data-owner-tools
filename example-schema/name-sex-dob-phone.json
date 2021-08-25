@@ -1,5 +1,5 @@
 {
-  "version": 2,
+  "version": 3,
   "clkConfig": {
     "l": 4096,
     "k": 30,
@@ -19,66 +19,114 @@
     },
     {
       "identifier": "given_name",
-      "format": { "type": "string", "encoding": "utf-8", "case": "mixed"},
+      "format": {
+        "type": "string",
+        "encoding": "utf-8",
+        "case": "mixed"
+      },
       "hashing": {
-        "ngram": 2,
         "strategy": {
-            "numBits": 300
+          "bitsPerFeature": 300
         },
-        "hash": {"type": "blakeHash"}
+        "hash": {
+          "type": "blakeHash"
+        },
+        "comparison": {
+          "type": "ngram",
+          "n": 2,
+          "positional": false
+        }
       }
     },
     {
       "identifier": "family_name",
-      "format": { "type": "string", "encoding": "utf-8", "case": "mixed"},
+      "format": {
+        "type": "string",
+        "encoding": "utf-8",
+        "case": "mixed"
+      },
       "hashing": {
-      "ngram": 2,
         "strategy": {
-            "numBits": 300
+          "bitsPerFeature": 300
         },
-        "hash": {"type": "blakeHash"}
+        "hash": {
+          "type": "blakeHash"
+        },
+        "comparison": {
+          "type": "ngram",
+          "n": 2,
+          "positional": false
+        }
       }
     },
     {
       "identifier": "DOB",
-      "format": { "type": "string", "encoding": "utf-8"},
+      "format": {
+        "type": "string",
+        "encoding": "utf-8"
+      },
       "hashing": {
-        "ngram": 2,
         "strategy": {
-          "numBits": 300
+          "bitsPerFeature": 300
         },
         "missingValue": {
           "sentinel": ""
         },
-        "hash": {"type": "blakeHash"}
+        "hash": {
+          "type": "blakeHash"
+        },
+        "comparison": {
+          "type": "ngram",
+          "n": 2,
+          "positional": false
+        }
       }
     },
     {
       "identifier": "sex",
       "format": {
         "type": "enum",
-        "values": ["M", "F", "UN"]
+        "values": [
+          "M",
+          "F",
+          "UN"
+        ]
       },
       "hashing": {
-        "ngram": 1,
         "strategy": {
-          "numBits": 200
+          "bitsPerFeature": 200
         },
         "missingValue": {
           "sentinel": ""
         },
-        "hash": {"type": "blakeHash"}
+        "hash": {
+          "type": "blakeHash"
+        },
+        "comparison": {
+          "type": "ngram",
+          "n": 1,
+          "positional": false
+        }
       }
     },
     {
       "identifier": "phone_number",
-      "format": { "type": "string", "encoding": "utf-8"},
+      "format": {
+        "type": "string",
+        "encoding": "utf-8"
+      },
       "hashing": {
-        "ngram": 2,
         "strategy": {
-            "numBits": 300
+          "bitsPerFeature": 300
         },
-        "hash": {"type": "blakeHash"}
+        "hash": {
+          "type": "blakeHash"
+        },
+        "comparison": {
+          "type": "ngram",
+          "n": 2,
+          "positional": false
+        }
       }
     },
     {
