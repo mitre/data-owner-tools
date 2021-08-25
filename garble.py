@@ -70,7 +70,7 @@ def create_clk_zip(clk_files, args):
     with ZipFile(os.path.join(args.outputdir, args.outputzip), "w") as garbled_zip:
         for clk_file in clk_files:
             garbled_zip.write(clk_file)
-    print("Zip file created at: " + args.outputdir + args.outputzip)
+    print("Zip file created at: " + args.outputdir + '/' + args.outputzip)
 
 
 def main():
