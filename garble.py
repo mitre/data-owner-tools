@@ -17,8 +17,8 @@ def parse_arguments():
     parser.add_argument("schemadir", help="Directory of linkage schema")
     parser.add_argument("secretfile", help="Location of de-identification secret file")
     parser.add_argument(
-        '-z', '--outputzip', dest='outputzip', default="output/garbled.zip",
-         help="Specify an output .zip file. Default is output/garbled.zip"
+        '-z', '--outputzip', dest='outputzip', default="garbled.zip",
+         help="Specify an name for the .zip file. Default is garbled.zip"
     )
     parser.add_argument(
         '-o', '--outputdir', dest='outputdir', default="output",
@@ -67,10 +67,10 @@ def garble_pii(args):
 
 
 def create_clk_zip(clk_files, args):
-    with ZipFile(args.outputzip, "w") as garbled_zip:
+    with ZipFile(os.path.join(args.outputdir, args.outputzip), "w") as garbled_zip:
         for clk_file in clk_files:
             garbled_zip.write(clk_file)
-    print("Zip file created at: " + args.outputzip)
+    print("Zip file created at: " + args.outputdir + args.outputzip)
 
 
 def main():

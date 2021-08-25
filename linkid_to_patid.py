@@ -23,7 +23,7 @@ def parse_arguments():
         help="Household LINK_ID CSV file from linkage agent",
     )
     parser.add_argument(
-        '-o', '--output', dest='outputdir', default="output",
+        '-o', '--outputdir', dest='outputdir', default="output",
          help="Specify an output file for links. Default is 'output' directory"
     )
     args = parser.parse_args()
