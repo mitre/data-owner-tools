@@ -1,0 +1,99 @@
+{
+  "version": 3,
+  "clkConfig": {
+    "l": 1024,
+    "k": 30,
+    "hash": {
+      "type": "blakeHash"
+    },
+    "kdf": {
+      "type": "HKDF",
+      "hash": "SHA256",
+      "keySize": 64
+    }
+  },
+  "features": [
+    {
+      "identifier": "family_name",
+      "format": {
+        "type": "string",
+        "encoding": "utf-8",
+        "case": "mixed"
+      },
+      "hashing": {
+        "strategy": {
+          "bitsPerFeature": 200
+        },
+        "hash": {
+          "type": "blakeHash"
+        },
+        "comparison": {
+          "type": "ngram",
+          "n": 2,
+          "positional": false
+        }
+      }
+    },
+    {
+      "identifier": "phone_number",
+      "format": {
+        "type": "string",
+        "encoding": "utf-8"
+      },
+      "hashing": {
+        "strategy": {
+          "bitsPerFeature": 200
+        },
+        "hash": {
+          "type": "blakeHash"
+        },
+        "comparison": {
+          "type": "ngram",
+          "n": 2,
+          "positional": false
+        }
+      }
+    },
+    {
+      "identifier": "household_street_address",
+      "format": {
+        "type": "string",
+        "encoding": "utf-8",
+        "case": "mixed"
+      },
+      "hashing": {
+        "strategy": {
+          "bitsPerFeature": 300
+        },
+        "hash": {
+          "type": "blakeHash"
+        },
+        "comparison": {
+          "type": "ngram",
+          "n": 2,
+          "positional": false
+        }
+      }
+    },
+    {
+      "identifier": "household_zip",
+      "format": {
+        "type": "string",
+        "encoding": "utf-8"
+      },
+      "hashing": {
+        "strategy": {
+          "bitsPerFeature": 300
+        },
+        "hash": {
+          "type": "blakeHash"
+        },
+        "comparison": {
+          "type": "ngram",
+          "n": 2,
+          "positional": false
+        }
+      }
+    }
+  ]
+}
