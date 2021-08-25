@@ -19,6 +19,7 @@ household_answer_count = 0
 
 with open(key_csv_path) as key_csv:
     key_reader = csv.reader(key_csv)
+    # Skips header
     next(key_reader)
     for row in key_reader:
         household_answer_count += 1
@@ -26,12 +27,14 @@ with open(key_csv_path) as key_csv:
 
 with open(hid_csv_path) as hid_csv:
     hid_reader = csv.reader(hid_csv)
+    # Skips header
     next(hid_reader)
     for row in hid_reader:
         hpos_pid_dict[row[0]] = row[1]
 
 with open(map_csv_path) as map_csv:
     map_reader = csv.reader(map_csv)
+    # Skips header
     next(map_reader)
     for row in map_reader:
         mapping_dict[row[0]] = row[1]

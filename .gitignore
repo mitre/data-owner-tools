@@ -128,6 +128,9 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
+# DS_Store files
+**/.DS_Store
+
 # Temporary data for runs
 temp-data/*
 pii.csv
@@ -137,4 +140,3 @@ blocking-output/*
 garbled.zip
 households_pii.csv
 households.csv
-temp-data/*

@@ -116,7 +116,11 @@ clkhash will garble personally identifiable information (PII) in a way that it c
 `garble.py` requires 3 different inputs:
 1. The location of a CSV file containing the PII to garble
 1. The location of a directory of clkhash linkage schema files
-1. The location of a secret file to use in the garbling process (you have to generate this file yourself - if you are not sure how, you may find the `testing-and-tuning/generate_secret.py` script useful)
+1. The location of a secret file to use in the garbling process - this should be a text file containing a single hexadecimal string of at least 128 characters; the `testing-and-tuning/generate_secret.py` script will create this for you if require it, e.g.:
+```
+python testing-and-tuning/generate_secret.py
+```
+This should create a new file called deidentification_secret.txt in your root directory.
 
 `garble.py` requires that the location of the PII file, schema directory, and secret file are provided via positional arguments.
 
@@ -166,7 +170,7 @@ This information must be provided to the linkage agent if you would like to get 
 Example run:
 ```
 $ python households.py temp-data/pii.csv ../deidentification_secret.txt
-Grouping individuals into households: 819it [01:04, 12.77it/s]
+Grouping individuals into households: 100%|███████████████████████| 819/819 [01:12<00:00, 11.37it/s]
 CLK data written to output/households/fn-phone-addr-zip.json
 Zip file created at: output/garbled_households.zip
 ```
@@ -220,6 +224,10 @@ To map the LINK_IDs back to PATIDs, use the `linkid_to_patid.py` script. The scr
 1. [Optional] The path to the HOUSEHOLD_LINK_ID CSV file provided by the DCC if you provided household information
 
 The script will create a file called `linkid_to_patid.csv` with the mapping of LINK_IDs to PATIDs in the `output/` folder by default. If you are testing and running household linkage this will also create a `linkid_to_hid.csv` file in the `output/` folder.
+
+## Cleanup
+
+In between runs it is advisable to run `rm temp-data/*` to clean up temporary data files used for individuals runs.
 
 ## Developer Testing
 

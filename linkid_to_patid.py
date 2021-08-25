@@ -22,6 +22,10 @@ def parse_arguments():
         "--hhlinks",
         help="Household LINK_ID CSV file from linkage agent",
     )
+    parser.add_argument(
+        '-o', '--output', dest='outputdir', default="output",
+         help="Specify an output file for links. Default is 'output' directory"
+    )
     args = parser.parse_args()
     return args
 
@@ -37,14 +41,16 @@ def parse_source_file(source_file):
 def write_patid_links(args):
     links_file = Path(args.linksfile)
     pii_lines = parse_source_file(args.sourcefile)
-    with open("output/linkid_to_patid.csv", "w", newline="", encoding="utf-8") as csvfile:
+    with open(os.path.join(args.outputdir, "linkid_to_patid.csv"), "w", newline="", encoding="utf-8") as csvfile:
         writer = csv.writer(csvfile)
         writer.writerow(HEADERS)
         with open(links_file) as links:
             links_reader = csv.reader(links)
+            # Skipping header
             next(links_reader)
             for row in links_reader:
                 link_id = row[0]
+                # The +1 accounts for the header row in spreadsheet index
                 patid = pii_lines[int(row[1]) + 1][0]
                 writer.writerow([link_id, patid])
 
@@ -52,14 +58,16 @@ def write_patid_links(args):
 def write_hh_links(args):
     hh_links_file = Path(args.hhlinks)
     hid_map = parse_source_file(args.hhsource)
-    with open("output/linkid_to_hid.csv", "w", newline="", encoding="utf-8") as csvfile:
+    with open(os.path.join(args.outputdir, "linkid_to_hid.csv"), "w", newline="", encoding="utf-8") as csvfile:
         writer = csv.writer(csvfile)
         writer.writerow(HH_HEADERS)
         with open(hh_links_file) as links:
             links_reader = csv.reader(links)
+            # Skipping header
             next(links_reader)
             for row in links_reader:
                 link_id = row[0]
+                # The +1 accounts for the header row in spreadsheet index
                 hid = hid_map[int(row[1]) + 1][1]
                 writer.writerow([link_id, hid])
 

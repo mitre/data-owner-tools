@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # Set argv[1] to the path of the blocking schema
 # and argv[2] to inbox path

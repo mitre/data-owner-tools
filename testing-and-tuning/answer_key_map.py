@@ -24,6 +24,7 @@ for s in systems:
 
     with open(key_path) as key_csv:
         key_reader = csv.reader(key_csv)
+        # Skips header
         next(key_reader)
         hid_line_map = list(key_reader)
         for line in hid_line_map:
@@ -35,6 +36,7 @@ for s in systems:
 
     with open(pos_pid_path) as pos_pid_csv:
         pos_pid_reader = csv.reader(pos_pid_csv)
+        # Skips header
         next(pos_pid_reader)
         pos_pid_map = list(pos_pid_reader)
 

@@ -17,8 +17,12 @@ def parse_arguments():
     parser.add_argument("schemadir", help="Directory of linkage schema")
     parser.add_argument("secretfile", help="Location of de-identification secret file")
     parser.add_argument(
-        '-o', '--output', dest='outputfile', default="output/garbled.zip",
-         help="Specify an output file. Default is output/garbled.zip"
+        '-z', '--outputzip', dest='outputzip', default="output/garbled.zip",
+         help="Specify an output .zip file. Default is output/garbled.zip"
+    )
+    parser.add_argument(
+        '-o', '--outputdir', dest='outputdir', default="output",
+         help="Specify an output directory. Default is output/"
     )
     args = parser.parse_args()
     if not Path(args.schemadir).exists():
@@ -53,7 +57,7 @@ def garble_pii(args):
                     "The following schema uses doubleHash, which is insecure: "
                     + str(s)
                 )
-        output_file = Path("output", s.split('/')[-1])
+        output_file = Path(args.outputdir, s.split('/')[-1])
         completed_process = subprocess.run(
             ["anonlink", "hash", source_file, secret, str(s), str(output_file)],
             check=True
@@ -63,10 +67,10 @@ def garble_pii(args):
 
 
 def create_clk_zip(clk_files, args):
-    with ZipFile(args.outputfile, "w") as garbled_zip:
+    with ZipFile(args.outputzip, "w") as garbled_zip:
         for clk_file in clk_files:
             garbled_zip.write(clk_file)
-    print("Zip file created at: " + args.outputfile)
+    print("Zip file created at: " + args.outputzip)
 
 
 def main():

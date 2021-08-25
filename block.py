@@ -18,8 +18,8 @@ def parse_arguments():
         help="Path to blocking schema. Default: example-schema/blocking-schema/lambda.json"
     )
     parser.add_argument(
-        '--clkpath', default="output/",
-         help="Specify a folder containing clks. Default is output/"
+        '--clkpath', default="output",
+         help="Specify a folder containing clks. Default is 'output' folder"
     )
     args = parser.parse_args()
     if not Path(args.schemafile).exists():
@@ -31,7 +31,7 @@ def block_individuals(args):
     os.makedirs('temp-data', exist_ok=True)
     os.makedirs('output', exist_ok=True)
     schema_file = Path(args.schemafile)
-    clk_files = glob.glob(args.clkpath + "/*.json")
+    clk_files = glob.glob(os.path.join(args.clkpath, "*.json"))
     blocked_files = []
     for clk in clk_files:
         clk_path = Path(clk)
