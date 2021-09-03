@@ -7,7 +7,7 @@ from pathlib import Path
 import subprocess
 import sys
 from zipfile import ZipFile
-
+from anonlinkclient import cli
 
 def parse_arguments():
     parser = argparse.ArgumentParser(
@@ -48,7 +48,7 @@ def garble_pii(args):
     os.makedirs('output', exist_ok=True)
     secret = validate_secret_file(secret_file)
     clk_files = []
-    schema = glob.glob(args.schemadir + "/*.json")
+    schema = glob.glob(str(schema_dir) + "/*.json")
     for s in schema:
         with open(s, "r") as schema_file:
             file_contents = schema_file.read()
@@ -57,11 +57,13 @@ def garble_pii(args):
                     "The following schema uses doubleHash, which is insecure: "
                     + str(s)
                 )
-        output_file = Path(args.outputdir, s.split('/')[-1])
-        completed_process = subprocess.run(
-            ["anonlink", "hash", source_file, secret, str(s), str(output_file)],
-            check=True
-        )
+        _, file_name = os.path.split(s)
+        output_file = Path(args.outputdir, file_name)
+        try:
+            completed_process = cli.hash([source_file, secret, str(s), str(output_file)])
+        except SystemExit as e:
+            if e.code != 0:
+                raise
         clk_files.append(output_file)
     return clk_files
 
@@ -70,7 +72,7 @@ def create_clk_zip(clk_files, args):
     with ZipFile(os.path.join(args.outputdir, args.outputzip), "w") as garbled_zip:
         for clk_file in clk_files:
             garbled_zip.write(clk_file)
-    print("Zip file created at: " + args.outputdir + '/' + args.outputzip)
+    print("Zip file created at: " + str(Path(args.outputdir, args.outputzip)))
 
 
 def main():

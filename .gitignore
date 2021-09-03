@@ -1,3 +1,19 @@
+pii.csv
+output
+garbled.zip
+links.csv
+linkidtopatid.csv
+/commit.bat
+.idea
+/secret-file
+download_fhir.py
+download_FHIR_executable.py
+azure_token.py
+generic_oauth_token.py
+config.json
+fhir_pii.csv
+all_patients.csv
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
