@@ -71,7 +71,7 @@ def garble_pii(args):
 def create_clk_zip(clk_files, args):
     with ZipFile(os.path.join(args.outputdir, args.outputzip), "w") as garbled_zip:
         for clk_file in clk_files:
-            garbled_zip.write(clk_file)
+            garbled_zip.write(clk_file, arcname="output/" + os.path.basename(clk_file))
     print("Zip file created at: " + str(Path(args.outputdir, args.outputzip)))
 
 

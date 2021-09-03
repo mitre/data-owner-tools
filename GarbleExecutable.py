@@ -33,7 +33,7 @@ class GarbleWindow(wx.Frame):
         panel = wx.Panel(self)
 
         hbox = wx.BoxSizer()
-        sizer = wx.FlexGridSizer(5, 2, 2, 250)
+        sizer = wx.FlexGridSizer(5, 2, 2, 400)
 
 
         self.pii_path_text = wx.StaticText(panel, label="Select PII CSV file:")
@@ -62,7 +62,7 @@ class GarbleWindow(wx.Frame):
 
 
 
-        self.SetSize((500, 150))
+        self.SetSize((700, 150))
         self.SetTitle('Garble Tool')
         self.Centre()
 
@@ -102,7 +102,7 @@ class GarbleWindow(wx.Frame):
             args = SimpleNamespace(**args)
             clks = garble.garble_pii(args)
             garble.create_clk_zip(clks, args)
-            self.garble_text.SetLabel("Zip file created at: " + args.outputdir + '/' + args.outputzip)
+            self.garble_text.SetLabel("Zip file created at: " + str(Path(args.outputdir, args.outputzip)))
 
 def main():
     app = wx.App()
