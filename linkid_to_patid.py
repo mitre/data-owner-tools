@@ -3,6 +3,7 @@
 import argparse
 import csv
 from pathlib import Path
+import os
 
 HEADERS = ["LINK_ID", "PATID"]
 HH_HEADERS = ["LINK_ID", "HH_ID"]
