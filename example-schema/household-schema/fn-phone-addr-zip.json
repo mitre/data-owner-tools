@@ -1,7 +1,7 @@
 {
   "version": 3,
   "clkConfig": {
-    "l": 4096,
+    "l": 1024,
     "k": 30,
     "hash": {
       "type": "blakeHash"
@@ -14,31 +14,6 @@
   },
   "features": [
     {
-      "identifier": "record_id",
-      "ignored": true
-    },
-    {
-      "identifier": "given_name",
-      "format": {
-        "type": "string",
-        "encoding": "utf-8",
-        "case": "mixed"
-      },
-      "hashing": {
-        "strategy": {
-          "bitsPerFeature": 300
-        },
-        "hash": {
-          "type": "blakeHash"
-        },
-        "comparison": {
-          "type": "ngram",
-          "n": 2,
-          "positional": false
-        }
-      }
-    },
-    {
       "identifier": "family_name",
       "format": {
         "type": "string",
@@ -47,71 +22,37 @@
       },
       "hashing": {
         "strategy": {
-          "bitsPerFeature": 300
-        },
-        "hash": {
-          "type": "blakeHash"
-        },
-        "comparison": {
-          "type": "ngram",
-          "n": 2,
-          "positional": false
-        }
-      }
-    },
-    {
-      "identifier": "DOB",
-      "format": {
-        "type": "string",
-        "encoding": "utf-8"
-      },
-      "hashing": {
-        "strategy": {
-          "bitsPerFeature": 300
-        },
-        "missingValue": {
-          "sentinel": ""
-        },
-        "hash": {
-          "type": "blakeHash"
-        },
-        "comparison": {
-          "type": "ngram",
-          "n": 2,
-          "positional": false
-        }
-      }
-    },
-    {
-      "identifier": "sex",
-      "format": {
-        "type": "enum",
-        "values": [
-          "M",
-          "F",
-          "UN"
-        ]
-      },
-      "hashing": {
-        "strategy": {
           "bitsPerFeature": 200
         },
-        "missingValue": {
-          "sentinel": ""
-        },
         "hash": {
           "type": "blakeHash"
         },
         "comparison": {
           "type": "ngram",
-          "n": 1,
+          "n": 2,
           "positional": false
         }
       }
     },
     {
       "identifier": "phone_number",
-      "ignored": true
+      "format": {
+        "type": "string",
+        "encoding": "utf-8"
+      },
+      "hashing": {
+        "strategy": {
+          "bitsPerFeature": 200
+        },
+        "hash": {
+          "type": "blakeHash"
+        },
+        "comparison": {
+          "type": "ngram",
+          "n": 2,
+          "positional": false
+        }
+      }
     },
     {
       "identifier": "household_street_address",
@@ -136,19 +77,23 @@
     },
     {
       "identifier": "household_zip",
-      "ignored": true
-    },
-    {
-      "identifier": "parent_given_name",
-      "ignored": true
-    },
-    {
-      "identifier": "parent_family_name",
-      "ignored": true
-    },
-    {
-      "identifier": "parent_email",
-      "ignored": true
+      "format": {
+        "type": "string",
+        "encoding": "utf-8"
+      },
+      "hashing": {
+        "strategy": {
+          "bitsPerFeature": 300
+        },
+        "hash": {
+          "type": "blakeHash"
+        },
+        "comparison": {
+          "type": "ngram",
+          "n": 2,
+          "positional": false
+        }
+      }
     }
   ]
 }
