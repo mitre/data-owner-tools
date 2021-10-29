@@ -8,9 +8,10 @@ import subprocess
 import sys
 from zipfile import ZipFile
 
-from tqdm import tqdm
+import pandas as pd
+import recordlinkage
 
-from households.matching import match_households
+from tqdm import tqdm
 
 HEADERS = ["HOUSEHOLD_POSITION", "PAT_CLK_POSITIONS"]
 HOUSEHOLD_PII_HEADERS = [
@@ -64,11 +65,21 @@ def validate_secret_file(secret_file):
 
 
 def parse_source_file(source_file):
-    with open(source_file) as source:
-        source_reader = csv.reader(source)
-        next(source_reader)
-        pii_lines = list(source_reader)
-        return pii_lines
+    all_strings = {
+        'record_id': 'str',
+        'given_name': 'str',
+        'family_name': 'str',
+        'DOB': 'str',
+        'sex': 'str',
+        'phone_number': 'str',
+        'household_street_address': 'str',
+        'household_zip': 'str',
+        'parent_given_name': 'str',
+        'parent_family_name': 'str',
+        'parent_email': 'str'
+    }
+    # force all columns to be strings, even if they look numeric
+    return pd.read_csv(source_file, dtype=all_strings)
 
 
 def write_households_pii(output_rows):
@@ -81,6 +92,26 @@ def write_households_pii(output_rows):
             writer.writerow(output_row)
 
 
+def bfs_traverse_matches(pos_to_pairs, position):
+    queue = [position]
+    visited = [position]
+
+    while queue:
+        curr = queue.pop(0)
+        pairs = pos_to_pairs[curr]
+
+        for p in pairs:
+            if p[0] not in visited:
+                visited.append(p[0])
+                queue.append(p[0])
+            if p[1] not in visited:
+                visited.append(p[1])
+                queue.append(p[1])
+
+    visited.sort()
+    return visited
+
+
 def write_mapping_file(pos_pid_rows, hid_pat_id_rows, args):
     source_file = Path(args.sourcefile)
     pii_lines = parse_source_file(source_file)
@@ -90,16 +121,75 @@ def write_mapping_file(pos_pid_rows, hid_pat_id_rows, args):
     ) as csvfile:
         writer = csv.writer(csvfile)
         writer.writerow(HEADERS)
-        already_added = []
+        already_added = set()
+
+        # indexing step
+        indexer = recordlinkage.Index()
+        indexer.full()
+        # indexer.block('given_name')
+        candidate_links = indexer.index(pii_lines)
+
+        # Comparison step
+        compare_cl = recordlinkage.Compare()
+
+        # family name, jaro winkler
+        # phone, jaro winkler
+        # address, custom
+        # zip, hamming
+
+        compare_cl.string('family_name', 'family_name', method='jarowinkler', label='family_name')
+        compare_cl.string('phone_number', 'phone_number', method='jarowinkler', label='phone_number')
+        compare_cl.string('household_street_address', 'household_street_address', method='jarowinkler', label='household_street_address')
+        compare_cl.string('household_zip', 'household_zip', method='levenshtein', label='household_zip')
+
+        features = compare_cl.compute(candidate_links, pii_lines)
+
+        FN_WEIGHT = 0.2
+        PHONE_WEIGHT = 0.2
+        ADDR_WEIGHT = 0.3
+        ZIP_WEIGHT = 0.3
+        MATCH_THRESHOLD = 0.7
+        features['family_name'] = features['family_name'] * FN_WEIGHT
+        features['phone_number'] = features['phone_number'] * PHONE_WEIGHT
+        features['household_street_address'] = features['household_street_address'] * ADDR_WEIGHT
+        features['household_zip'] = features['household_zip'] * ZIP_WEIGHT
+
+        # Classification step
+        matches = features[features.sum(axis=1) > MATCH_THRESHOLD]
+        # print(matches.keys())
+        # print(matches.head())
+
+        matching_pairs = list(matches.index)
+        # matching pairs are bi-directional and not duplicated,
+        # ex if (1,9) is in the list then (9,1) won't be
+
+        pos_to_pairs = {}
+        for pair in matching_pairs:
+            if pair[0] in pos_to_pairs:
+                pos_to_pairs[pair[0]].append(pair)
+            else:
+                pos_to_pairs[pair[0]] = [pair]
+
+            if pair[1] in pos_to_pairs:
+                pos_to_pairs[pair[1]].append(pair)
+            else:
+                pos_to_pairs[pair[1]] = [pair]
+
         hclk_position = 0
         # Match households
-        for position, line in enumerate(tqdm(pii_lines, desc="Grouping individuals into households")):
+        for position, line in tqdm(pii_lines.iterrows(), desc="Grouping individuals into households"):
             if position in already_added:
                 continue
-            already_added.append(position)
-            pat_clks = [position]
-            pat_ids = [line[0]]
-            match_households(already_added, pat_clks, pat_ids, line, pii_lines)
+            already_added.add(position)
+
+            if position in pos_to_pairs:
+                pat_clks = bfs_traverse_matches(pos_to_pairs, position)
+                pat_ids = list(map(lambda p: pii_lines.at[p, 'record_id'], pat_clks))
+                already_added.update(pat_clks)
+            else:
+                pat_clks = [position]
+                pat_ids = [line[0]]
+
             string_pat_clks = [str(int) for int in pat_clks]
             pat_string = ",".join(string_pat_clks)
             writer.writerow([hclk_position, pat_string])
