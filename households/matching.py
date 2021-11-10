@@ -1,5 +1,9 @@
 import textdistance
 import usaddress
+import pandas as pd
+import numpy as np
+from recordlinkage.base import BaseCompareFeature
+
 
 MATCH_THRESHOLD = 0.7
 FN_WEIGHT = 0.2
@@ -9,7 +13,6 @@ ZIP_WEIGHT = 0.3
 
 
 def addr_parse(addr):
-    addr_tuples = usaddress.parse(addr)
     address_dict = {
         "number": "",
         "street": "",
@@ -17,6 +20,12 @@ def addr_parse(addr):
         "prefix": "",
         "value": "",
     }
+
+    try:
+        addr_tuples = usaddress.parse(addr)
+    except:
+        return address_dict
+
     for pair in addr_tuples:
         if pair[1] == "AddressNumber":
             address_dict["number"] = pair[0]
@@ -211,6 +220,42 @@ def address_distance(a1, a2):
     )
     return score
 
+
+# see https://github.com/J535D165/recordlinkage/blob/master/recordlinkage/compare.py
+class AddressComparison(BaseCompareFeature):
+    """Compare the record pairs as Addresses.
+    This class is used to compare records using custom address-based logic.
+    ----------
+    left_on : str or int
+        Field name to compare in left DataFrame.
+    right_on : str or int
+        Field name to compare in right DataFrame.
+    """
+
+    name = "address"
+    description = "Compare attributes of record pairs."
+
+    def __init__(self,
+                 left_on,
+                 right_on,
+                 label=None):
+        super(AddressComparison, self).__init__(left_on, right_on, label=label)
+
+    def _compute_vectorized(self, s1, s2):
+        # https://github.com/J535D165/recordlinkage/blob/5b3230f5cff92ef58968eedc451735e972035793/recordlinkage/algorithms/string.py
+        conc = pd.Series(list(zip(s1, s2)))
+
+        def comp_address_apply(x):
+            try:
+                return address_distance(x[0], x[1])
+            except Exception as err:
+                if pd.isnull(x[0]) or pd.isnull(x[1]):
+                    return np.nan
+                else:
+                    raise err
+
+        c = conc.apply(comp_address_apply)
+        return c
 
 def match_households(already_added, pat_clks, pat_ids, line, pii_lines):
     for position, line_compare in enumerate(pii_lines):

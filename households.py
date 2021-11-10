@@ -11,6 +11,8 @@ from zipfile import ZipFile
 import pandas as pd
 import recordlinkage
 
+from households.matching import AddressComparison, addr_parse
+
 from tqdm import tqdm
 
 HEADERS = ["HOUSEHOLD_POSITION", "PAT_CLK_POSITIONS"]
@@ -79,7 +81,13 @@ def parse_source_file(source_file):
         'parent_email': 'str'
     }
     # force all columns to be strings, even if they look numeric
-    return pd.read_csv(source_file, dtype=all_strings)
+    df = pd.read_csv(source_file, dtype=all_strings)
+
+    # break out the address into number, street, suffix, etc, so we can prefilter matches based on those
+    addr_cols = df.apply(lambda row: addr_parse(row.household_street_address), axis='columns', result_type='expand')
+    df = pd.concat([df, addr_cols], axis='columns')
+
+    return df
 
 
 def write_households_pii(output_rows):
@@ -125,8 +133,11 @@ def write_mapping_file(pos_pid_rows, hid_pat_id_rows, args):
 
         # indexing step
         indexer = recordlinkage.Index()
-        indexer.full()
-        # indexer.block('given_name')
+        # use sorted naighborhood here to allow for typos
+        # potentially match on close zips and street names
+        # note that the default "window" is 3
+        indexer.sortedneighbourhood('household_zip')
+        indexer.sortedneighbourhood('street')
         candidate_links = indexer.index(pii_lines)
 
         # Comparison step
@@ -139,8 +150,10 @@ def write_mapping_file(pos_pid_rows, hid_pat_id_rows, args):
 
         compare_cl.string('family_name', 'family_name', method='jarowinkler', label='family_name')
         compare_cl.string('phone_number', 'phone_number', method='jarowinkler', label='phone_number')
-        compare_cl.string('household_street_address', 'household_street_address', method='jarowinkler', label='household_street_address')
+        compare_cl.add(AddressComparison('household_street_address', 'household_street_address', label='household_street_address'))
         compare_cl.string('household_zip', 'household_zip', method='levenshtein', label='household_zip')
+        # note: hamming distance is not implemented in this library, but levenshtein is
+        # the two metrics are likely similar enough that it's not worth implementing hamming again
 
         features = compare_cl.compute(candidate_links, pii_lines)
 
