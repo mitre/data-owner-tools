@@ -9,11 +9,8 @@ import sys
 from zipfile import ZipFile
 
 import pandas as pd
-import recordlinkage
 
-from households.matching import AddressComparison, addr_parse
-
-from tqdm import tqdm
+from households.matching import addr_parse, get_houshold_matches
 
 HEADERS = ["HOUSEHOLD_POSITION", "PAT_CLK_POSITIONS"]
 HOUSEHOLD_PII_HEADERS = [
@@ -83,8 +80,10 @@ def parse_source_file(source_file):
     # force all columns to be strings, even if they look numeric
     df = pd.read_csv(source_file, dtype=all_strings)
 
-    # break out the address into number, street, suffix, etc, so we can prefilter matches based on those
-    addr_cols = df.apply(lambda row: addr_parse(row.household_street_address), axis='columns', result_type='expand')
+    # break out the address into number, street, suffix, etc,
+    # so we can prefilter matches based on those
+    addr_cols = df.apply(lambda row: addr_parse(row.household_street_address),
+                         axis='columns', result_type='expand')
     df = pd.concat([df, addr_cols], axis='columns')
 
     return df
@@ -100,6 +99,8 @@ def write_households_pii(output_rows):
             writer.writerow(output_row)
 
 
+# Simple breadth-first-search to turn a graph-like structure of pairs
+# into a list representing the ids in the household
 def bfs_traverse_matches(pos_to_pairs, position):
     queue = [position]
     visited = [position]
@@ -131,66 +132,15 @@ def write_mapping_file(pos_pid_rows, hid_pat_id_rows, args):
         writer.writerow(HEADERS)
         already_added = set()
 
-        # indexing step
-        indexer = recordlinkage.Index()
-        # use sorted naighborhood here to allow for typos
-        # potentially match on close zips and street names
-        # note that the default "window" is 3
-        indexer.sortedneighbourhood('household_zip')
-        indexer.sortedneighbourhood('street')
-        candidate_links = indexer.index(pii_lines)
-
-        # Comparison step
-        compare_cl = recordlinkage.Compare()
-
-        # family name, jaro winkler
-        # phone, jaro winkler
-        # address, custom
-        # zip, hamming
-
-        compare_cl.string('family_name', 'family_name', method='jarowinkler', label='family_name')
-        compare_cl.string('phone_number', 'phone_number', method='jarowinkler', label='phone_number')
-        compare_cl.add(AddressComparison('household_street_address', 'household_street_address', label='household_street_address'))
-        compare_cl.string('household_zip', 'household_zip', method='levenshtein', label='household_zip')
-        # note: hamming distance is not implemented in this library, but levenshtein is
-        # the two metrics are likely similar enough that it's not worth implementing hamming again
-
-        features = compare_cl.compute(candidate_links, pii_lines)
-
-        FN_WEIGHT = 0.2
-        PHONE_WEIGHT = 0.2
-        ADDR_WEIGHT = 0.3
-        ZIP_WEIGHT = 0.3
-        MATCH_THRESHOLD = 0.7
-        features['family_name'] = features['family_name'] * FN_WEIGHT
-        features['phone_number'] = features['phone_number'] * PHONE_WEIGHT
-        features['household_street_address'] = features['household_street_address'] * ADDR_WEIGHT
-        features['household_zip'] = features['household_zip'] * ZIP_WEIGHT
-
-        # Classification step
-        matches = features[features.sum(axis=1) > MATCH_THRESHOLD]
-        # print(matches.keys())
-        # print(matches.head())
-
-        matching_pairs = list(matches.index)
-        # matching pairs are bi-directional and not duplicated,
-        # ex if (1,9) is in the list then (9,1) won't be
-
-        pos_to_pairs = {}
-        for pair in matching_pairs:
-            if pair[0] in pos_to_pairs:
-                pos_to_pairs[pair[0]].append(pair)
-            else:
-                pos_to_pairs[pair[0]] = [pair]
-
-            if pair[1] in pos_to_pairs:
-                pos_to_pairs[pair[1]].append(pair)
-            else:
-                pos_to_pairs[pair[1]] = [pair]
+        # pos_to_pairs is a dict of:
+        # (patient position) --> [matching pairs that include that patient]
+        # so it can be traversed sort of like a graph from any given patient
+        # note the key is patient position within the pii_lines dataframe
+        pos_to_pairs = get_houshold_matches(pii_lines)
 
         hclk_position = 0
         # Match households
-        for position, line in tqdm(pii_lines.iterrows(), desc="Grouping individuals into households"):
+        for position, line in pii_lines.iterrows():
             if position in already_added:
                 continue
             already_added.add(position)
