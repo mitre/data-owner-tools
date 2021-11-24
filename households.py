@@ -8,9 +8,9 @@ import subprocess
 import sys
 from zipfile import ZipFile
 
-from tqdm import tqdm
+import pandas as pd
 
-from households.matching import match_households
+from households.matching import addr_parse, get_houshold_matches
 
 HEADERS = ["HOUSEHOLD_POSITION", "PAT_CLK_POSITIONS"]
 HOUSEHOLD_PII_HEADERS = [
@@ -64,11 +64,29 @@ def validate_secret_file(secret_file):
 
 
 def parse_source_file(source_file):
-    with open(source_file) as source:
-        source_reader = csv.reader(source)
-        next(source_reader)
-        pii_lines = list(source_reader)
-        return pii_lines
+    all_strings = {
+        'record_id': 'str',
+        'given_name': 'str',
+        'family_name': 'str',
+        'DOB': 'str',
+        'sex': 'str',
+        'phone_number': 'str',
+        'household_street_address': 'str',
+        'household_zip': 'str',
+        'parent_given_name': 'str',
+        'parent_family_name': 'str',
+        'parent_email': 'str'
+    }
+    # force all columns to be strings, even if they look numeric
+    df = pd.read_csv(source_file, dtype=all_strings)
+
+    # break out the address into number, street, suffix, etc,
+    # so we can prefilter matches based on those
+    addr_cols = df.apply(lambda row: addr_parse(row.household_street_address),
+                         axis='columns', result_type='expand')
+    df = pd.concat([df, addr_cols], axis='columns')
+
+    return df
 
 
 def write_households_pii(output_rows):
@@ -81,6 +99,28 @@ def write_households_pii(output_rows):
             writer.writerow(output_row)
 
 
+# Simple breadth-first-search to turn a graph-like structure of pairs
+# into a list representing the ids in the household
+def bfs_traverse_matches(pos_to_pairs, position):
+    queue = [position]
+    visited = [position]
+
+    while queue:
+        curr = queue.pop(0)
+        pairs = pos_to_pairs[curr]
+
+        for p in pairs:
+            if p[0] not in visited:
+                visited.append(p[0])
+                queue.append(p[0])
+            if p[1] not in visited:
+                visited.append(p[1])
+                queue.append(p[1])
+
+    visited.sort()
+    return visited
+
+
 def write_mapping_file(pos_pid_rows, hid_pat_id_rows, args):
     source_file = Path(args.sourcefile)
     pii_lines = parse_source_file(source_file)
@@ -90,16 +130,29 @@ def write_mapping_file(pos_pid_rows, hid_pat_id_rows, args):
     ) as csvfile:
         writer = csv.writer(csvfile)
         writer.writerow(HEADERS)
-        already_added = []
+        already_added = set()
+
+        # pos_to_pairs is a dict of:
+        # (patient position) --> [matching pairs that include that patient]
+        # so it can be traversed sort of like a graph from any given patient
+        # note the key is patient position within the pii_lines dataframe
+        pos_to_pairs = get_houshold_matches(pii_lines)
+
         hclk_position = 0
         # Match households
-        for position, line in enumerate(tqdm(pii_lines, desc="Grouping individuals into households")):
+        for position, line in pii_lines.iterrows():
             if position in already_added:
                 continue
-            already_added.append(position)
-            pat_clks = [position]
-            pat_ids = [line[0]]
-            match_households(already_added, pat_clks, pat_ids, line, pii_lines)
+            already_added.add(position)
+
+            if position in pos_to_pairs:
+                pat_clks = bfs_traverse_matches(pos_to_pairs, position)
+                pat_ids = list(map(lambda p: pii_lines.at[p, 'record_id'], pat_clks))
+                already_added.update(pat_clks)
+            else:
+                pat_clks = [position]
+                pat_ids = [line[0]]
+
             string_pat_clks = [str(int) for int in pat_clks]
             pat_string = ",".join(string_pat_clks)
             writer.writerow([hclk_position, pat_string])

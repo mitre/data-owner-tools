@@ -7,3 +7,5 @@ textdistance>=4.2.1
 usaddress>=0.5.10
 pylint>=2.4.2
 tqdm>=4.36.1
+pandas>=1.2.1
+recordlinkage>=0.14
