@@ -4,6 +4,7 @@ import argparse
 import csv
 import os
 from pathlib import Path
+from random import shuffle
 import subprocess
 import sys
 from zipfile import ZipFile
@@ -95,6 +96,7 @@ def parse_source_file(source_file):
 
 
 def write_households_pii(output_rows):
+    shuffle(output_rows)
     with open(
         "temp-data/households_pii.csv", "w", newline="", encoding="utf-8"
     ) as house_csv:
