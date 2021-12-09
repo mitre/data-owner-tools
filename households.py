@@ -10,6 +10,7 @@ from zipfile import ZipFile
 
 import pandas as pd
 
+from derive_subkey import derive_subkey
 from households.matching import addr_parse, get_houshold_matches
 
 HEADERS = ["HOUSEHOLD_POSITION", "PAT_CLK_POSITIONS"]
@@ -191,6 +192,7 @@ def hash_households(args):
     schema_file = Path(args.schemafile)
     secret_file = Path(args.secretfile)
     secret = validate_secret_file(secret_file)
+    households_secret = derive_subkey(secret, 'households')
     with open(schema_file, "r") as schema:
         file_contents = schema.read()
         if "doubleHash" in file_contents:
@@ -204,7 +206,7 @@ def hash_households(args):
             "anonlink",
             "hash",
             "temp-data/households_pii.csv",
-            secret,
+            households_secret,
             str(schema_file),
             str(output_file),
         ]
