@@ -38,8 +38,12 @@ def validate_secret_file(secret_file):
     secret = None
     with open(secret_file, "r") as secret_text:
         secret = secret_text.read()
-        if len(secret) < 256:
-            sys.exit("Secret length not long enough to ensure proper de-identification")
+        try:
+            int(secret, 16)
+        except ValueError:
+            sys.exit('Secret must be in hexadecimal format')
+        if len(secret) < 32:
+            sys.exit('Secret smaller than minimum security level')
     return secret
 
 
