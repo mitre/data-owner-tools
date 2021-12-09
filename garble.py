@@ -53,7 +53,7 @@ def garble_pii(args):
     source_file = args.sourcefile
     os.makedirs('output', exist_ok=True)
     secret = validate_secret_file(secret_file)
-    individuals_secret = derive_subkey(secret, 'households')
+    individuals_secret = derive_subkey(secret, 'individuals')
 
     clk_files = []
     schema = glob.glob(args.schemadir + "/*.json")
