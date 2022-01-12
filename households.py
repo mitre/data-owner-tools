@@ -4,12 +4,14 @@ import argparse
 import csv
 import os
 from pathlib import Path
+from random import shuffle
 import subprocess
 import sys
 from zipfile import ZipFile
 
 import pandas as pd
 
+from derive_subkey import derive_subkey
 from households.matching import addr_parse, get_houshold_matches
 
 HEADERS = ["HOUSEHOLD_POSITION", "PAT_CLK_POSITIONS"]
@@ -58,8 +60,12 @@ def validate_secret_file(secret_file):
     secret = None
     with open(secret_file, "r") as secret_text:
         secret = secret_text.read()
-        if len(secret) < 256:
-            sys.exit("Secret length not long enough to ensure proper de-identification")
+        try:
+            int(secret, 16)
+        except ValueError:
+            sys.exit('Secret must be in hexadecimal format')
+        if len(secret) < 32:
+            sys.exit('Secret smaller than minimum security level')
     return secret
 
 
@@ -90,6 +96,7 @@ def parse_source_file(source_file):
 
 
 def write_households_pii(output_rows):
+    shuffle(output_rows)
     with open(
         "temp-data/households_pii.csv", "w", newline="", encoding="utf-8"
     ) as house_csv:
@@ -191,6 +198,7 @@ def hash_households(args):
     schema_file = Path(args.schemafile)
     secret_file = Path(args.secretfile)
     secret = validate_secret_file(secret_file)
+    households_secret = derive_subkey(secret, 'households')
     with open(schema_file, "r") as schema:
         file_contents = schema.read()
         if "doubleHash" in file_contents:
@@ -204,7 +212,7 @@ def hash_households(args):
             "anonlink",
             "hash",
             "temp-data/households_pii.csv",
-            secret,
+            households_secret,
             str(schema_file),
             str(output_file),
         ]

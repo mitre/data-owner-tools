@@ -8,6 +8,8 @@ import subprocess
 import sys
 from zipfile import ZipFile
 
+from derive_subkey import derive_subkey
+
 
 def parse_arguments():
     parser = argparse.ArgumentParser(
@@ -36,8 +38,12 @@ def validate_secret_file(secret_file):
     secret = None
     with open(secret_file, "r") as secret_text:
         secret = secret_text.read()
-        if len(secret) < 256:
-            sys.exit("Secret length not long enough to ensure proper de-identification")
+        try:
+            int(secret, 16)
+        except ValueError:
+            sys.exit('Secret must be in hexadecimal format')
+        if len(secret) < 32:
+            sys.exit('Secret smaller than minimum security level')
     return secret
 
 
@@ -47,6 +53,8 @@ def garble_pii(args):
     source_file = args.sourcefile
     os.makedirs('output', exist_ok=True)
     secret = validate_secret_file(secret_file)
+    individuals_secret = derive_subkey(secret, 'individuals')
+
     clk_files = []
     schema = glob.glob(args.schemadir + "/*.json")
     for s in schema:
@@ -58,8 +66,15 @@ def garble_pii(args):
                     + str(s)
                 )
         output_file = Path(args.outputdir, s.split('/')[-1])
-        completed_process = subprocess.run(
-            ["anonlink", "hash", source_file, secret, str(s), str(output_file)],
+        subprocess.run(
+            [
+                "anonlink",
+                "hash",
+                source_file,
+                individuals_secret,
+                str(s),
+                str(output_file)
+            ],
             check=True
         )
         clk_files.append(output_file)

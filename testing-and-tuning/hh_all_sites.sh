@@ -2,12 +2,14 @@
 
 # Script to run through all sites, group by households, and score the results.
 
-# Note this script expects to be run from the root data-owner-tools folder, i.e.,
-# ./testing-and-tuning/hh_all_sites.sh
+# Note this script expects to be run from the testing-and-tuning folder, i.e.,
+# ./hh_all_sites.sh
 
 # Required files in temp_data:
 # - pii_site_*.csv -- obtained by extract.py
 # - site_*_key.csv -- obtained by build_key.py
+
+cd ..
 
 SITES="a b c d e f"
 for s in $SITES
