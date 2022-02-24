@@ -78,7 +78,7 @@
         "comparison": {
           "type": "ngram",
           "n": 2,
-          "positional": false
+          "positional": true
         }
       }
     },
