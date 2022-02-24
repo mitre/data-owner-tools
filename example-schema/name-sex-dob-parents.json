@@ -44,6 +44,7 @@
       "format": { "type": "string", "encoding": "utf-8"},
       "hashing": {
         "ngram": 2,
+        "positional": true,
         "strategy": {
           "numBits": 300
         },
