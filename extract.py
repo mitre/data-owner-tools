@@ -87,7 +87,7 @@ with engine.connect() as connection:
     validate(report, 'family_name', family_name)
     output_row.append(clean_name(family_name))
     birth_date = case_insensitive_lookup(row, 'birth_date')
-    output_row.append(birth_date.isoformat())
+    output_row.append(birth_date.strftime('%y%m%d'))
     sex = case_insensitive_lookup(row, 'sex')
     validate(report, 'sex', sex)
     output_row.append(sex.strip())
