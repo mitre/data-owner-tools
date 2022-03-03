@@ -25,15 +25,43 @@ HEADER = [
 ]
 
 
+V1 = 'v1'
+V2 = 'v2'
+
+# This provides a mapping of our field names
+# to the field names used across versions of the DM
+DATA_DICTIONARY = {
+    "record_id": {V1: 'patid', V2: 'patid'},
+    "given_name": {V1: 'given_name', V2: 'pat_firstname'},
+    "family_name": {V1: 'family_name', V2: 'pat_lastname'},
+    "DOB": {V1: 'birth_date', V2: 'birth_date'},
+    "sex": {V1: 'sex', V2: 'sex'},
+    "phone_number": {V1: 'household_phone', V2: 'primary_phone'},
+    "household_street_address": {V1: 'household_street_address', V2: 'address_street'},
+    "household_zip": {V1: 'household_zip', V2: 'address_zip5'},
+    # these last 3 aren't used anymore
+    # "parent_given_name": {},
+    # "parent_family_name": {},
+    # "parent_email": {},
+}
+
+
 def parse_arguments():
     parser = argparse.ArgumentParser(
         description="Tool for extracting, validating and cleaning data for CODI PPRL"
     )
     parser.add_argument('database', help="Database connection string")
-    parser.add_argument('-v', '--verbose', dest='verbose', action='store_true', help="Verbose mode prints output to console")
+    parser.add_argument(
+        '-v', '--verbose', dest='verbose', action='store_true',
+        help="Verbose mode prints output to console"
+    )
+    parser.add_argument(
+        '-s', '--schema', dest='schema', default=V2, choices=[V1, V2],
+        help=f"Version of the CODI Data Model schema to use. \
+               Valid options are \"{V1}\" or \"{V2}\"")
     parser.add_argument(
         '-o', '--output', dest='output_file', default="temp-data/pii.csv",
-         help="Specify an output file. Default is temp-data/pii.csv"
+        help="Specify an output file. Default is temp-data/pii.csv"
     )
     args = parser.parse_args()
     return args
@@ -70,7 +98,9 @@ def clean_zip(household_zip):
     return household_zip.strip()
 
 
-def case_insensitive_lookup(row, desired_key):
+def case_insensitive_lookup(row, key, version):
+    desired_key = DATA_DICTIONARY[key][version]
+
     if desired_key in row:
         return row[desired_key]
     else:
@@ -98,55 +128,105 @@ def print_report(report):
 def extract_database(args):
     output_rows = []
     connection_string = args.database
+    version = args.schema
     report = get_report()
     engine = create_engine(connection_string)
     with engine.connect() as connection:
-        meta = MetaData()
-        identity = Table(
-            "identifier", meta, autoload=True, autoload_with=engine, schema="codi"
-        )
-
-        query = select([identity])
+        query = get_query(engine, version)
         results = connection.execute(query)
         for row in results:
-            output_row = [case_insensitive_lookup(row, "patid")]
-            given_name = case_insensitive_lookup(row, "given_name")
-            validate(report, "given_name", given_name)
-            output_row.append(clean_string(given_name))
-            family_name = case_insensitive_lookup(row, "family_name")
-            validate(report, "family_name", family_name)
-            output_row.append(clean_string(family_name))
-            birth_date = case_insensitive_lookup(row, "birth_date")
-            output_row.append(birth_date.isoformat())
-            sex = case_insensitive_lookup(row, "sex")
-            validate(report, "sex", sex)
-            output_row.append(sex.strip())
-            phone_number = case_insensitive_lookup(row, "household_phone")
-            validate(report, "phone_number", phone_number)
-            output_row.append(clean_phone(phone_number))
-            household_street_address = case_insensitive_lookup(
-                row, "household_street_address"
-            )
-            validate(report, "household_street_address", household_street_address)
-            output_row.append(clean_string(household_street_address))
-            household_zip = case_insensitive_lookup(row, "household_zip")
-            validate(report, "household_zip", household_zip)
-            output_row.append(clean_zip(household_zip))
-            parent_given_name = case_insensitive_lookup(row, "parent_given_name")
-            validate(report, "parent_given_name", parent_given_name)
-            output_row.append(clean_string(parent_given_name))
-            parent_family_name = case_insensitive_lookup(row, "parent_family_name")
-            validate(report, "parent_family_name", parent_family_name)
-            output_row.append(clean_string(parent_family_name))
-            parent_email = case_insensitive_lookup(row, "household_email")
-            validate(report, "parent_email", parent_email)
-            output_row.append(clean_string(parent_email))
+            output_row = handle_row(row, report, version)
             output_rows.append(output_row)
 
     shuffle(output_rows)
     if args.verbose:
         print_report(report)
     return output_rows
+
+
+def get_query(engine, version):
+    if version == V1:
+        identity = Table(
+            "identifier", MetaData(),
+            autoload=True, autoload_with=engine, schema="codi"
+        )
+
+        query = select([identity])
+        return query
+    else:
+        # demographic = Table(
+        #     "demographic", MetaData(),
+        #     autoload=True, autoload_with=engine, schema="cdm"
+        # )
+        # demographic table doesn't contain any required fields by itself,
+        # we can join the 2 private_ tables to get all the necessary items
+
+        prv_demo = Table(
+            "private_demographic", MetaData(),
+            autoload=True, autoload_with=engine, schema="cdm"
+        )
+
+        prv_address = Table(
+            "private_address_history", MetaData(),
+            autoload=True, autoload_with=engine, schema="cdm"
+        )
+
+        query = select([prv_demo, prv_address])\
+            .filter(prv_demo.columns.patid == prv_address.columns.patid)
+
+        return query
+
+
+def handle_row(row, report, version):
+    output_row = []
+    record_id = case_insensitive_lookup(row, "record_id", version)
+    output_row.append(record_id)
+
+    given_name = case_insensitive_lookup(row, "given_name", version)
+    validate(report, "given_name", given_name)
+    output_row.append(clean_string(given_name))
+
+    family_name = case_insensitive_lookup(row, "family_name", version)
+    validate(report, "family_name", family_name)
+    output_row.append(clean_string(family_name))
+
+    dob = case_insensitive_lookup(row, "DOB", version)
+    output_row.append(dob.isoformat())
+
+    sex = case_insensitive_lookup(row, "sex", version)
+    validate(report, "sex", sex)
+    output_row.append(sex.strip())
+
+    phone_number = case_insensitive_lookup(row, "phone_number", version)
+    validate(report, "phone_number", phone_number)
+    output_row.append(clean_phone(phone_number))
+
+    household_street_address = case_insensitive_lookup(
+        row, "household_street_address", version
+    )
+    validate(report, "household_street_address", household_street_address)
+    output_row.append(clean_string(household_street_address))
+
+    household_zip = case_insensitive_lookup(row, "household_zip", version)
+    validate(report, "household_zip", household_zip)
+    output_row.append(clean_zip(household_zip))
+
+    # parent_given_name = case_insensitive_lookup(row, "parent_given_name")
+    # validate(report, "parent_given_name", parent_given_name)
+    parent_given_name = ''
+    output_row.append(clean_string(parent_given_name))
+
+    # parent_family_name = case_insensitive_lookup(row, "parent_family_name")
+    # validate(report, "parent_family_name", parent_family_name)
+    parent_family_name = ''
+    output_row.append(clean_string(parent_family_name))
+
+    # parent_email = case_insensitive_lookup(row, "household_email")
+    # validate(report, "parent_email", parent_email)
+    parent_email = ''
+    output_row.append(clean_string(parent_email))
+
+    return output_row
 
 
 def write_data(output_rows, args):
