@@ -92,7 +92,6 @@ def analyze(data, source):
             'max': str(parsed_dobs.max())
         }
 
-
     sex_col = DATA_DICTIONARY['sex'][source]
     stats['sex'] = top_N(data, sex_col)
 
@@ -106,6 +105,9 @@ def analyze(data, source):
     data['phone_format'] = data[phone_col].map(to_format)
     stats['phone_format'] = top_N(data, 'phone_format')
 
+    # Note: the following top 10s are limited to anything that occurs 3+ times,
+    # in order to limit the potential spill of PII.
+    # For this analysis, any names that appear 2 or fewer times are not especially useful.
     given_name_col = DATA_DICTIONARY['given_name'][source]
     raw_values['top_10_given_names'] = top_N(data, given_name_col, 10, 3)
 
@@ -118,10 +120,10 @@ def analyze(data, source):
     raw_values['top_10_phone_numbers'] = top_N(data, phone_col, 10, 3)
 
     stats['field_summaries'] = {}
-    for col in [given_name_col, family_name_col, address_col, zip_col]:
+    for col in [given_name_col, family_name_col, address_col, zip_col, phone_col]:
         stats['field_summaries'][col] = summary(data, col)
 
-    # possible quick win: look at the year/month/day breakdown in dates
+    # TODO: possible quick win: look at the year/month/day breakdown in dates
 
     return (stats, raw_values)
 
@@ -137,7 +139,7 @@ def to_format(numeric_string):
 
 
 def top_N(df, column, N=0, lower_limit=1):
-    # return a dict of the top 10 most prevalent entries in the column
+    # return a dict of the top N most prevalent entries in the column
     # and the count of each
 
     top_n = df[column].value_counts()
@@ -156,23 +158,26 @@ def top_N(df, column, N=0, lower_limit=1):
 
 
 def summary(df, column):
-    length = df[column].str.len().describe().to_dict()
+    series = df[column]
 
-    list_chars = df[column].map(lambda v: to_char_list(v))
+    # 1. count the number of missing (null) entries
+    missing = series.isna().sum()
+
+    # 2. basic descriptive statistics on the length of the values
+    length = series.str.len().describe().to_dict()
+
+    # 3. count the characters across all values
+    list_chars = series[series.notna()].map(list)
     # list_chars is a list of lists e.g: [[J,o,h,n],[J,a,n,e],...]
     flat_list = [item for sublist in list_chars.tolist() for item in sublist]
     # flat_list is now a single list [J,o,h,n,J,a,n,e,....]
     total_chars = pd.Series(flat_list).value_counts().to_dict()
+
     return {
+        'missing': int(missing),
         'length': length,
         'characters': total_chars
     }
-
-
-def to_char_list(string):
-    if not string or pd.isnull(string):
-        return []
-    return list(string)
 
 
 if __name__ == "__main__":
