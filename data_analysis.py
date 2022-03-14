@@ -1,9 +1,11 @@
 import argparse
+from datetime import datetime
+import json
 import re
 import time
-import json
 
 import pandas as pd
+
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -68,7 +70,7 @@ def analyze(data, source):
     stats['total_unique_patids'] = len(patid_stats)
 
     patid_dups = {k:v for (k,v) in patid_stats.items() if v > 1}
-    stats['duplicate_patid_count'] = len(patid_dups)
+    stats['patids_with_duplicates'] = len(patid_dups)
     if len(patid_dups) > 0 and len(patid_dups) < (len(patid_stats) * .2):
         # only report individual IDs if there are less than 20% dups
         raw_values['duplicate_patids'] = patid_dups
@@ -79,6 +81,17 @@ def analyze(data, source):
         'min': str(dob_values.min()),  # str-ify because we get Timestamp from DB
         'max': str(dob_values.max())   # which is not serializable
     }
+
+    if source == 'csv':
+        # we should have truncated the dates to YYMMDD,
+        # which means if there are any '90s dates in there,
+        # the min/max aren't correct
+        parsed_dobs = dob_values.map(lambda d: datetime.strptime(d, '%y%m%d'))
+        stats['parsed_dob'] = {
+            'min': str(parsed_dobs.min()),  # str-ify the Timestamps again
+            'max': str(parsed_dobs.max())
+        }
+
 
     sex_col = DATA_DICTIONARY['sex'][source]
     stats['sex'] = top_N(data, sex_col)
@@ -107,6 +120,8 @@ def analyze(data, source):
     stats['field_summaries'] = {}
     for col in [given_name_col, family_name_col, address_col, zip_col]:
         stats['field_summaries'][col] = summary(data, col)
+
+    # possible quick win: look at the year/month/day breakdown in dates
 
     return (stats, raw_values)
 
