@@ -1,5 +1,5 @@
 import argparse
-from datetime import datetime
+from datetime import datetime, date
 import json
 import re
 import time
@@ -36,7 +36,7 @@ DATA_DICTIONARY = {
 
 
 def load_db(connection_string):
-    db_data = pd.read_sql_table('identifier', connection_string, schema='codi')
+    db_data = pd.read_sql_query('select * from codi.identifier', connection_string)
     return db_data  
 
 
@@ -77,20 +77,45 @@ def analyze(data, source):
 
     dob_col = DATA_DICTIONARY['dob'][source]
     dob_values = data[dob_col]
+    notnull_dobs = dob_values.dropna()
     stats['dob'] = {
-        'min': str(dob_values.min()),  # str-ify because we get Timestamp from DB
-        'max': str(dob_values.max())   # which is not serializable
+        'min': str(notnull_dobs.min()),  # str-ify because we get Timestamp from DB
+        'max': str(notnull_dobs.max()),  # which is not serializable
+        'missing': int(dob_values.isna().sum())
     }
 
+    expected_min_dob = '1997-01-01'  # roughly, 19 years old at the start of CODI observation period (2016)
+    # expected_max_dob is trickier because we don't know when the data was populated
+    # TODO: add another command line arg?
+
     if source == 'csv':
-        # we should have truncated the dates to YYMMDD,
-        # which means if there are any '90s dates in there,
-        # the min/max aren't correct
-        parsed_dobs = dob_values.map(lambda d: datetime.strptime(d, '%y%m%d'))
-        stats['parsed_dob'] = {
-            'min': str(parsed_dobs.min()),  # str-ify the Timestamps again
-            'max': str(parsed_dobs.max())
-        }
+        if '-' in notnull_dobs[0]:
+            out_of_range = notnull_dobs[notnull_dobs < expected_min_dob]
+            stats['dob']['count_earlier_dob_than_expected'] = len(out_of_range)
+        else:
+            # the date format will either be YYYY-MM-DD or YYMMDD
+            # we'll assume it's consistent across a single file
+
+            # if YYMMDD, any '90s dates or earlier in there
+            # will mean the min/max aren't correct.
+            # YYYY-MM-DD preserves normal sorting,
+            # so don't spend time parsing it
+
+            parsed_dobs = notnull_dobs.map(yymmdd_to_date)
+
+            stats['dob']['min_parsed'] = str(parsed_dobs.min())  # str-ify the Timestamps again
+            stats['dob']['max_parsed'] = str(parsed_dobs.max())
+
+            expected_min_dob = pd.to_datetime(expected_min_dob, format='%Y-%m-%d')
+
+            out_of_range = parsed_dobs[parsed_dobs < expected_min_dob]
+            stats['dob']['count_earlier_dob_than_expected'] = len(out_of_range)
+
+    else:
+        expected_min_dob = date.fromisoformat(expected_min_dob)
+
+        out_of_range = notnull_dobs[notnull_dobs < expected_min_dob]
+        stats['dob']['count_earlier_dob_than_expected'] = len(out_of_range)
 
     sex_col = DATA_DICTIONARY['sex'][source]
     stats['sex'] = top_N(data, sex_col)
@@ -127,6 +152,18 @@ def analyze(data, source):
 
     return (stats, raw_values)
 
+def yymmdd_to_date(yymmdd):
+    if yymmdd[0] in ['0', '1', '2']:
+        # if the 3rd digit in year is 0, 1, or 2
+        # we assume it's in the 2000s
+        # note this is incorrect for dates <= 1929
+        # but we expect that there won't be a lot of those here
+        # (native date parsing for 2 digit years uses a cutoff for 19/20 at 68)
+        century = '20'
+    else:
+        century = '19'
+
+    return datetime.strptime(century + yymmdd, '%Y%m%d')
 
 def to_format(numeric_string):
     # turn, ex, 123-4567 into ###-####
