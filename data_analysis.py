@@ -133,7 +133,11 @@ def analyze(data, source):
             stats['dob']['count_earlier_dob_than_expected'] = len(out_of_range)
 
     else:
-        expected_min_dob = date.fromisoformat(expected_min_dob)
+        # different DBs may return different data types for the DOB column
+        if type(notnull_dobs[0]) is date:
+            expected_min_dob = date.fromisoformat(expected_min_dob)
+        # else
+        #   assume it's a string in ISO format, no change should be needed
 
         out_of_range = notnull_dobs[notnull_dobs < expected_min_dob]
         stats['dob']['count_earlier_dob_than_expected'] = len(out_of_range)
