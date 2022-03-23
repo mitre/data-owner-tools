@@ -5,7 +5,8 @@ import re
 import time
 
 import pandas as pd
-
+from sqlalchemy import create_engine, MetaData, Table
+from sqlalchemy.sql import select
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -68,10 +69,12 @@ def load_db(args):
     connection_string = args.db
     schema = args.schema
     table = args.table
-    # This looks like SQL injection, but since it requires the user
-    # to pass in their own credentials, there's no risk of privilege escalation
-    # or uninintended data being returned.
-    db_data = pd.read_sql_query(f"select * from {schema}.{table}", connection_string)
+
+    engine = create_engine(connection_string)
+    meta = MetaData()
+    identifier = Table(table, meta, autoload=True, autoload_with=engine, schema=schema)
+    query = select([identifier])
+    db_data = pd.read_sql(query, connection_string)
     return db_data  
 
 
