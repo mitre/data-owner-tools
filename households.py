@@ -14,7 +14,7 @@ import pandas as pd
 from derive_subkey import derive_subkey
 from households.matching import addr_parse, get_houshold_matches
 
-HEADERS = ["HOUSEHOLD_POSITION", "PAT_CLK_POSITIONS"]
+HEADERS = ["HOUSEHOLD_POSITION", "PII_POSITIONS"]
 HOUSEHOLD_PII_HEADERS = [
     "family_name",
     "phone_number",
