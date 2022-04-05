@@ -19,11 +19,7 @@ HEADER = [
     "phone_number",
     "household_street_address",
     "household_zip",
-    "parent_given_name",
-    "parent_family_name",
-    "parent_email",
 ]
-
 
 V1 = 'v1'
 V2 = 'v2'
@@ -39,10 +35,6 @@ DATA_DICTIONARY = {
     "phone_number": {V1: 'household_phone', V2: 'primary_phone'},
     "household_street_address": {V1: 'household_street_address', V2: 'address_street'},
     "household_zip": {V1: 'household_zip', V2: 'address_zip5'},
-    # these last 3 aren't used anymore
-    # "parent_given_name": {},
-    # "parent_family_name": {},
-    # "parent_email": {},
 }
 
 
@@ -210,21 +202,6 @@ def handle_row(row, report, version):
     household_zip = case_insensitive_lookup(row, "household_zip", version)
     validate(report, "household_zip", household_zip)
     output_row.append(clean_zip(household_zip))
-
-    # parent_given_name = case_insensitive_lookup(row, "parent_given_name")
-    # validate(report, "parent_given_name", parent_given_name)
-    parent_given_name = ''
-    output_row.append(clean_string(parent_given_name))
-
-    # parent_family_name = case_insensitive_lookup(row, "parent_family_name")
-    # validate(report, "parent_family_name", parent_family_name)
-    parent_family_name = ''
-    output_row.append(clean_string(parent_family_name))
-
-    # parent_email = case_insensitive_lookup(row, "household_email")
-    # validate(report, "parent_email", parent_email)
-    parent_email = ''
-    output_row.append(clean_string(parent_email))
 
     return output_row
 

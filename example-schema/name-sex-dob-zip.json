@@ -136,18 +136,6 @@
           "positional": false
         }
       }
-    },
-    {
-      "identifier": "parent_given_name",
-      "ignored": true
-    },
-    {
-      "identifier": "parent_family_name",
-      "ignored": true
-    },
-    {
-      "identifier": "parent_email",
-      "ignored": true
     }
   ]
 }
