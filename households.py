@@ -20,6 +20,7 @@ HOUSEHOLD_PII_HEADERS = [
     "phone_number",
     "household_street_address",
     "household_zip",
+    "record_ids",
 ]
 HOUSEHOLD_POS_PID_HEADERS = ["household_position", "pid"]
 
@@ -170,7 +171,9 @@ def write_mapping_file(pos_pid_rows, hid_pat_id_rows, args):
             pos_pid_rows.append([hclk_position, line[0]])
             for patid in pat_ids:
                 hid_pat_id_rows.append([hclk_position, patid])
-            output_row = [line[2], line[5], line[6], line[7]]
+            # note pat_ids_str will be quoted by the csv writer if needed
+            pat_ids_str = ','.join(pat_ids)
+            output_row = [line[2], line[5], line[6], line[7], pat_ids_str]
             hclk_position += 1
             output_rows.append(output_row)
     return output_rows

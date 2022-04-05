@@ -94,6 +94,10 @@
           "positional": false
         }
       }
+    },
+    {
+      "identifier": "record_ids",
+      "ignored": true
     }
   ]
 }
