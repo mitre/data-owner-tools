@@ -1,6 +1,6 @@
 # Data Owner Tools
 
-Tools for Childhood Obesity Data Initiative (CODI) data owners to extract personally identifiable information (PII) from the CODI Data Model and garble PII to send to the data coordinating center (DCC) for matching. These tools facilitate hashing / Bloom filter creation part of a Privacy-Preserving Record Linkage (PPRL) process.
+Tools for Childhood Obesity Data Initiative (CODI) data owners to extract personally identifiable information (PII) from the CODI Data Model and garble PII to send to the linkage agent for matching. These tools facilitate hashing / Bloom filter creation part of a Privacy-Preserving Record Linkage (PPRL) process.
 
 ## Contents:
 1. [Installation](#installation)
@@ -20,7 +20,7 @@ These tools were created and tested on Python 3.7.4. The tools rely on two libra
 
 SQLAlchemy is a library that allows the tools to connect to a database in a vendor independent fashion. This allows the tools to connect to a database that conforms to the CODI Identity Data Model implented in PostgreSQL or Microsoft SQLServer (and a number of others).
 
-clkhash is a part of the [anonlink](https://github.com/data61/anonlink) suite of tools. It is repsonsible for garbling the PII so that it can be de-identified prior to transmission to the DCC. Note: you may have to specify the latest anonlink docker image when pulling, to ensure you are on the right version as registry may have old version (tested on v1.14)
+clkhash is a part of the [anonlink](https://github.com/data61/anonlink) suite of tools. It is repsonsible for garbling the PII so that it can be de-identified prior to transmission to the linkage agent. Note: you may have to specify the latest anonlink docker image when pulling, to ensure you are on the right version as registry may have old version (tested on v1.14)
 
 ### Installing with an existing Python install
 
@@ -92,26 +92,11 @@ Contains Non-printable Characters: 1
 household_zip
 --------------------
 NULL Value: 9
-
-parent_given_name
---------------------
-Contains Non-ASCII Characters: 386
-Contains Non-printable Characters: 4
-
-parent_family_name
---------------------
-NULL Value: 19
-Contains Non-ASCII Characters: 4
-
-parent_email
---------------------
-NULL Value: 238
-Contains Non-ASCII Characters: 12
 ```
 
 ## Garbling PII
 
-clkhash will garble personally identifiable information (PII) in a way that it can be used for linkage later on. The CODI PPRL process garbles information a number of different ways. The `garble.py` script will manage executing clkhash multiple times and package the information for transmission to the DCC.
+clkhash will garble personally identifiable information (PII) in a way that it can be used for linkage later on. The CODI PPRL process garbles information a number of different ways. The `garble.py` script will manage executing clkhash multiple times and package the information for transmission to the linkage agent.
 
 `garble.py` requires 3 different inputs:
 1. The location of a CSV file containing the PII to garble
@@ -177,7 +162,7 @@ Zip file created at: output/garbled_households.zip
 
 ### [Optional] Blocking Individuals
 
-Currently there is optional functionality for evaluation purposes to use blocking techniques to try and make the matching more efficient. After running `garble.py` you can run `block.py` to generate an additional blocking .zip file to send to the DCC / linkage agent.
+Currently there is optional functionality for evaluation purposes to use blocking techniques to try and make the matching more efficient. After running `garble.py` you can run `block.py` to generate an additional blocking .zip file to send to the linkage agent.
 
 Example run - note this is using the default settings, i.e. looking for the CLKs from the `garble.py` run in `output/` and using the `example-schema/blocking-schema/lambda.json` LSH blocking configuration (Read more about [blocking schmea here](https://anonlink-client.readthedocs.io/en/latest/blocking-schema.html), and more about anonlink's [LSH-based blocking approach here](https://www.computer.org/csdl/journal/tk/2015/04/06880802/13rRUxASubY)):
 ```
@@ -214,16 +199,16 @@ Statistics for the generated blocks:
 
 ## Mapping LINKIDs to PATIDs
 
-When anonlink matches across data owners / partners, it identifies records by their position in the file. It essentially uses the line number in the extracted PII file as the identifier for the record. When results are returned from the DCC, it will assign a LINK_ID to a line number in the PII CSV file.
+When anonlink matches across data owners / partners, it identifies records by their position in the file. It essentially uses the line number in the extracted PII file as the identifier for the record. When results are returned from the linkage agent, it will assign a LINK_ID to a line number in the PII CSV file.
 
-To map the LINK_IDs back to PATIDs, use the `linkid_to_patid.py` script. The script takes two arguments:
+To map the LINK_IDs back to PATIDs, use the `linkid_to_patid.py` script. The script takes four arguments:
 
-1. The path to the PII CSV file
-1. The path to the LINK_ID CSV file provided by the DCC
-1. [Optional] The path to the `temp-data/*_hid_mapping.csv` file created by the `testing-and-tuning/answer_key_map.py` script (this should only be used if running with household linkage and testing against an answer key / ground truth)
-1. [Optional] The path to the HOUSEHOLD_LINK_ID CSV file provided by the DCC if you provided household information
+1. The path to the PII CSV file. 
+2. The path to the LINK_ID CSV file provided by the linkage agent
+3. The path to the Household PII CSV file, either provided by the data owner directly or inferred by the `households.py` script
+4. The path to the HOUSEHOLDID CSV file provided by the linkage agent if you provided household information
 
-The script will create a file called `linkid_to_patid.csv` with the mapping of LINK_IDs to PATIDs in the `output/` folder by default. If you are testing and running household linkage this will also create a `linkid_to_hid.csv` file in the `output/` folder.
+If both the PII CSV and LINK_ID CSV file are provided as arguments, the script will create a file called `linkid_to_patid.csv` with the mapping of LINK_IDs to PATIDs in the `output/` folder by default. If both the household PII CSV and LINK_ID CSV file are provided as arguments this will also create a `householdid_to_patid.csv` file in the `output/` folder.
 
 ## Cleanup
 
@@ -239,6 +224,6 @@ If you would like to test household linkage you can currently run the `garble.sh
 
 ## Notice
 
-Copyright 2020 The MITRE Corporation.
+Copyright 2020-2022 The MITRE Corporation.
 
 Approved for Public Release; Distribution Unlimited. Case Number 19-2008

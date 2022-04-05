@@ -16,12 +16,12 @@ def parse_arguments():
     parser.add_argument("--sourcefile", help="Source PII CSV file")
     parser.add_argument("--linksfile", help="LINK_ID CSV file from linkage agent")
     parser.add_argument(
-        "--hhlinksfile",
-        help="HOUSEHOLD_ID CSV file from linkage agent",
-    )
-    parser.add_argument(
         "--hhsourcefile",
         help="Household PII csv, either inferred by households.py or provided by data owner",
+    )
+    parser.add_argument(
+        "--hhlinksfile",
+        help="HOUSEHOLD_ID CSV file from linkage agent",
     )
     parser.add_argument(
         '-o', '--outputdir', dest='outputdir', default="output",
