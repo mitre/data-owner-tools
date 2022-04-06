@@ -37,7 +37,7 @@ def clean_address(address):
 def clean_zip(zip):
   if zip is None:
     return None
-  return zip.strip()
+  return zip.strip()[:5]  # based on QA, limit zips to only 5 characters
 
 def clean_email(email):
   if email is None:
