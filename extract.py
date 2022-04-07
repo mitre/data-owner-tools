@@ -65,6 +65,21 @@ export_count = 0
 
 parser = argparse.ArgumentParser(description='Tool for extracting, validating and cleaning data for CODI PPRL')
 parser.add_argument('--db', nargs=1, required=True, help='Database connection string')
+parser.add_argument(
+    '--schema',
+    default='codi',
+    help="Database schema to read from. Default is 'codi'"
+)
+parser.add_argument(
+    '--table',
+    default='identifier',
+    help="Database table or view to read from. Default is 'identifier'"
+)
+parser.add_argument(
+    '--idcolumn',
+    default='patid',
+    help="Column name for patient unique ID. Default is 'patid'"
+)
 args = parser.parse_args()
 
 connection_string = args.db[0]
@@ -74,12 +89,15 @@ output_rows = []
 engine = create_engine(connection_string)
 with engine.connect() as connection:
   meta = MetaData()
-  identity = Table('identifier', meta, autoload=True, autoload_with=engine, schema='codi')
+  identity = Table(args.table, meta, autoload=True, autoload_with=engine, schema=args.schema)
 
   query = select([identity])
   results = connection.execute(query)
   for row in results:
-    output_row = [case_insensitive_lookup(row, 'patid')]
+    output_row = []
+    record_id = case_insensitive_lookup(row, args.idcolumn)
+    validate(report, 'record_id', record_id)
+    output_row.append(record_id)
     given_name = case_insensitive_lookup(row, 'given_name')
     validate(report, 'given_name', given_name)
     output_row.append(clean_name(given_name))
