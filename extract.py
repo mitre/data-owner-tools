@@ -146,13 +146,9 @@ def get_query(engine, version):
         query = select([identity])
         return query
     else:
-        # demographic = Table(
-        #     "demographic", MetaData(),
-        #     autoload=True, autoload_with=engine, schema="cdm"
-        # )
-        # demographic table doesn't contain any required fields by itself,
-        # we can join the 2 private_ tables to get all the necessary items
-
+        # note there is also the `demographic` table, but
+        # all relevant identifiers there are also in the two tables below.
+        # so we join just the 2 private_ tables to get all the necessary items
         prv_demo = Table(
             "private_demographic", MetaData(),
             autoload=True, autoload_with=engine, schema="cdm"
@@ -163,6 +159,9 @@ def get_query(engine, version):
             autoload=True, autoload_with=engine, schema="cdm"
         )
 
+        # the expectation is there will only be one record per individual 
+        # in private_address_history, so we simply join the tables
+        # with no further filtering
         query = select([prv_demo, prv_address])\
             .filter(prv_demo.columns.patid == prv_address.columns.patid)
 

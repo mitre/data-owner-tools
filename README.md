@@ -1,6 +1,6 @@
 # Data Owner Tools
 
-Tools for Childhood Obesity Data Initiative (CODI) data owners to extract personally identifiable information (PII) from the CODI Data Model and garble PII to send to the linkage agent for matching. These tools facilitate hashing / Bloom filter creation part of a Privacy-Preserving Record Linkage (PPRL) process.
+Tools for Clinical and Community Data Initiative (CODI) data owners to extract personally identifiable information (PII) from the CODI Data Model and garble PII to send to the linkage agent for matching. These tools facilitate hashing / Bloom filter creation part of a Privacy-Preserving Record Linkage (PPRL) process.
 
 ## Contents:
 1. [Installation](#installation)
@@ -16,11 +16,11 @@ Tools for Childhood Obesity Data Initiative (CODI) data owners to extract person
 
 ### Dependency Overview
 
-These tools were created and tested on Python 3.7.4. The tools rely on two libraries: [SQLAlchemy](https://www.sqlalchemy.org/) and [clkhash](https://github.com/data61/clkhash).
+These tools were created and tested on Python 3.7.4. The tools rely on two libraries: [SQLAlchemy](https://www.sqlalchemy.org/) and [anonlink](https://github.com/data61/anonlink).
 
 SQLAlchemy is a library that allows the tools to connect to a database in a vendor independent fashion. This allows the tools to connect to a database that conforms to the CODI Identity Data Model implented in PostgreSQL or Microsoft SQLServer (and a number of others).
 
-clkhash is a part of the [anonlink](https://github.com/data61/anonlink) suite of tools. It is repsonsible for garbling the PII so that it can be de-identified prior to transmission to the linkage agent. Note: you may have to specify the latest anonlink docker image when pulling, to ensure you are on the right version as registry may have old version (tested on v1.14)
+anonlink is repsonsible for garbling the PII so that it can be de-identified prior to transmission to the linkage agent. Note: you may have to specify the latest anonlink docker image when pulling, to ensure you are on the right version as registry may have old version (tested on v1.14)
 
 ### Installing with an existing Python install
 
@@ -96,11 +96,11 @@ NULL Value: 9
 
 ## Garbling PII
 
-clkhash will garble personally identifiable information (PII) in a way that it can be used for linkage later on. The CODI PPRL process garbles information a number of different ways. The `garble.py` script will manage executing clkhash multiple times and package the information for transmission to the linkage agent.
+anonlink will garble personally identifiable information (PII) in a way that it can be used for linkage later on. The CODI PPRL process garbles information a number of different ways. The `garble.py` script will manage executing anonlink multiple times and package the information for transmission to the linkage agent.
 
 `garble.py` requires 3 different inputs:
 1. The location of a CSV file containing the PII to garble
-1. The location of a directory of clkhash linkage schema files
+1. The location of a directory of anonlink linkage schema files
 1. The location of a secret file to use in the garbling process - this should be a text file containing a single hexadecimal string of at least 128 characters; the `testing-and-tuning/generate_secret.py` script will create this for you if require it, e.g.:
 ```
 python testing-and-tuning/generate_secret.py
@@ -109,7 +109,7 @@ This should create a new file called deidentification_secret.txt in your root di
 
 `garble.py` requires that the location of the PII file, schema directory, and secret file are provided via positional arguments.
 
-The [clkhash schema files](https://clkhash.readthedocs.io/en/latest/schema.html) specify the fields that will be used in the hashing process as well as assigning weights to those fields. The `example-schema` directory contains a set of example schema that can be used to test the tools.
+The [anonlink schema files](https://anonlink-client.readthedocs.io/en/latest/schema.html) specify the fields that will be used in the hashing process as well as assigning weights to those fields. The `example-schema` directory contains a set of example schema that can be used to test the tools.
 
 `garble.py`, and all other scripts in the repository, will provide usage information with the `-h` flag:
 
