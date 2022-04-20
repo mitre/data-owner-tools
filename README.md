@@ -101,7 +101,7 @@ anonlink will garble personally identifiable information (PII) in a way that it 
 `garble.py` requires 3 different inputs:
 1. The location of a CSV file containing the PII to garble
 1. The location of a directory of anonlink linkage schema files
-1. The location of a secret file to use in the garbling process - this should be a text file containing a single hexadecimal string of at least 128 characters; the `testing-and-tuning/generate_secret.py` script will create this for you if require it, e.g.:
+1. The location of a secret file to use in the garbling process - this should be a text file containing a single hexadecimal string of at least 128 bits (32 characters); the `testing-and-tuning/generate_secret.py` script will create this for you if require it, e.g.:
 ```
 python testing-and-tuning/generate_secret.py
 ```
