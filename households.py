@@ -14,29 +14,34 @@ import pandas as pd
 from derive_subkey import derive_subkey
 from households.matching import addr_parse, get_houshold_matches
 
-HEADERS = ["HOUSEHOLD_POSITION", "PAT_CLK_POSITIONS"]
+HEADERS = ["HOUSEHOLD_POSITION", "PII_POSITIONS"]
 HOUSEHOLD_PII_HEADERS = [
     "family_name",
     "phone_number",
     "household_street_address",
     "household_zip",
+    "record_ids",
 ]
 HOUSEHOLD_POS_PID_HEADERS = ["household_position", "pid"]
 
 
 def parse_arguments():
     parser = argparse.ArgumentParser(
-        description="Tool for extracting households from pii.csv"
+        description="Tool for garbling household PII for PPRL purposes in the CODI project"
     )
     parser.add_argument("sourcefile", help="Source PII CSV file")
     parser.add_argument("secretfile", help="Location of de-identification secret file")
+    parser.add_argument(
+        '-d', '--householddef',  # would have used -h but that's help
+        help="Location of household definitions file; don't infer households from source PII"
+    )
     parser.add_argument(
         "--schemafile", default="example-schema/household-schema/fn-phone-addr-zip.json",
         help="Location of linkage schema. Default: example-schema/household-schema/fn-phone-addr-zip.json"
     )
     parser.add_argument(
         "--mappingfile", default="output/households/households.csv",
-        help="Specify a mapping file output. Default is output/households/household.csv"
+        help="Specify a mapping file output for inferred households. Default is output/households/household.csv"
     )
     parser.add_argument(
         '-o', '--output', dest='outputfile', default="output/garbled_households.zip",
@@ -166,7 +171,9 @@ def write_mapping_file(pos_pid_rows, hid_pat_id_rows, args):
             pos_pid_rows.append([hclk_position, line[0]])
             for patid in pat_ids:
                 hid_pat_id_rows.append([hclk_position, patid])
-            output_row = [line[2], line[5], line[6], line[7]]
+            # note pat_ids_str will be quoted by the csv writer if needed
+            pat_ids_str = ','.join(pat_ids)
+            output_row = [line[2], line[5], line[6], line[7], pat_ids_str]
             hclk_position += 1
             output_rows.append(output_row)
     return output_rows
@@ -207,11 +214,12 @@ def hash_households(args):
                 + str(schema_file)
             )
     output_file = Path("output/households/fn-phone-addr-zip.json")
+    household_pii_file = args.householddef or "temp-data/households_pii.csv"
     subprocess.run(
         [
             "anonlink",
             "hash",
-            "temp-data/households_pii.csv",
+            household_pii_file,
             households_secret,
             str(schema_file),
             str(output_file),
@@ -219,7 +227,7 @@ def hash_households(args):
     )
 
 
-def garble_households(args):
+def infer_households(args):
     pos_pid_rows = []
     hid_pat_id_rows = []
     os.makedirs('output/households', exist_ok=True)
@@ -229,19 +237,19 @@ def garble_households(args):
     if args.testrun:
         write_scoring_file(hid_pat_id_rows)
         write_hid_hh_pos_map(pos_pid_rows)
-    hash_households(args)
 
 
 def create_clk_zip(args):
     with ZipFile(args.outputfile, "w") as garbled_zip:
         garbled_zip.write("output/households/fn-phone-addr-zip.json")
-        garbled_zip.write(args.mappingfile)
     print("Zip file created at: " + args.outputfile)
 
 
 def main():
     args = parse_arguments()
-    garble_households(args)
+    if not args.householddef:
+        infer_households(args)
+    hash_households(args)
     create_clk_zip(args)
 
 
