@@ -1,4 +1,4 @@
-SQLAlchemy>=1.3.13
+SQLAlchemy>=1.4.35
 clkhash>=0.16.0
 psycopg2>=2.8.3
 anonlink-client>=0.1.4
