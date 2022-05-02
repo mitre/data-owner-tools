@@ -45,7 +45,7 @@ in the Python Standard Library.
 
 ```shell
 # Navigate to the project folder
-cd linkage-agent-tools/
+cd data-owner-tools/
 # Create a virtual environment in a `venv/` folder
 python3 -m venv venv/
 # Activate the virtual environment
