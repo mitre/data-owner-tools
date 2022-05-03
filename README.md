@@ -47,7 +47,7 @@ in the Python Standard Library.
 # Navigate to the project folder
 cd data-owner-tools/
 # Create a virtual environment in a `venv/` folder
-python3 -m venv venv/
+python -m venv venv/
 # Activate the virtual environment
 source venv/bin/activate
 ```
