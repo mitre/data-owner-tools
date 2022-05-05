@@ -1,5 +1,7 @@
 # Data Owner Tools
 
+[![.github/workflows/style.yml](https://github.com/mitre/data-owner-tools/actions/workflows/style.yml/badge.svg)](https://github.com/mitre/data-owner-tools/actions/workflows/style.yml)
+
 Tools for Clinical and Community Data Initiative (CODI) data owners to extract personally identifiable information (PII) from the CODI Data Model and garble PII to send to the linkage agent for matching. These tools facilitate hashing / Bloom filter creation part of a Privacy-Preserving Record Linkage (PPRL) process.
 
 ## Contents:

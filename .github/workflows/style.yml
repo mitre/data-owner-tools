@@ -1,0 +1,24 @@
+name: Style
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+
+  style:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-python@v3
+      with:
+        python-version: '3.9'
+        cache: 'pip'
+    - name: pip install
+      run: pip install -r requirements.txt
+    - name: run black
+      run: black --check .
+    - name: rune flake8
+      run: flake8 .
