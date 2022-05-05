@@ -21,20 +21,20 @@ HEADER = [
     "household_zip",
 ]
 
-V1 = 'v1'
-V2 = 'v2'
+V1 = "v1"
+V2 = "v2"
 
 # This provides a mapping of our field names
 # to the field names used across versions of the DM
 DATA_DICTIONARY = {
-    "record_id": {V1: 'patid', V2: 'patid'},
-    "given_name": {V1: 'given_name', V2: 'pat_firstname'},
-    "family_name": {V1: 'family_name', V2: 'pat_lastname'},
-    "DOB": {V1: 'birth_date', V2: 'birth_date'},
-    "sex": {V1: 'sex', V2: 'sex'},
-    "phone_number": {V1: 'household_phone', V2: 'primary_phone'},
-    "household_street_address": {V1: 'household_street_address', V2: 'address_street'},
-    "household_zip": {V1: 'household_zip', V2: 'address_zip5'},
+    "record_id": {V1: "patid", V2: "patid"},
+    "given_name": {V1: "given_name", V2: "pat_firstname"},
+    "family_name": {V1: "family_name", V2: "pat_lastname"},
+    "DOB": {V1: "birth_date", V2: "birth_date"},
+    "sex": {V1: "sex", V2: "sex"},
+    "phone_number": {V1: "household_phone", V2: "primary_phone"},
+    "household_street_address": {V1: "household_street_address", V2: "address_street"},
+    "household_zip": {V1: "household_zip", V2: "address_zip5"},
 }
 
 
@@ -42,18 +42,29 @@ def parse_arguments():
     parser = argparse.ArgumentParser(
         description="Tool for extracting, validating and cleaning data for CODI PPRL"
     )
-    parser.add_argument('database', help="Database connection string")
+    parser.add_argument("database", help="Database connection string")
     parser.add_argument(
-        '-v', '--verbose', dest='verbose', action='store_true',
-        help="Verbose mode prints output to console"
+        "-v",
+        "--verbose",
+        dest="verbose",
+        action="store_true",
+        help="Verbose mode prints output to console",
     )
     parser.add_argument(
-        '-s', '--schema', dest='schema', default=V2, choices=[V1, V2],
-        help=f"Version of the CODI Data Model schema to use. \
-               Valid options are \"{V1}\" or \"{V2}\"")
+        "-s",
+        "--schema",
+        dest="schema",
+        default=V2,
+        choices=[V1, V2],
+        help=f'Version of the CODI Data Model schema to use. \
+               Valid options are "{V1}" or "{V2}"',
+    )
     parser.add_argument(
-        '-o', '--output', dest='output_file', default="temp-data/pii.csv",
-        help="Specify an output file. Default is temp-data/pii.csv"
+        "-o",
+        "--output",
+        dest="output_file",
+        default="temp-data/pii.csv",
+        help="Specify an output file. Default is temp-data/pii.csv",
     )
     args = parser.parse_args()
     return args
@@ -74,7 +85,9 @@ def validate(report, field, value):
 def clean_string(pii_string):
     if pii_string is None:
         return None
-    ascii_pii_string = unicodedata.normalize("NFKD", pii_string).encode("ascii", "ignore")
+    ascii_pii_string = unicodedata.normalize("NFKD", pii_string).encode(
+        "ascii", "ignore"
+    )
     return ascii_pii_string.strip().upper().decode("ascii")
 
 
@@ -139,8 +152,7 @@ def extract_database(args):
 def get_query(engine, version):
     if version == V1:
         identity = Table(
-            "identifier", MetaData(),
-            autoload=True, autoload_with=engine, schema="codi"
+            "identifier", MetaData(), autoload=True, autoload_with=engine, schema="codi"
         )
 
         query = select([identity])
@@ -150,20 +162,27 @@ def get_query(engine, version):
         # all relevant identifiers there are also in the two tables below.
         # so we join just the 2 private_ tables to get all the necessary items
         prv_demo = Table(
-            "private_demographic", MetaData(),
-            autoload=True, autoload_with=engine, schema="cdm"
+            "private_demographic",
+            MetaData(),
+            autoload=True,
+            autoload_with=engine,
+            schema="cdm",
         )
 
         prv_address = Table(
-            "private_address_history", MetaData(),
-            autoload=True, autoload_with=engine, schema="cdm"
+            "private_address_history",
+            MetaData(),
+            autoload=True,
+            autoload_with=engine,
+            schema="cdm",
         )
 
-        # the expectation is there will only be one record per individual 
+        # the expectation is there will only be one record per individual
         # in private_address_history, so we simply join the tables
         # with no further filtering
-        query = select([prv_demo, prv_address])\
-            .filter(prv_demo.columns.patid == prv_address.columns.patid)
+        query = select([prv_demo, prv_address]).filter(
+            prv_demo.columns.patid == prv_address.columns.patid
+        )
 
         return query
 
@@ -206,7 +225,7 @@ def handle_row(row, report, version):
 
 
 def write_data(output_rows, args):
-    os.makedirs('temp-data', exist_ok=True)
+    os.makedirs("temp-data", exist_ok=True)
     with open(args.output_file, "w", newline="", encoding="utf-8") as csvfile:
         writer = csv.writer(csvfile)
         writer.writerow(HEADER)

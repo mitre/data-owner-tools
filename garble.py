@@ -19,12 +19,18 @@ def parse_arguments():
     parser.add_argument("schemadir", help="Directory of linkage schema")
     parser.add_argument("secretfile", help="Location of de-identification secret file")
     parser.add_argument(
-        '-z', '--outputzip', dest='outputzip', default="garbled.zip",
-         help="Specify an name for the .zip file. Default is garbled.zip"
+        "-z",
+        "--outputzip",
+        dest="outputzip",
+        default="garbled.zip",
+        help="Specify an name for the .zip file. Default is garbled.zip",
     )
     parser.add_argument(
-        '-o', '--outputdir', dest='outputdir', default="output",
-         help="Specify an output directory. Default is output/"
+        "-o",
+        "--outputdir",
+        dest="outputdir",
+        default="output",
+        help="Specify an output directory. Default is output/",
     )
     args = parser.parse_args()
     if not Path(args.schemadir).exists():
@@ -41,9 +47,9 @@ def validate_secret_file(secret_file):
         try:
             int(secret, 16)
         except ValueError:
-            sys.exit('Secret must be in hexadecimal format')
+            sys.exit("Secret must be in hexadecimal format")
         if len(secret) < 32:
-            sys.exit('Secret smaller than minimum security level')
+            sys.exit("Secret smaller than minimum security level")
     return secret
 
 
@@ -51,9 +57,9 @@ def garble_pii(args):
     schema_dir = Path(args.schemadir)
     secret_file = Path(args.secretfile)
     source_file = args.sourcefile
-    os.makedirs('output', exist_ok=True)
+    os.makedirs("output", exist_ok=True)
     secret = validate_secret_file(secret_file)
-    individuals_secret = derive_subkey(secret, 'individuals')
+    individuals_secret = derive_subkey(secret, "individuals")
 
     clk_files = []
     schema = glob.glob(args.schemadir + "/*.json")
@@ -62,10 +68,9 @@ def garble_pii(args):
             file_contents = schema_file.read()
             if "doubleHash" in file_contents:
                 sys.exit(
-                    "The following schema uses doubleHash, which is insecure: "
-                    + str(s)
+                    "The following schema uses doubleHash, which is insecure: " + str(s)
                 )
-        output_file = Path(args.outputdir, s.split('/')[-1])
+        output_file = Path(args.outputdir, s.split("/")[-1])
         subprocess.run(
             [
                 "anonlink",
@@ -73,9 +78,9 @@ def garble_pii(args):
                 source_file,
                 individuals_secret,
                 str(s),
-                str(output_file)
+                str(output_file),
             ],
-            check=True
+            check=True,
         )
         clk_files.append(output_file)
     return clk_files
@@ -85,7 +90,7 @@ def create_clk_zip(clk_files, args):
     with ZipFile(os.path.join(args.outputdir, args.outputzip), "w") as garbled_zip:
         for clk_file in clk_files:
             garbled_zip.write(clk_file)
-    print("Zip file created at: " + args.outputdir + '/' + args.outputzip)
+    print("Zip file created at: " + args.outputdir + "/" + args.outputzip)
 
 
 def main():

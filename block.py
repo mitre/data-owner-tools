@@ -14,12 +14,14 @@ def parse_arguments():
         description="Tool for garbling PII for PPRL purposes in the CODI project"
     )
     parser.add_argument(
-        "--schemafile", default="example-schema/blocking-schema/lambda.json",
-        help="Path to blocking schema. Default: example-schema/blocking-schema/lambda.json"
+        "--schemafile",
+        default="example-schema/blocking-schema/lambda.json",
+        help="Path to blocking schema. Default: example-schema/blocking-schema/lambda.json",
     )
     parser.add_argument(
-        '--clkpath', default="output",
-         help="Specify a folder containing clks. Default is 'output' folder"
+        "--clkpath",
+        default="output",
+        help="Specify a folder containing clks. Default is 'output' folder",
     )
     args = parser.parse_args()
     if not Path(args.schemafile).exists():
@@ -28,17 +30,17 @@ def parse_arguments():
 
 
 def block_individuals(args):
-    os.makedirs('temp-data', exist_ok=True)
-    os.makedirs('output', exist_ok=True)
+    os.makedirs("temp-data", exist_ok=True)
+    os.makedirs("output", exist_ok=True)
     schema_file = Path(args.schemafile)
     clk_files = glob.glob(os.path.join(args.clkpath, "*.json"))
     blocked_files = []
     for clk in clk_files:
         clk_path = Path(clk)
-        temp_file = Path("temp-data", clk.split('/')[-1])
+        temp_file = Path("temp-data", clk.split("/")[-1])
         subprocess.run(
             ["anonlink", "block", str(clk_path), str(schema_file), str(temp_file)],
-            check=True
+            check=True,
         )
         blocked_files.append(temp_file)
     return blocked_files

@@ -32,24 +32,32 @@ def parse_arguments():
     parser.add_argument("sourcefile", help="Source PII CSV file")
     parser.add_argument("secretfile", help="Location of de-identification secret file")
     parser.add_argument(
-        '-d', '--householddef',  # would have used -h but that's help
-        help="Location of household definitions file; don't infer households from source PII"
+        "-d",
+        "--householddef",  # would have used -h but that's help
+        help="Location of household definitions file; don't infer households from source PII",
     )
     parser.add_argument(
-        "--schemafile", default="example-schema/household-schema/fn-phone-addr-zip.json",
-        help="Location of linkage schema. Default: example-schema/household-schema/fn-phone-addr-zip.json"
+        "--schemafile",
+        default="example-schema/household-schema/fn-phone-addr-zip.json",
+        help="Location of linkage schema. Default: example-schema/household-schema/fn-phone-addr-zip.json",
     )
     parser.add_argument(
-        "--mappingfile", default="output/households/households.csv",
-        help="Specify a mapping file output for inferred households. Default is output/households/household.csv"
+        "--mappingfile",
+        default="output/households/households.csv",
+        help="Specify a mapping file output for inferred households. Default is output/households/household.csv",
     )
     parser.add_argument(
-        '-o', '--output', dest='outputfile', default="output/garbled_households.zip",
-         help="Specify an output file. Default is output/garbled_households.zip"
+        "-o",
+        "--output",
+        dest="outputfile",
+        default="output/garbled_households.zip",
+        help="Specify an output file. Default is output/garbled_households.zip",
     )
     parser.add_argument(
-        "-t", "--testrun", action="store_true",
-        help="Optional generate files used for testing against an answer key"
+        "-t",
+        "--testrun",
+        action="store_true",
+        help="Optional generate files used for testing against an answer key",
     )
     args = parser.parse_args()
     if not Path(args.sourcefile).exists():
@@ -68,34 +76,37 @@ def validate_secret_file(secret_file):
         try:
             int(secret, 16)
         except ValueError:
-            sys.exit('Secret must be in hexadecimal format')
+            sys.exit("Secret must be in hexadecimal format")
         if len(secret) < 32:
-            sys.exit('Secret smaller than minimum security level')
+            sys.exit("Secret smaller than minimum security level")
     return secret
 
 
 def parse_source_file(source_file):
     all_strings = {
-        'record_id': 'str',
-        'given_name': 'str',
-        'family_name': 'str',
-        'DOB': 'str',
-        'sex': 'str',
-        'phone_number': 'str',
-        'household_street_address': 'str',
-        'household_zip': 'str',
-        'parent_given_name': 'str',
-        'parent_family_name': 'str',
-        'parent_email': 'str'
+        "record_id": "str",
+        "given_name": "str",
+        "family_name": "str",
+        "DOB": "str",
+        "sex": "str",
+        "phone_number": "str",
+        "household_street_address": "str",
+        "household_zip": "str",
+        "parent_given_name": "str",
+        "parent_family_name": "str",
+        "parent_email": "str",
     }
     # force all columns to be strings, even if they look numeric
     df = pd.read_csv(source_file, dtype=all_strings)
 
     # break out the address into number, street, suffix, etc,
     # so we can prefilter matches based on those
-    addr_cols = df.apply(lambda row: addr_parse(row.household_street_address),
-                         axis='columns', result_type='expand')
-    df = pd.concat([df, addr_cols], axis='columns')
+    addr_cols = df.apply(
+        lambda row: addr_parse(row.household_street_address),
+        axis="columns",
+        result_type="expand",
+    )
+    df = pd.concat([df, addr_cols], axis="columns")
 
     return df
 
@@ -137,9 +148,7 @@ def write_mapping_file(pos_pid_rows, hid_pat_id_rows, args):
     source_file = Path(args.sourcefile)
     pii_lines = parse_source_file(source_file)
     output_rows = []
-    with open(
-        args.mappingfile, "w", newline="", encoding="utf-8"
-    ) as csvfile:
+    with open(args.mappingfile, "w", newline="", encoding="utf-8") as csvfile:
         writer = csv.writer(csvfile)
         writer.writerow(HEADERS)
         already_added = set()
@@ -159,7 +168,7 @@ def write_mapping_file(pos_pid_rows, hid_pat_id_rows, args):
 
             if position in pos_to_pairs:
                 pat_clks = bfs_traverse_matches(pos_to_pairs, position)
-                pat_ids = list(map(lambda p: pii_lines.at[p, 'record_id'], pat_clks))
+                pat_ids = list(map(lambda p: pii_lines.at[p, "record_id"], pat_clks))
                 already_added.update(pat_clks)
             else:
                 pat_clks = [position]
@@ -172,7 +181,7 @@ def write_mapping_file(pos_pid_rows, hid_pat_id_rows, args):
             for patid in pat_ids:
                 hid_pat_id_rows.append([hclk_position, patid])
             # note pat_ids_str will be quoted by the csv writer if needed
-            pat_ids_str = ','.join(pat_ids)
+            pat_ids_str = ",".join(pat_ids)
             output_row = [line[2], line[5], line[6], line[7], pat_ids_str]
             hclk_position += 1
             output_rows.append(output_row)
@@ -205,7 +214,7 @@ def hash_households(args):
     schema_file = Path(args.schemafile)
     secret_file = Path(args.secretfile)
     secret = validate_secret_file(secret_file)
-    households_secret = derive_subkey(secret, 'households')
+    households_secret = derive_subkey(secret, "households")
     with open(schema_file, "r") as schema:
         file_contents = schema.read()
         if "doubleHash" in file_contents:
@@ -230,8 +239,8 @@ def hash_households(args):
 def infer_households(args):
     pos_pid_rows = []
     hid_pat_id_rows = []
-    os.makedirs('output/households', exist_ok=True)
-    os.makedirs('temp-data', exist_ok=True)
+    os.makedirs("output/households", exist_ok=True)
+    os.makedirs("temp-data", exist_ok=True)
     output_rows = write_mapping_file(pos_pid_rows, hid_pat_id_rows, args)
     write_households_pii(output_rows)
     if args.testrun:

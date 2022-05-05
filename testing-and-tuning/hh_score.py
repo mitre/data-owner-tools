@@ -5,7 +5,7 @@ from itertools import combinations
 from pathlib import Path
 
 
-sites = ['a', 'b', 'c', 'd', 'e', 'f']
+sites = ["a", "b", "c", "d", "e", "f"]
 
 for site in sites:
     hid_csv_path = Path(f"../temp-data/site_{site}_hh_pos_patids.csv")

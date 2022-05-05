@@ -9,7 +9,7 @@ from pathlib import Path
 
 answer_key = Path("../temp-data/answer_key.json")
 
-sites = ['a', 'b', 'c', 'd', 'e', 'f']
+sites = ["a", "b", "c", "d", "e", "f"]
 site_ids = {}
 for site in sites:
     site_ids[site] = set()
@@ -25,7 +25,7 @@ HEADER = ["record_id", "seed_record_id", "household_id", "file_name"]
 new_answer_key = []
 with open(answer_key) as f:
     d = json.load(f)
-    
+
     # {
     #   "14444032-081e-92ac-47dd-eafdbce66365": [
     #     {
@@ -47,13 +47,13 @@ with open(answer_key) as f:
     #       "file_name": "Andrew_Nikla_Denbraber_14444032-081e-92ac-47dd-eafdbce663651.json"
     #     }
     #   ],
-    
+
     for household in d.values():
         for record in household:
-            record_id = record['record_id']
-            seed_record_id = record['seed_record_id']
-            household_id = record['household_id']
-            file_name = record['file_name']
+            record_id = record["record_id"]
+            seed_record_id = record["seed_record_id"]
+            household_id = record["household_id"]
+            file_name = record["file_name"]
             key_line = [record_id, seed_record_id, household_id, file_name]
             new_answer_key.append(key_line)
 
