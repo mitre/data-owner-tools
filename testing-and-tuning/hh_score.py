@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 import csv
-from itertools import combinations
 from pathlib import Path
 
 
@@ -55,7 +54,6 @@ for site in sites:
     recall = true_positives / len(answer_key)
     fscore = 2 * ((precision * recall) / (precision + recall))
     print(
-        "Site {} Data owner household linkage scoring:\nPrecision: {} Recall: {} F-Score: {}".format(
-            site, precision, recall, fscore
-        )
+        "Site {} Data owner household linkage scoring:"
+        "\nPrecision: {} Recall: {} F-Score: {}".format(site, precision, recall, fscore)
     )
