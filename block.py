@@ -5,7 +5,6 @@ import glob
 import os
 from pathlib import Path
 import subprocess
-import sys
 from zipfile import ZipFile
 
 
@@ -16,7 +15,8 @@ def parse_arguments():
     parser.add_argument(
         "--schemafile",
         default="example-schema/blocking-schema/lambda.json",
-        help="Path to blocking schema. Default: example-schema/blocking-schema/lambda.json",
+        help="Path to blocking schema."
+        " Default: example-schema/blocking-schema/lambda.json",
     )
     parser.add_argument(
         "--clkpath",
