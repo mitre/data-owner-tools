@@ -54,7 +54,6 @@ def validate_secret_file(secret_file):
 
 
 def garble_pii(args):
-    schema_dir = Path(args.schemadir)
     secret_file = Path(args.secretfile)
     source_file = args.sourcefile
     os.makedirs("output", exist_ok=True)
