@@ -27,24 +27,28 @@ HOUSEHOLD_POS_PID_HEADERS = ["household_position", "pid"]
 
 def parse_arguments():
     parser = argparse.ArgumentParser(
-        description="Tool for garbling household PII for PPRL purposes in the CODI project"
+        description="Tool for garbling household PII for PPRL purposes"
+        " in the CODI project"
     )
     parser.add_argument("sourcefile", help="Source PII CSV file")
     parser.add_argument("secretfile", help="Location of de-identification secret file")
     parser.add_argument(
         "-d",
         "--householddef",  # would have used -h but that's help
-        help="Location of household definitions file; don't infer households from source PII",
+        help="Location of household definitions file;"
+        " don't infer households from source PII",
     )
     parser.add_argument(
         "--schemafile",
         default="example-schema/household-schema/fn-phone-addr-zip.json",
-        help="Location of linkage schema. Default: example-schema/household-schema/fn-phone-addr-zip.json",
+        help="Location of linkage schema."
+        " Default: example-schema/household-schema/fn-phone-addr-zip.json",
     )
     parser.add_argument(
         "--mappingfile",
         default="output/households/households.csv",
-        help="Specify a mapping file output for inferred households. Default is output/households/household.csv",
+        help="Specify a mapping file output for inferred households."
+        " Default is output/households/household.csv",
     )
     parser.add_argument(
         "-o",
