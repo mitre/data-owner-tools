@@ -6,7 +6,6 @@ import recordlinkage
 
 from recordlinkage.base import BaseCompareFeature
 
-
 MATCH_THRESHOLD = 0.8
 FN_WEIGHT = 0.2
 PHONE_WEIGHT = 0.15
@@ -25,7 +24,7 @@ def addr_parse(addr):
 
     try:
         addr_tuples = usaddress.parse(addr)
-    except:
+    except Exception:
         return address_dict
 
     for pair in addr_tuples:
@@ -210,7 +209,8 @@ def address_distance(a1, a2):
         if max_score_sec:
             secondary_score = max_score_sec
 
-    # See if simple string compare of all things combined with a 0.6 adjustment is better
+    # See if simple string compare of all things combined
+    # with a 0.6 adjustment is better
     score = max(
         score,
         textdistance.jaro_winkler(a1, a2) * (weight_number + weight_street_name) * 0.6,
