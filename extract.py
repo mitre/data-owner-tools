@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 
 import argparse
-from collections import Counter
 import csv
 import os
-from random import shuffle
 import unicodedata
+from collections import Counter
+from random import shuffle
 
-from sqlalchemy import create_engine, MetaData, Table
+from sqlalchemy import MetaData, Table, create_engine
 from sqlalchemy.sql import select
 
 HEADER = [

@@ -3,7 +3,6 @@
 import csv
 from pathlib import Path
 
-
 sites = ["a", "b", "c", "d", "e", "f"]
 
 for site in sites:

@@ -3,9 +3,9 @@
 import argparse
 import glob
 import os
-from pathlib import Path
 import subprocess
 import sys
+from pathlib import Path
 from zipfile import ZipFile
 
 from derive_subkey import derive_subkey

@@ -1,9 +1,8 @@
+import numpy as np
+import pandas as pd
+import recordlinkage
 import textdistance
 import usaddress
-import pandas as pd
-import numpy as np
-import recordlinkage
-
 from recordlinkage.base import BaseCompareFeature
 
 MATCH_THRESHOLD = 0.8

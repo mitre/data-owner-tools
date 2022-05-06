@@ -3,10 +3,10 @@
 import argparse
 import csv
 import os
-from pathlib import Path
-from random import shuffle
 import subprocess
 import sys
+from pathlib import Path
+from random import shuffle
 from zipfile import ZipFile
 
 import pandas as pd
