@@ -224,6 +224,16 @@ In the [linkage agent tools](https://github.com/mitre/linkage-agent-tools) there
 
 If you would like to test household linkage you can currently run the `garble.sh` script (configuring the sites for which you have extracted pii). If you would like to test blocking you may run the `blocking_garble.sh` script. Note: for these scripts it is assumed that the pii files created by the `extract.py` have been renamed to their respective `pii_{site}.csv`.
 
+## Formatting and Linting
+
+This repository uses `black`, `flake8`, and `isort` to maintain consistent formatting and style. These tools can be run with the following command:
+
+```shell
+black .
+isort .
+flake8
+```
+
 ## Notice
 
 Copyright 2020-2022 The MITRE Corporation.
