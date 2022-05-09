@@ -24,11 +24,39 @@ anonlink is repsonsible for garbling the PII so that it can be de-identified pri
 
 ### Installing with an existing Python install
 
-1. Download the tools as a zip file using the "Clone or download" button on GitHub.
-1. Unzip the file.
-1. From the unzipped directory run:
 
-    `pip install -r requirements.txt`
+#### Cloning the Repository
+
+Clone the project locally as a Git repository
+```shell
+git clone https://github.com/mitre/data-owner-tools.git
+```
+
+Or download as a zip file:
+
+1. [Click this link to download the project as a zip](https://github.com/mitre/data-owner-tools/archive/refs/heads/master.zip) or use the "Clone or download" button on GitHub.
+1. Unzip the file.
+
+#### Set up a virtual environment _(Optional, but recommended)_
+
+It can be helpful to set up a virtual environment to isolate project dependencies from system dependencies.
+There are a few libraries that can do this, but this documentation will stick with `venv` since that is included
+in the Python Standard Library.
+
+```shell
+# Navigate to the project folder
+cd data-owner-tools/
+# Create a virtual environment in a `venv/` folder
+python -m venv venv/
+# Activate the virtual environment
+source venv/bin/activate
+```
+
+#### Installing dependencies
+
+```shell
+pip install -r requirements.txt
+```
 
 N.B. If the install fails during install of psycopg2 due to a clang error, you may need to run the following to resolve:
     `env LDFLAGS='-L/usr/local/lib -L/usr/local/opt/openssl/lib -L/usr/local/opt/readline/lib' pip install psycopg2==2.8.4`
