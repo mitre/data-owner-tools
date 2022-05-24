@@ -140,3 +140,7 @@ blocking-output/*
 garbled.zip
 households_pii.csv
 households.csv
+
+# output from data_analysis.py
+results_*.txt
+private_results_*.txt
