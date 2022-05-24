@@ -1,3 +1,6 @@
+black==22.3.0
+flake8==4.0.1
+isort==5.10.1
 SQLAlchemy>=1.4.35
 clkhash>=0.16.0
 psycopg2>=2.8.3

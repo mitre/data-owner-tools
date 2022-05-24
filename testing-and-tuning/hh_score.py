@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
 
 import csv
-from itertools import combinations
 from pathlib import Path
 
-
-sites = ['a', 'b', 'c', 'd', 'e', 'f']
+sites = ["a", "b", "c", "d", "e", "f"]
 
 for site in sites:
     hid_csv_path = Path(f"../temp-data/site_{site}_hh_pos_patids.csv")
@@ -55,7 +53,6 @@ for site in sites:
     recall = true_positives / len(answer_key)
     fscore = 2 * ((precision * recall) / (precision + recall))
     print(
-        "Site {} Data owner household linkage scoring:\nPrecision: {} Recall: {} F-Score: {}".format(
-            site, precision, recall, fscore
-        )
+        "Site {} Data owner household linkage scoring:"
+        "\nPrecision: {} Recall: {} F-Score: {}".format(site, precision, recall, fscore)
     )

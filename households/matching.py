@@ -1,11 +1,9 @@
+import numpy as np
+import pandas as pd
+import recordlinkage
 import textdistance
 import usaddress
-import pandas as pd
-import numpy as np
-import recordlinkage
-
 from recordlinkage.base import BaseCompareFeature
-
 
 MATCH_THRESHOLD = 0.8
 FN_WEIGHT = 0.2
@@ -25,7 +23,7 @@ def addr_parse(addr):
 
     try:
         addr_tuples = usaddress.parse(addr)
-    except:
+    except Exception:
         return address_dict
 
     for pair in addr_tuples:
@@ -210,16 +208,12 @@ def address_distance(a1, a2):
         if max_score_sec:
             secondary_score = max_score_sec
 
-    # See if simple string compare of all things combined with a 0.6 adjustment is better
-    score = (
-        max(
-            score,
-            textdistance.jaro_winkler(a1, a2)
-            * (weight_number + weight_street_name)
-            * 0.6,
-        )
-        + (secondary_score * weight_secondary)
-    )
+    # See if simple string compare of all things combined
+    # with a 0.6 adjustment is better
+    score = max(
+        score,
+        textdistance.jaro_winkler(a1, a2) * (weight_number + weight_street_name) * 0.6,
+    ) + (secondary_score * weight_secondary)
     return score
 
 
@@ -237,10 +231,7 @@ class AddressComparison(BaseCompareFeature):
     name = "address"
     description = "Compare attributes of record pairs."
 
-    def __init__(self,
-                 left_on,
-                 right_on,
-                 label=None):
+    def __init__(self, left_on, right_on, label=None):
         super(AddressComparison, self).__init__(left_on, right_on, label=label)
 
     def _compute_vectorized(self, s1, s2):
@@ -269,33 +260,40 @@ def get_houshold_matches(pii_lines):
     #  but also records pairs in their neighbourhood."
     # potentially match on close zips and street names
     # note that the default "window" aka distance to consider pairs is 3
-    indexer.sortedneighbourhood('household_zip')
-    indexer.sortedneighbourhood('street')
+    indexer.sortedneighbourhood("household_zip")
+    indexer.sortedneighbourhood("street")
     candidate_links = indexer.index(pii_lines)
 
     # Comparison step performs the defined comparison algorithms
     # against the candidate pairs
     compare_cl = recordlinkage.Compare()
 
-    compare_cl.string('family_name', 'family_name',
-                      method='jarowinkler', label='family_name')
-    compare_cl.string('phone_number', 'phone_number',
-                      method='jarowinkler', label='phone_number')
-    compare_cl.add(AddressComparison('household_street_address',
-                                     'household_street_address',
-                                     label='household_street_address'))
-    compare_cl.string('household_zip', 'household_zip',
-                      method='levenshtein', label='household_zip')
+    compare_cl.string(
+        "family_name", "family_name", method="jarowinkler", label="family_name"
+    )
+    compare_cl.string(
+        "phone_number", "phone_number", method="jarowinkler", label="phone_number"
+    )
+    compare_cl.add(
+        AddressComparison(
+            "household_street_address",
+            "household_street_address",
+            label="household_street_address",
+        )
+    )
+    compare_cl.string(
+        "household_zip", "household_zip", method="levenshtein", label="household_zip"
+    )
     # note: hamming distance is not implemented in this library,
     # but levenshtein is. the two metrics are likely similar enough
     # that it's not worth implementing hamming again
 
     features = compare_cl.compute(candidate_links, pii_lines)
 
-    features['family_name'] *= FN_WEIGHT
-    features['phone_number'] *= PHONE_WEIGHT
-    features['household_street_address'] *= ADDR_WEIGHT
-    features['household_zip'] *= ZIP_WEIGHT
+    features["family_name"] *= FN_WEIGHT
+    features["phone_number"] *= PHONE_WEIGHT
+    features["household_street_address"] *= ADDR_WEIGHT
+    features["household_zip"] *= ZIP_WEIGHT
 
     # filter the matches down based on the cumulative score
     matches = features[features.sum(axis=1) > MATCH_THRESHOLD]

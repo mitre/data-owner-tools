@@ -1,5 +1,7 @@
 # Data Owner Tools
 
+[![.github/workflows/style.yml](https://github.com/mitre/data-owner-tools/actions/workflows/style.yml/badge.svg)](https://github.com/mitre/data-owner-tools/actions/workflows/style.yml)
+
 Tools for Clinical and Community Data Initiative (CODI) data owners to extract personally identifiable information (PII) from the CODI Data Model and garble PII to send to the linkage agent for matching. These tools facilitate hashing / Bloom filter creation part of a Privacy-Preserving Record Linkage (PPRL) process.
 
 ## Contents:
@@ -249,6 +251,16 @@ The documentation above outlines the approach for a single data owner to run the
 In the [linkage agent tools](https://github.com/mitre/linkage-agent-tools) there is a Jupyter notebook under development that will run all of these steps through the notebook by invoking scripts in the `testing-and-tuning/` folder.
 
 If you would like to test household linkage you can currently run the `garble.sh` script (configuring the sites for which you have extracted pii). If you would like to test blocking you may run the `blocking_garble.sh` script. Note: for these scripts it is assumed that the pii files created by the `extract.py` have been renamed to their respective `pii_{site}.csv`.
+
+## Formatting and Linting
+
+This repository uses `black`, `flake8`, and `isort` to maintain consistent formatting and style. These tools can be run with the following command:
+
+```shell
+black .
+isort .
+flake8
+```
 
 ## Notice
 
