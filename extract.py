@@ -66,6 +66,26 @@ def parse_arguments():
         default="temp-data/pii.csv",
         help="Specify an output file. Default is temp-data/pii.csv",
     )
+    parser.add_argument(
+        '--v1.schema',
+        dest='v1_schema',
+        default='codi',
+        help="Database schema to read from in a v1 database. Default is 'codi'"
+    )
+    parser.add_argument(
+        '--v1.table',
+        dest='v1_table',
+        default='identifier',
+        help="Database table or view to read from in a v1 database. "
+             "Default is 'identifier'"
+    )
+    parser.add_argument(
+        '--v1.idcolumn',
+        dest='v1_idcolumn',
+        default='patid',
+        help="Column name for patient unique ID in a v1 database. "
+             "Default is 'patid'"
+    )
     args = parser.parse_args()
     return args
 
@@ -137,7 +157,7 @@ def extract_database(args):
     report = get_report()
     engine = create_engine(connection_string)
     with engine.connect() as connection:
-        query = get_query(engine, version)
+        query = get_query(engine, version, args)
         results = connection.execute(query)
         for row in results:
             output_row = handle_row(row, report, version)
@@ -149,13 +169,19 @@ def extract_database(args):
     return output_rows
 
 
-def get_query(engine, version):
+def get_query(engine, version, args):
     if version == V1:
-        identity = Table(
-            "identifier", MetaData(), autoload=True, autoload_with=engine, schema="codi"
+        DATA_DICTIONARY["record_id"][V1] = args.v1_idcolumn
+
+        identifier = Table(
+            args.v1_table,  # default: "identifier"
+            MetaData(),
+            autoload=True,
+            autoload_with=engine,
+            schema=args.v1_schema,  # default: "codi"
         )
 
-        query = select([identity])
+        query = select([identifier])
         return query
     else:
         # note there is also the `demographic` table, but
