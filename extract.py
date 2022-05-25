@@ -7,8 +7,9 @@ import unicodedata
 from collections import Counter
 from random import shuffle
 
-from sqlalchemy import MetaData, Table, create_engine
-from sqlalchemy.sql import select
+from sqlalchemy import create_engine
+
+from utils.data_reader import add_parser_db_args, case_insensitive_lookup, get_query
 
 HEADER = [
     "record_id",
@@ -24,19 +25,6 @@ HEADER = [
 V1 = "v1"
 V2 = "v2"
 
-# This provides a mapping of our field names
-# to the field names used across versions of the DM
-DATA_DICTIONARY = {
-    "record_id": {V1: "patid", V2: "patid"},
-    "given_name": {V1: "given_name", V2: "pat_firstname"},
-    "family_name": {V1: "family_name", V2: "pat_lastname"},
-    "DOB": {V1: "birth_date", V2: "birth_date"},
-    "sex": {V1: "sex", V2: "sex"},
-    "phone_number": {V1: "household_phone", V2: "primary_phone"},
-    "household_street_address": {V1: "household_street_address", V2: "address_street"},
-    "household_zip": {V1: "household_zip", V2: "address_zip5"},
-}
-
 
 def parse_arguments():
     parser = argparse.ArgumentParser(
@@ -51,41 +39,15 @@ def parse_arguments():
         help="Verbose mode prints output to console",
     )
     parser.add_argument(
-        "-s",
-        "--schema",
-        dest="schema",
-        default=V2,
-        choices=[V1, V2],
-        help=f'Version of the CODI Data Model schema to use. \
-               Valid options are "{V1}" or "{V2}"',
-    )
-    parser.add_argument(
         "-o",
         "--output",
         dest="output_file",
         default="temp-data/pii.csv",
         help="Specify an output file. Default is temp-data/pii.csv",
     )
-    parser.add_argument(
-        '--v1.schema',
-        dest='v1_schema',
-        default='codi',
-        help="Database schema to read from in a v1 database. Default is 'codi'"
-    )
-    parser.add_argument(
-        '--v1.table',
-        dest='v1_table',
-        default='identifier',
-        help="Database table or view to read from in a v1 database. "
-             "Default is 'identifier'"
-    )
-    parser.add_argument(
-        '--v1.idcolumn',
-        dest='v1_idcolumn',
-        default='patid',
-        help="Column name for patient unique ID in a v1 database. "
-             "Default is 'patid'"
-    )
+
+    add_parser_db_args(parser)
+
     args = parser.parse_args()
     return args
 
@@ -123,17 +85,6 @@ def clean_zip(household_zip):
     return household_zip.strip()
 
 
-def case_insensitive_lookup(row, key, version):
-    desired_key = DATA_DICTIONARY[key][version]
-
-    if desired_key in row:
-        return row[desired_key]
-    else:
-        for actual_key in row.keys():
-            if actual_key.lower() == desired_key:
-                return row[actual_key]
-
-
 def get_report():
     report = {}
     for h in HEADER:
@@ -169,50 +120,6 @@ def extract_database(args):
     return output_rows
 
 
-def get_query(engine, version, args):
-    if version == V1:
-        DATA_DICTIONARY["record_id"][V1] = args.v1_idcolumn
-
-        identifier = Table(
-            args.v1_table,  # default: "identifier"
-            MetaData(),
-            autoload=True,
-            autoload_with=engine,
-            schema=args.v1_schema,  # default: "codi"
-        )
-
-        query = select([identifier])
-        return query
-    else:
-        # note there is also the `demographic` table, but
-        # all relevant identifiers there are also in the two tables below.
-        # so we join just the 2 private_ tables to get all the necessary items
-        prv_demo = Table(
-            "private_demographic",
-            MetaData(),
-            autoload=True,
-            autoload_with=engine,
-            schema="cdm",
-        )
-
-        prv_address = Table(
-            "private_address_history",
-            MetaData(),
-            autoload=True,
-            autoload_with=engine,
-            schema="cdm",
-        )
-
-        # the expectation is there will only be one record per individual
-        # in private_address_history, so we simply join the tables
-        # with no further filtering
-        query = select([prv_demo, prv_address]).filter(
-            prv_demo.columns.patid == prv_address.columns.patid
-        )
-
-        return query
-
-
 def handle_row(row, report, version):
     output_row = []
     record_id = case_insensitive_lookup(row, "record_id", version)
@@ -233,17 +140,17 @@ def handle_row(row, report, version):
     validate(report, "sex", sex)
     output_row.append(sex.strip())
 
-    phone_number = case_insensitive_lookup(row, "phone_number", version)
+    phone_number = case_insensitive_lookup(row, "phone", version)
     validate(report, "phone_number", phone_number)
     output_row.append(clean_phone(phone_number))
 
     household_street_address = case_insensitive_lookup(
-        row, "household_street_address", version
+        row, "address", version
     )
     validate(report, "household_street_address", household_street_address)
     output_row.append(clean_string(household_street_address))
 
-    household_zip = case_insensitive_lookup(row, "household_zip", version)
+    household_zip = case_insensitive_lookup(row, "zip", version)
     validate(report, "household_zip", household_zip)
     output_row.append(clean_zip(household_zip))
 

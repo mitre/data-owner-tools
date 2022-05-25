@@ -8,6 +8,9 @@ import pandas as pd
 from sqlalchemy import create_engine, MetaData, Table
 from sqlalchemy.sql import select
 
+from utils.data_reader import DataReader, add_parser_db_args, case_insensitive_lookup, load_db, load_csv
+
+
 def parse_args():
     parser = argparse.ArgumentParser()
     group = parser.add_mutually_exclusive_group(required=True)
@@ -20,68 +23,10 @@ def parse_args():
         help='Connection string for DB to analyze',
     )
 
-    # DB-related arguments
-    parser.add_argument(
-        '--schema',
-        default='codi',
-        help="Database schema to read from. Default is 'codi'"
-    )
-    parser.add_argument(
-        '--table',
-        default='identifier',
-        help="Database table or view to read from. Default is 'identifier'"
-    )
-    parser.add_argument(
-        '--idcolumn',
-        default='patid',
-        help="Column name for patient unique ID. Default is 'patid'"
-    )
+    add_parser_db_args(parser)
 
     args = parser.parse_args()
     return args
-
-# This provides a mapping of friendly names
-# to the field names used in the DB and CSV
-DATA_DICTIONARY = {
-    "patid": {'db': 'patid', 'csv': 'record_id'},
-    "given_name": {'db': 'given_name', 'csv': 'given_name'},
-    "family_name": {'db': 'family_name', 'csv': 'family_name'},
-    "dob": {'db': 'birth_date', 'csv': 'DOB'},
-    "sex": {'db': 'sex', 'csv': 'sex'},
-    "phone": {'db': 'household_phone', 'csv': 'phone_number'},
-    "address": {'db': 'household_street_address', 'csv': 'household_street_address'},
-    "zip": {'db': 'household_zip', 'csv': 'household_zip'},
-}
-
-
-def get_column(row, key, source):
-    desired_key = DATA_DICTIONARY[key][source]
-
-    if desired_key in row:
-        return row[desired_key]
-    else:
-        for actual_key in row.keys():
-            if actual_key.lower() == desired_key:
-                return row[actual_key]
-
-
-def load_db(args):
-    connection_string = args.db
-    schema = args.schema
-    table = args.table
-
-    engine = create_engine(connection_string)
-    meta = MetaData()
-    identifier = Table(table, meta, autoload=True, autoload_with=engine, schema=schema)
-    query = select([identifier])
-    db_data = pd.read_sql(query, connection_string)
-    return db_data  
-
-
-def load_csv(filepath):
-    # force all columns to be strings, even if they look numeric
-    csv_data = pd.read_csv(filepath, dtype=str)
-    return csv_data
 
 
 def analyze(data, source):
@@ -90,17 +35,17 @@ def analyze(data, source):
 
     stats['number_of_rows'] = len(data.index)
 
-    patid_col = get_column(data, 'patid', source)
-    patid_stats = top_N(patid_col)
-    stats['total_unique_patids'] = len(patid_stats)
+    record_id_col = case_insensitive_lookup(data, 'record_id', source)
+    record_id_stats = top_N(record_id_col)
+    stats['total_unique_record_ids'] = len(record_id_stats)
 
-    patid_dups = {k:v for (k,v) in patid_stats.items() if v > 1}
-    stats['patids_with_duplicates'] = len(patid_dups)
-    if len(patid_dups) > 0 and len(patid_dups) < (len(patid_stats) * .2):
+    record_id_dups = {k:v for (k,v) in record_id_stats.items() if v > 1}
+    stats['record_ids_with_duplicates'] = len(record_id_dups)
+    if len(record_id_dups) > 0 and len(record_id_dups) < (len(record_id_stats) * .2):
         # only report individual IDs if there are less than 20% dups
-        raw_values['duplicate_patids'] = patid_dups
+        raw_values['duplicate_record_ids'] = record_id_dups
 
-    dob_col = get_column(data, 'dob', source)
+    dob_col = case_insensitive_lookup(data, 'DOB', source)
     notnull_dobs = dob_col.dropna()
     stats['dob'] = {
         'min': str(notnull_dobs.min()),  # str-ify because we get Timestamp from DB
@@ -145,16 +90,16 @@ def analyze(data, source):
         out_of_range = notnull_dobs[notnull_dobs < expected_min_dob]
         stats['dob']['count_earlier_dob_than_expected'] = len(out_of_range)
 
-    sex_col = get_column(data, 'sex', source)
+    sex_col = case_insensitive_lookup(data, 'sex', source)
     stats['sex'] = top_N(sex_col)
 
-    zip_col = get_column(data, 'zip', source)
+    zip_col = case_insensitive_lookup(data, 'zip', source)
     data['zip_format'] = zip_col.map(to_format)
     stats['zip_format'] = top_N(data['zip_format'])
 
     stats['top_10_zip_codes'] = top_N(zip_col, 10)
 
-    phone_col = get_column(data, 'phone', source)
+    phone_col = case_insensitive_lookup(data, 'phone', source)
     data['phone_format'] = phone_col.map(to_format)
 
     stats['phone_format'] = top_N(data['phone_format'])
@@ -162,13 +107,13 @@ def analyze(data, source):
     # Note: the following top 10s are limited to anything that occurs 3+ times,
     # in order to limit the potential spill of PII.
     # For this analysis, any names that appear 2 or fewer times are not especially useful.
-    given_name_col = get_column(data, 'given_name', source)
+    given_name_col = case_insensitive_lookup(data, 'given_name', source)
     raw_values['top_10_given_names'] = top_N(given_name_col, 10, 3)
 
-    family_name_col = get_column(data, 'family_name', source)
+    family_name_col = case_insensitive_lookup(data, 'family_name', source)
     raw_values['top_10_family_names'] = top_N(family_name_col, 10, 3)
 
-    address_col = get_column(data, 'address', source)
+    address_col = case_insensitive_lookup(data, 'address', source)
     raw_values['top_10_addresses'] = top_N(address_col, 10, 3)
 
     raw_values['top_10_phone_numbers'] = top_N(phone_col, 10, 3)
@@ -253,9 +198,8 @@ if __name__ == "__main__":
         source = 'csv'
 
     if args.db:
-        DATA_DICTIONARY['patid']['db'] = args.idcolumn
         db_data = load_db(args)
-        results = analyze(db_data, 'db')
+        results = analyze(db_data, args.schema)
         source = 'db'
 
     timestamp = int(time.time())
