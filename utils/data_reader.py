@@ -1,5 +1,4 @@
 import pandas as pd
-
 from sqlalchemy import MetaData, Table, create_engine
 from sqlalchemy.sql import select
 
@@ -10,14 +9,18 @@ CSV = "csv"
 # This provides a mapping of our field names
 # to the field names used across versions of the DM and the CSV
 DATA_DICTIONARY = {
-    "record_id": {V1: "patid", V2: "patid", CSV: 'record_id'},
-    "given_name": {V1: "given_name", V2: "pat_firstname", CSV: 'given_name'},
-    "family_name": {V1: "family_name", V2: "pat_lastname", CSV: 'family_name'},
-    "DOB": {V1: "birth_date", V2: "birth_date", CSV: 'DOB'},
-    "sex": {V1: "sex", V2: "sex", CSV: 'sex'},
-    "phone": {V1: "household_phone", V2: "primary_phone", CSV: 'phone_number'},
-    "address": {V1: "household_street_address", V2: "address_street", CSV: 'household_street_address'},
-    "zip": {V1: "household_zip", V2: "address_zip5", CSV: 'household_zip'},
+    "record_id": {V1: "patid", V2: "patid", CSV: "record_id"},
+    "given_name": {V1: "given_name", V2: "pat_firstname", CSV: "given_name"},
+    "family_name": {V1: "family_name", V2: "pat_lastname", CSV: "family_name"},
+    "DOB": {V1: "birth_date", V2: "birth_date", CSV: "DOB"},
+    "sex": {V1: "sex", V2: "sex", CSV: "sex"},
+    "phone": {V1: "household_phone", V2: "primary_phone", CSV: "phone_number"},
+    "address": {
+        V1: "household_street_address",
+        V2: "address_street",
+        CSV: "household_street_address",
+    },
+    "zip": {V1: "household_zip", V2: "address_zip5", CSV: "household_zip"},
 }
 
 
@@ -29,29 +32,28 @@ def add_parser_db_args(parser):
         default=V2,
         choices=[V1, V2],
         help=f"Version of the CODI Data Model schema to use. "
-               "Valid options are \"{V1}\" or \"{V2}\"",
+        'Valid options are "{V1}" or "{V2}"',
     )
 
     parser.add_argument(
-        '--v1.schema',
-        dest='v1_schema',
-        default='codi',
-        help="Database schema to read from in a v1 database. "
-             "Default is 'codi'"
+        "--v1.schema",
+        dest="v1_schema",
+        default="codi",
+        help="Database schema to read from in a v1 database. " "Default is 'codi'",
     )
     parser.add_argument(
-        '--v1.table',
-        dest='v1_table',
-        default='identifier',
+        "--v1.table",
+        dest="v1_table",
+        default="identifier",
         help="Database table or view to read from in a v1 database. "
-             "Default is 'identifier'"
+        "Default is 'identifier'",
     )
     parser.add_argument(
-        '--v1.idcolumn',
-        dest='v1_idcolumn',
-        default='patid',
+        "--v1.idcolumn",
+        dest="v1_idcolumn",
+        default="patid",
         help="Column name for patient unique ID in a v1 database. "
-             "Default is 'patid'"
+        "Default is 'patid'",
     )
 
 
@@ -124,4 +126,3 @@ def load_csv(filepath):
     # force all columns to be strings, even if they look numeric
     csv_data = pd.read_csv(filepath, dtype=str)
     return csv_data
-

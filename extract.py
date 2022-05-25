@@ -144,9 +144,7 @@ def handle_row(row, report, version):
     validate(report, "phone_number", phone_number)
     output_row.append(clean_phone(phone_number))
 
-    household_street_address = case_insensitive_lookup(
-        row, "address", version
-    )
+    household_street_address = case_insensitive_lookup(row, "address", version)
     validate(report, "household_street_address", household_street_address)
     output_row.append(clean_string(household_street_address))
 
