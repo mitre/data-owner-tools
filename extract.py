@@ -2,6 +2,7 @@
 
 import argparse
 import csv
+import json
 import os
 import unicodedata
 from collections import Counter
@@ -10,6 +11,7 @@ from random import shuffle
 from sqlalchemy import create_engine
 
 from utils.data_reader import add_parser_db_args, case_insensitive_lookup, get_query
+from utils.csv_extractor import read_duplicate_file, read_deduplicated_file
 
 HEADER = [
     "record_id",
@@ -24,6 +26,8 @@ HEADER = [
 
 V1 = "v1"
 V2 = "v2"
+
+INGEST_BEHAVIOR = {'gotr':lambda x: x, 'hfc':lambda x: x}
 
 
 def parse_arguments():
@@ -45,10 +49,18 @@ def parse_arguments():
         default="temp-data/pii.csv",
         help="Specify an output file. Default is temp-data/pii.csv",
     )
+    parser.add_argument(
+        "--csv",
+        dest="csv_config",
+        default=False,
+        nargs=1,
+        help="Specify path to csv translation config file"
+    )
 
     add_parser_db_args(parser)
 
     args = parser.parse_args()
+
     return args
 
 
@@ -119,6 +131,24 @@ def extract_database(args):
         print_report(report)
     return output_rows
 
+# TODO: fold kwargs into parsed object using argparse
+def extract_gotr(args, mapping={}, csvfile="", duplicatefile="", dedupefile="", init_id=100000):
+    output_rows = []
+    duplicate_lines = read_duplicate_file(duplicatefile)
+    participant_lines = read_deduplicated_file(dedupefile)
+    report = get_report()
+    person_id = init_id
+    with open(csvfile,'r') as datasource:
+        rows = csv.DictReader(datasource)
+        for row in rows:
+            row['record_id'] = person_id
+            person_id += 1
+            output_rows.append(handle_row(row, report, mapping))
+
+    if args.verbose:
+        print_report(report)
+    return output_rows
+
 
 def handle_row(row, report, version):
     output_row = []
@@ -166,7 +196,18 @@ def write_data(output_rows, args):
 
 def main():
     args = parse_arguments()
-    output_rows = extract_database(args)
+    if args.csv_conf:
+        with open(args.csv_conf, 'r') as f:
+            conf = json.load(f)
+        if 'ingestion_behavior' in conf:
+            mode = conf['ingestion_behavior']['mode']
+            ingest_kwargs = conf['ingestion_behavior'].get('kwargs', {})
+            ingest_kwargs['mapping'] = conf['translation_map']
+            output_rows = INGEST_BEHAVIOR[mode](args, **ingest_kwargs)
+        else:
+            generic_extract(conf)
+    else:
+        output_rows = extract_database(args)
     write_data(output_rows, args)
     if args.verbose:
         print("Total records exported: {}".format(len(output_rows)))

@@ -8,7 +8,7 @@ CSV = "csv"
 
 # This provides a mapping of our field names
 # to the field names used across versions of the DM and the CSV
-DATA_DICTIONARY = {
+OLD_DATA_DICTIONARY = {
     "record_id": {V1: "patid", V2: "patid", CSV: "record_id"},
     "given_name": {V1: "given_name", V2: "pat_firstname", CSV: "given_name"},
     "family_name": {V1: "family_name", V2: "pat_lastname", CSV: "family_name"},
@@ -23,6 +23,23 @@ DATA_DICTIONARY = {
     "zip": {V1: "household_zip", V2: "address_zip5", CSV: "household_zip"},
 }
 
+DATA_DICTIONARY = {
+    V1: {
+        'record_id': 'patid', 'given_name': 'given_name', 'family_name': 'family_name',
+        'DOB': 'birth_date', 'sex': 'sex', 'phone': 'household_phone',
+        'address': 'household_street_address', 'zip': 'household_zip'
+    },
+    V2: {
+        'record_id': 'patid', 'given_name': 'pat_firstname', 'family_name': 'pat_lastname',
+        'DOB': 'birth_date', 'sex': 'sex', 'phone': 'primary_phone', 'address': 'address_street',
+        'zip': 'address_zip5'
+    },
+    CSV: {
+        'record_id': 'record_id', 'given_name': 'given_name', 'family_name': 'family_name',
+        'DOB': 'DOB', 'sex': 'sex', 'phone': 'phone_number', 'address': 'household_street_address',
+        'zip': 'household_zip'
+    }
+}
 
 def add_parser_db_args(parser):
     parser.add_argument(
@@ -58,7 +75,13 @@ def add_parser_db_args(parser):
 
 
 def case_insensitive_lookup(row, key, version):
-    desired_key = DATA_DICTIONARY[key][version]
+
+    if type(version) == str:
+        desired_key = DATA_DICTIONARY[version][key]
+    else:
+        # if key is not present in mapping, then it is a key not present in the original
+        # data, and therefore will be added to the row with its proper name before this point
+        desired_key = version.get(key, key)
 
     if desired_key in row:
         return row[desired_key]
