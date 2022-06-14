@@ -95,8 +95,6 @@ def case_insensitive_lookup(row, key, version):
     if type(version) == str:
         desired_key = DATA_DICTIONARY[version][key]
     else:
-        # if key is not present in mapping, then it is a key not present in the original
-        # data, and therefore will be added to the row with its proper name before this point
         desired_key = version.get(key, key)
         defaults = version.get("default_values", {})
 
