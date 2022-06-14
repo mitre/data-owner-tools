@@ -95,6 +95,13 @@ def clean_zip(household_zip):
     return household_zip.strip()
 
 
+def clean_dob_fromstr(dob_str, date_format):
+    norm_str = unicodedata.normalize("NFKD", dob_str).encode(
+        "ascii", "ignore"
+    )
+    return strftime("%Y-%m-%d", strptime(norm_str.decode('ascii'), date_format))
+
+
 def get_report():
     report = {}
     for h in HEADER:
@@ -167,7 +174,7 @@ def handle_row(row, report, version):
 
     dob = case_insensitive_lookup(row, "DOB", version)
     if type(dob) == str:
-        dob = strftime("%Y-%m-%d", strptime(dob, version["date_format"]))
+        dob = clean_dob_fromstr(dob, version["date_format"])
         validate(report, "DOB", dob)
         output_row.append(dob)
     else:
