@@ -25,21 +25,37 @@ OLD_DATA_DICTIONARY = {
 
 DATA_DICTIONARY = {
     V1: {
-        'record_id': 'patid', 'given_name': 'given_name', 'family_name': 'family_name',
-        'DOB': 'birth_date', 'sex': 'sex', 'phone': 'household_phone',
-        'address': 'household_street_address', 'zip': 'household_zip'
+        "record_id": "patid",
+        "given_name": "given_name",
+        "family_name": "family_name",
+        "DOB": "birth_date",
+        "sex": "sex",
+        "phone": "household_phone",
+        "address": "household_street_address",
+        "zip": "household_zip",
     },
     V2: {
-        'record_id': 'patid', 'given_name': 'pat_firstname', 'family_name': 'pat_lastname',
-        'DOB': 'birth_date', 'sex': 'sex', 'phone': 'primary_phone', 'address': 'address_street',
-        'zip': 'address_zip5'
+        "record_id": "patid",
+        "given_name": "pat_firstname",
+        "family_name": "pat_lastname",
+        "DOB": "birth_date",
+        "sex": "sex",
+        "phone": "primary_phone",
+        "address": "address_street",
+        "zip": "address_zip5",
     },
     CSV: {
-        'record_id': 'record_id', 'given_name': 'given_name', 'family_name': 'family_name',
-        'DOB': 'DOB', 'sex': 'sex', 'phone': 'phone_number', 'address': 'household_street_address',
-        'zip': 'household_zip'
-    }
+        "record_id": "record_id",
+        "given_name": "given_name",
+        "family_name": "family_name",
+        "DOB": "DOB",
+        "sex": "sex",
+        "phone": "phone_number",
+        "address": "household_street_address",
+        "zip": "household_zip",
+    },
 }
+
 
 def add_parser_db_args(parser):
     parser.add_argument(
@@ -90,7 +106,7 @@ def case_insensitive_lookup(row, key, version):
         for actual_key in row.keys():
             if actual_key.lower() == desired_key.lower():
                 return row[actual_key]
-            
+
     if desired_key in defaults:
         return defaults[desired_key]
     else:

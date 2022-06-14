@@ -52,7 +52,7 @@ def parse_arguments():
         "--csv",
         dest="csv_conf",
         default=False,
-        help="Specify path to csv translation config file"
+        help="Specify path to csv translation config file",
     )
 
     add_parser_db_args(parser)
@@ -133,11 +133,11 @@ def extract_database(args):
 def extract_csv(args, mapping=None, csvfile="", init_id=100000, date_format="%y%m%d"):
     if mapping is None:
         mapping = dict()
-    mapping['date_format'] = date_format
+    mapping["date_format"] = date_format
     output_rows = []
     report = get_report()
     person_id = init_id
-    with open(csvfile, 'r') as datasource:
+    with open(csvfile, "r") as datasource:
         rows = csv.DictReader(datasource)
         for row in rows:
             handled_row = handle_row(row, report, mapping)
@@ -167,8 +167,8 @@ def handle_row(row, report, version):
 
     dob = case_insensitive_lookup(row, "DOB", version)
     if type(dob) == str:
-        dob = strftime('%Y-%m-%d',strptime(dob, version['date_format']))
-        validate(report,"DOB",dob)
+        dob = strftime("%Y-%m-%d", strptime(dob, version["date_format"]))
+        validate(report, "DOB", dob)
         output_row.append(dob)
     else:
         output_row.append(dob.isoformat())
@@ -215,13 +215,17 @@ def main():
             for issue in issues:
                 print("\t-", issue)
             print()
-        with open(args.csv_conf, 'r') as f:
+        with open(args.csv_conf, "r") as f:
             conf = json.load(f)
-        ingest_kwargs = {'mapping': conf['translation_map'], 'csvfile': conf['filepath'],
-                         'init_id': int(conf['initial_id']), 'date_format': conf['date_format']}
+        ingest_kwargs = {
+            "mapping": conf["translation_map"],
+            "csvfile": conf["filepath"],
+            "init_id": int(conf["initial_id"]),
+            "date_format": conf["date_format"],
+        }
         output_rows = extract_csv(args, **ingest_kwargs)
-        if 'output' in conf:
-            args.output_file = conf['output']
+        if "output" in conf:
+            args.output_file = conf["output"]
     else:
         output_rows = extract_database(args)
     write_data(output_rows, args)
