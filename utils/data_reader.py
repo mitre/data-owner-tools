@@ -75,20 +75,29 @@ def add_parser_db_args(parser):
 
 
 def case_insensitive_lookup(row, key, version):
-
+    defaults = {}
     if type(version) == str:
         desired_key = DATA_DICTIONARY[version][key]
     else:
         # if key is not present in mapping, then it is a key not present in the original
         # data, and therefore will be added to the row with its proper name before this point
         desired_key = version.get(key, key)
+        defaults = version.get("default_values", {})
 
     if desired_key in row:
         return row[desired_key]
     else:
         for actual_key in row.keys():
-            if actual_key.lower() == desired_key:
+            if actual_key.lower() == desired_key.lower():
                 return row[actual_key]
+            
+    if desired_key in defaults:
+        return defaults[desired_key]
+    else:
+        for actual_key in defaults.keys():
+            if actual_key.lower() == desired_key.lower():
+                return defaults[actual_key]
+        return False
 
 
 def get_query(engine, version, args):

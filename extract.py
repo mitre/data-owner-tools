@@ -7,11 +7,12 @@ import os
 import unicodedata
 from collections import Counter
 from random import shuffle
+from time import strftime, strptime
 
 from sqlalchemy import create_engine
 
 from utils.data_reader import add_parser_db_args, case_insensitive_lookup, get_query
-from utils.csv_extractor import read_duplicate_file, read_deduplicated_file
+from utils.validate import validate_csv_conf
 
 HEADER = [
     "record_id",
@@ -27,14 +28,12 @@ HEADER = [
 V1 = "v1"
 V2 = "v2"
 
-INGEST_BEHAVIOR = {'gotr':lambda x: x, 'hfc':lambda x: x}
-
 
 def parse_arguments():
     parser = argparse.ArgumentParser(
         description="Tool for extracting, validating and cleaning data for CODI PPRL"
     )
-    parser.add_argument("database", help="Database connection string")
+    parser.add_argument("database", help="Database connection string", nargs="?")
     parser.add_argument(
         "-v",
         "--verbose",
@@ -51,9 +50,8 @@ def parse_arguments():
     )
     parser.add_argument(
         "--csv",
-        dest="csv_config",
+        dest="csv_conf",
         default=False,
-        nargs=1,
         help="Specify path to csv translation config file"
     )
 
@@ -131,20 +129,24 @@ def extract_database(args):
         print_report(report)
     return output_rows
 
-# TODO: fold kwargs into parsed object using argparse
-def extract_gotr(args, mapping={}, csvfile="", duplicatefile="", dedupefile="", init_id=100000):
+
+def extract_csv(args, mapping=None, csvfile="", init_id=100000, date_format="%y%m%d"):
+    if mapping is None:
+        mapping = dict()
+    mapping['date_format'] = date_format
     output_rows = []
-    duplicate_lines = read_duplicate_file(duplicatefile)
-    participant_lines = read_deduplicated_file(dedupefile)
     report = get_report()
     person_id = init_id
-    with open(csvfile,'r') as datasource:
+    with open(csvfile, 'r') as datasource:
         rows = csv.DictReader(datasource)
         for row in rows:
-            row['record_id'] = person_id
-            person_id += 1
-            output_rows.append(handle_row(row, report, mapping))
+            handled_row = handle_row(row, report, mapping)
+            if not handled_row[0]:
+                handled_row[0] = person_id
+                person_id += 1
+            output_rows.append(handled_row)
 
+    shuffle(output_rows)
     if args.verbose:
         print_report(report)
     return output_rows
@@ -164,7 +166,12 @@ def handle_row(row, report, version):
     output_row.append(clean_string(family_name))
 
     dob = case_insensitive_lookup(row, "DOB", version)
-    output_row.append(dob.isoformat())
+    if type(dob) == str:
+        dob = strftime('%Y-%m-%d',strptime(dob, version['date_format']))
+        validate(report,"DOB",dob)
+        output_row.append(dob)
+    else:
+        output_row.append(dob.isoformat())
 
     sex = case_insensitive_lookup(row, "sex", version)
     validate(report, "sex", sex)
@@ -196,16 +203,25 @@ def write_data(output_rows, args):
 
 def main():
     args = parse_arguments()
+    print()
+    print("csv-conf:", args.csv_conf)
     if args.csv_conf:
+
+        issues = validate_csv_conf(args.csv_conf)
+        if len(issues) == 0 and args.verbose:
+            print("\nNo issues found in csv extraction config")
+        elif args.verbose:
+            print(f"Found {len(issues)} issues in csv extraction config:")
+            for issue in issues:
+                print("\t-", issue)
+            print()
         with open(args.csv_conf, 'r') as f:
             conf = json.load(f)
-        if 'ingestion_behavior' in conf:
-            mode = conf['ingestion_behavior']['mode']
-            ingest_kwargs = conf['ingestion_behavior'].get('kwargs', {})
-            ingest_kwargs['mapping'] = conf['translation_map']
-            output_rows = INGEST_BEHAVIOR[mode](args, **ingest_kwargs)
-        else:
-            generic_extract(conf)
+        ingest_kwargs = {'mapping': conf['translation_map'], 'csvfile': conf['filepath'],
+                         'init_id': int(conf['initial_id']), 'date_format': conf['date_format']}
+        output_rows = extract_csv(args, **ingest_kwargs)
+        if 'output' in conf:
+            args.output_file = conf['output']
     else:
         output_rows = extract_database(args)
     write_data(output_rows, args)
