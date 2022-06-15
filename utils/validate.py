@@ -1,5 +1,4 @@
 import json
-from os.path import exists
 
 MAP_COLS = [
     "given_name",
@@ -17,10 +16,6 @@ def validate_csv_conf(filepath):
         conf = json.load(f)
     issues = []
 
-    if "filepath" not in conf:
-        issues.append("No csv file specified")
-    elif not exists(conf["filepath"]):
-        issues.append("Specified csv does not exist")
     if "date_format" not in conf:
         issues.append("No date ingest format specified")
     if "translation_map" not in conf:

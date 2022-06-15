@@ -33,7 +33,12 @@ def parse_arguments():
     parser = argparse.ArgumentParser(
         description="Tool for extracting, validating and cleaning data for CODI PPRL"
     )
-    parser.add_argument("database", help="Database connection string", nargs="?")
+    parser.add_argument(
+        "source",
+        help="Specify an extraction source."
+        "Valid source is database connection string or path to csv file",
+    )
+
     parser.add_argument(
         "-v",
         "--verbose",
@@ -96,10 +101,8 @@ def clean_zip(household_zip):
 
 
 def clean_dob_fromstr(dob_str, date_format):
-    norm_str = unicodedata.normalize("NFKD", dob_str).encode(
-        "ascii", "ignore"
-    )
-    return strftime("%Y-%m-%d", strptime(norm_str.decode('ascii'), date_format))
+    norm_str = unicodedata.normalize("NFKD", dob_str).encode("ascii", "ignore")
+    return strftime("%Y-%m-%d", strptime(norm_str.decode("ascii"), date_format))
 
 
 def get_report():
@@ -120,7 +123,7 @@ def print_report(report):
 
 def extract_database(args):
     output_rows = []
-    connection_string = args.database
+    connection_string = args.source
     version = args.schema
     report = get_report()
     engine = create_engine(connection_string)
@@ -137,14 +140,14 @@ def extract_database(args):
     return output_rows
 
 
-def extract_csv(args, mapping=None, csvfile="", init_id=100000, date_format="%y%m%d"):
+def extract_csv(args, mapping=None, init_id=100000, date_format="%y%m%d"):
     if mapping is None:
         mapping = dict()
     mapping["date_format"] = date_format
     output_rows = []
     report = get_report()
     person_id = init_id
-    with open(csvfile, "r") as datasource:
+    with open(args.source, "r") as datasource:
         rows = csv.DictReader(datasource)
         for row in rows:
             handled_row = handle_row(row, report, mapping)
@@ -226,13 +229,10 @@ def main():
             conf = json.load(f)
         ingest_kwargs = {
             "mapping": conf["translation_map"],
-            "csvfile": conf["filepath"],
             "init_id": int(conf["initial_id"]),
             "date_format": conf["date_format"],
         }
         output_rows = extract_csv(args, **ingest_kwargs)
-        if "output" in conf:
-            args.output_file = conf["output"]
     else:
         output_rows = extract_database(args)
     write_data(output_rows, args)

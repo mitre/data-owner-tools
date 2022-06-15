@@ -1,1 +1,0 @@
-{"filepath": "data-owner-tools/testing-and-tuning/faker-gotr.csv", "initial_id": 100000, "date_format": "%m/%d/%Y", "translation_map": {"given_name": "First Name", "family_name": "Last Name", "DOB": "DateOfBirth", "phone": "Telephone Number", "address": "Street Address 1", "zip": "Zip", "default_values": {"sex": "F"}}, "output": "gotr-test-pii.csv"}

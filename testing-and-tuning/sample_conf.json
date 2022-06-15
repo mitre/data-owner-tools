@@ -1,0 +1,15 @@
+{
+  "date_format": "%m/%d/%Y",
+  "initial_id": 100000,
+  "translation_map": {
+    "given_name": "First Name",
+    "family_name": "Last Name",
+    "DOB": "DateOfBirth",
+    "phone": "Telephone Number",
+    "address": "Street Address 1",
+    "zip": "Zip",
+    "default_values": {
+      "sex": "F"
+    }
+  }
+}
