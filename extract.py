@@ -67,7 +67,7 @@ def parse_arguments():
     return args
 
 
-def validate(report, field, value):
+def validate(report, field, value, reg_rules=None):
     if value is None:
         report[field]["NULL Value"] += 1
         return
@@ -77,6 +77,9 @@ def validate(report, field, value):
         report[field]["Contains Non-printable Characters"] += 1
     if value.isspace():
         report[field]["Empty String"] += 1
+    if type(reg_rules) == dict:
+        if field in reg_rules and value not in reg_rules[field]:
+            report[field]["Unregularizable"] += 1
 
 
 def clean_string(pii_string):
@@ -140,17 +143,20 @@ def extract_database(args):
     return output_rows
 
 
-def extract_csv(args, mapping=None, init_id=100000, date_format="%y%m%d"):
+def extract_csv(args, mapping=None, init_id=0, date_format="%y%m%d", reg_rules=None):
     if mapping is None:
         mapping = dict()
-    mapping["date_format"] = date_format
+    if reg_rules is None:
+        reg_rules = dict()
+    translation = {"meta": {"reg_rules": reg_rules}, "mapping": mapping}
+    translation["meta"]["date_format"] = date_format
     output_rows = []
     report = get_report()
     person_id = init_id
     with open(args.source, "r") as datasource:
         rows = csv.DictReader(datasource)
         for row in rows:
-            handled_row = handle_row(row, report, mapping)
+            handled_row = translate_row(row, report, translation)
             if not handled_row[0]:
                 handled_row[0] = person_id
                 person_id += 1
@@ -160,6 +166,62 @@ def extract_csv(args, mapping=None, init_id=100000, date_format="%y%m%d"):
     if args.verbose:
         print_report(report)
     return output_rows
+
+
+def translate_row(row, report, translation):
+    output_row = []
+    reg_rules = translation["meta"]["reg_rules"]
+    mapping = translation["mapping"]
+
+    record_id = case_insensitive_lookup(row, "record_id", mapping)
+    output_row.append(record_id)
+
+    given_name = case_insensitive_lookup(row, "given_name", mapping)
+    validate(report, "given_name", given_name, reg_rules)
+    clean_given_name = clean_string(given_name)
+    output_row.append(
+        reg_rules.get("given_name", {}).get(clean_given_name, clean_given_name)
+    )
+
+    family_name = case_insensitive_lookup(row, "family_name", mapping)
+    validate(report, "family_name", family_name, reg_rules)
+    clean_family_name = clean_string(family_name)
+    output_row.append(
+        reg_rules.get("family_name", {}).get(clean_family_name, clean_family_name)
+    )
+
+    dob = case_insensitive_lookup(row, "DOB", mapping)
+    dob = clean_dob_fromstr(dob, translation["meta"]["date_format"])
+    validate(report, "DOB", dob, reg_rules)
+    output_row.append(reg_rules.get("DOB", {}).get(dob, dob))
+
+    sex = case_insensitive_lookup(row, "sex", mapping)
+    validate(report, "sex", sex, reg_rules)
+    output_row.append(reg_rules.get("sex", {}).get(sex, sex))
+
+    # is phone or phone_number the canonical field name?
+    phone_number = case_insensitive_lookup(row, "phone", mapping)
+    validate(report, "phone_number", phone_number, reg_rules)
+    clean_phone_number = clean_phone(phone_number)
+    output_row.append(
+        reg_rules.get("phone", {}).get(clean_phone_number, clean_phone_number)
+    )
+
+    household_street_address = case_insensitive_lookup(row, "address", mapping)
+    validate(report, "household_street_address", household_street_address, reg_rules)
+    clean_household_street_address = clean_string(household_street_address)
+    output_row.append(
+        reg_rules.get("household_street_address", {}).get(
+            clean_household_street_address, clean_household_street_address
+        )
+    )
+
+    household_zip = case_insensitive_lookup(row, "zip", mapping)
+    validate(report, "household_zip", household_zip, reg_rules)
+    cleaned_zip = clean_zip(household_zip)
+    output_row.append(reg_rules.get("zip", {}).get(cleaned_zip, cleaned_zip))
+
+    return output_row
 
 
 def handle_row(row, report, version):
@@ -176,12 +238,7 @@ def handle_row(row, report, version):
     output_row.append(clean_string(family_name))
 
     dob = case_insensitive_lookup(row, "DOB", version)
-    if type(dob) == str:
-        dob = clean_dob_fromstr(dob, version["date_format"])
-        validate(report, "DOB", dob)
-        output_row.append(dob)
-    else:
-        output_row.append(dob.isoformat())
+    output_row.append(dob.isoformat())
 
     sex = case_insensitive_lookup(row, "sex", version)
     validate(report, "sex", sex)
@@ -231,6 +288,7 @@ def main():
             "mapping": conf["translation_map"],
             "init_id": int(conf["initial_id"]),
             "date_format": conf["date_format"],
+            "reg_rules": conf["regularization_rules"],
         }
         output_rows = extract_csv(args, **ingest_kwargs)
     else:

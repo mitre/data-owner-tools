@@ -11,5 +11,9 @@
     "default_values": {
       "sex": "F"
     }
+  },
+  "regularization_rules": {
+    "sex": {"Female": "F", "Male": "M"},
+    "phone": {"1234567890": "PLACEHOLDER/UNKNOWN"}
   }
 }
