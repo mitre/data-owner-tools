@@ -110,11 +110,10 @@ def translation_lookup(row, key, translation_map):
     mapped_key = map_key(row, desired_key)
     defaults = translation_map.get("default_values", {})
 
-    if (mapped_key := map_key(row, desired_key)) is not None:
+    if (mapped_key := map_key(row, desired_key)) and row[mapped_key] != "":
         return row[mapped_key]
-    elif (mapped_key := map_key(defaults, desired_key)) is not None:
-        return defaults[map_key(defaults, desired_key)]
-    return None
+    else:
+      return defaults.get(key, None)
 
 
 def get_query(engine, version, args):
