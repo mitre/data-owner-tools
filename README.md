@@ -128,7 +128,13 @@ NULL Value: 9
 
 ### `.csv` Translation Configuration File
 
-The configuration file used to extract and translate data for PPRL from a `.csv` file must be a `.json` file, the path to which is specified with the `--csv_config` flag. The `.json` file must contain the following fields:
+The configuration file used to extract and translate data for PPRL from a `.csv` file must be a `.json` file, the path to which is specified with the `--csv_config` flag.
+
+```python
+python extract.py my_data.csv --csv_conf my_config.json
+```
+
+The `.json` file must contain the following fields:
 
 * A "date_format" field which specifies the string date representation of dates within the `.csv` for DOB extraction. The string must conform to the 1989 C Date format standard. See [Python's datetime documentation](https://docs.python.org/3/library/datetime.html#strftime-strptime-behavior) for the most relevant information.
 * A "translation_map" field that contains an object mapping standardized column names used in the PPRL process to the column names within the `.csv` file. The following columns require a mapping or a default value:
