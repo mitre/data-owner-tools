@@ -83,9 +83,11 @@ N.B. If the install fails during install of psycopg2 due to a clang error, you m
 
 ## Extract PII
 
-The CODI PPRL process depends on information pulled from a database structured to match the CODI Data Model. `extract.py` connects to a database and extracts information, cleaning and validating it to prepare it for the PPRL process. The script will output a `temp-data/pii.csv` file that contains the PII ready for garbling.
+The CODI PPRL process depends on information pulled from a database or translated from a `.csv` file structured to match the CODI Data Model. `extract.py` either connects to a database and extracts information, or reads from a provided `.csv` file, cleaning and validating it to prepare it for the PPRL process. The script will output a `temp-data/pii.csv` file that contains the PII ready for garbling.
 
-`extract.py` requires a database connection string to connect. Consult the [SQLAlchemy documentation](https://docs.sqlalchemy.org/en/13/core/engines.html#database-urls) to determine the exact string for the database in use.
+To extract from a database, `extract.py` requires a database connection string to connect. Consult the [SQLAlchemy documentation](https://docs.sqlalchemy.org/en/13/core/engines.html#database-urls) to determine the exact string for the database in use.
+
+To translate from a `.csv` file, `extract.py` requires a `.json` configuration file, the path to which must be specified with the `--csv_config` flag. The requirements of this configuration file are described [below](#csv-translation-configuration-file)
 
 When finished, if you specify the `--verbose` flag, the script will print a report to the terminal, documenting various issues it found when extracting the data. An example execution of the script is included below:
 
@@ -123,6 +125,26 @@ household_zip
 --------------------
 NULL Value: 9
 ```
+
+### `.csv` Translation Configuration File
+
+The configuration file used to extract and translate data for PPRL from a `.csv` file must be a `.json` file, the path to which is specified with the `--csv_config` flag. The `.json` file must contain the following fields:
+
+* A "date_format" field which specifies the string date representation of dates within the `.csv` for DOB extraction. The string must conform to the 1989 C Date format standard. See [Python's datetime documentation](https://docs.python.org/3/library/datetime.html#strftime-strptime-behavior) for the most relevant information.
+* A "translation_map" field that contains an object mapping standardized column names used in the PPRL process to the column names within the `.csv` file. The following columns require a mapping or a default value:
+	* "given_name" 
+	* "family_name"
+	* "DOB"
+	* "sex"
+	* "phone"
+	* "address"
+	* "zip"
+Default values are provided as an object within the "tranlsation_map" under the field "default_values". It both provides a single default value to assign to an entire column if not present within the `.csv` or if a given record has no value for that field
+
+The configuration file may also optionally contain the following fields:
+
+* A "value_mapping_rules" field which contains an dictionary which maps values found within a given column to values expected for the PPRL process (e.g. mapping "Male" and "Female" within the "sex" column to "M" and "F", respectively)
+* An "initial_id" field which gives an integer to be used as the ID number for each of the records if a suitable column is not present in the `.csv` file or if a value is not present for that field in a given record. IDs are generated sequentially counting up from the provided "initial_id" if used.
 
 ## Garbling PII
 
