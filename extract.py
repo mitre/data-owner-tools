@@ -25,9 +25,9 @@ HEADER = [
     "family_name",
     "DOB",
     "sex",
-    "phone",
-    "address",
-    "zip",
+    "phone_number",
+    "household_street_address",
+    "household_zip",
 ]
 
 V1 = "v1"
@@ -200,14 +200,14 @@ def translate_row(row, report, conf):
 
     # is phone or phone_number the canonical field name?
     phone_number = translation_lookup(row, "phone", column_maps)
-    validate(report, "phone", phone_number, value_maps)
+    validate(report, "phone_number", phone_number, value_maps)
     clean_phone_number = clean_phone(phone_number)
     output_row.append(
         value_maps.get("phone", {}).get(clean_phone_number, clean_phone_number)
     )
 
     household_street_address = translation_lookup(row, "address", column_maps)
-    validate(report, "address", household_street_address, value_maps)
+    validate(report, "household_street_address", household_street_address, value_maps)
     clean_household_street_address = clean_string(household_street_address)
     output_row.append(
         value_maps.get("address", {}).get(
@@ -216,7 +216,7 @@ def translate_row(row, report, conf):
     )
 
     household_zip = translation_lookup(row, "zip", column_maps)
-    validate(report, "zip", household_zip, value_maps)
+    validate(report, "household_zip", household_zip, value_maps)
     cleaned_zip = clean_zip(household_zip)
     output_row.append(value_maps.get("zip", {}).get(cleaned_zip, cleaned_zip))
 
@@ -252,7 +252,7 @@ def handle_row(row, report, version):
     output_row.append(clean_string(household_street_address))
 
     household_zip = case_insensitive_lookup(row, "zip", version)
-    validate(report, "zip", household_zip)
+    validate(report, "household_zip", household_zip)
     output_row.append(clean_zip(household_zip))
 
     return output_row
