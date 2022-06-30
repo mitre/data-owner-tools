@@ -27,7 +27,7 @@ HEADER = [
     "sex",
     "phone",
     "address",
-    "household_zip",
+    "zip",
 ]
 
 V1 = "v1"
@@ -216,7 +216,7 @@ def translate_row(row, report, conf):
     )
 
     household_zip = translation_lookup(row, "zip", column_maps)
-    validate(report, "household_zip", household_zip, value_maps)
+    validate(report, "zip", household_zip, value_maps)
     cleaned_zip = clean_zip(household_zip)
     output_row.append(value_maps.get("zip", {}).get(cleaned_zip, cleaned_zip))
 
