@@ -72,7 +72,7 @@ def parse_arguments():
     return args
 
 
-def validate(report, field, value, reg_rules=None):
+def validate(report, field, value, value_mapping=None):
     if value is None:
         report[field]["NULL Value"] += 1
         return
@@ -82,9 +82,9 @@ def validate(report, field, value, reg_rules=None):
         report[field]["Contains Non-printable Characters"] += 1
     if value.isspace():
         report[field]["Empty String"] += 1
-    if type(reg_rules) == dict:
-        if field in reg_rules and value not in reg_rules[field]:
-            report[field]["Unregularizable"] += 1
+    if type(value_mapping) == dict:
+        if field in value_mapping and value not in value_mapping[field]:
+            report[field]["No Mapping Available"] += 1
 
 
 def clean_string(pii_string):
