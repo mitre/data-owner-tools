@@ -252,7 +252,7 @@ def handle_row(row, report, version):
     output_row.append(clean_string(household_street_address))
 
     household_zip = case_insensitive_lookup(row, "zip", version)
-    validate(report, "household_zip", household_zip)
+    validate(report, "zip", household_zip)
     output_row.append(clean_zip(household_zip))
 
     return output_row
