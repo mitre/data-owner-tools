@@ -113,7 +113,7 @@ def translation_lookup(row, key, translation_map):
     if (mapped_key := map_key(row, desired_key)) and row[mapped_key] != "":
         return row[mapped_key]
     else:
-      return defaults.get(key, None)
+        return defaults.get(key, None)
 
 
 def get_query(engine, version, args):
