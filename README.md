@@ -146,6 +146,8 @@ The configuration file may also optionally contain the following fields:
 * A "value_mapping_rules" field which contains an dictionary which maps values found within a given column to values expected for the PPRL process (e.g. mapping "Male" and "Female" within the "sex" column to "M" and "F", respectively)
 * An "initial_id" field which gives an integer to be used as the ID number for each of the records if a suitable column is not present in the `.csv` file or if a value is not present for that field in a given record. IDs are generated sequentially counting up from the provided "initial_id" if used.
 
+See [`testing-and-tuning/sample_conf.json`](https://github.com/mitre/data-owner-tools/blob/csv-translation/testing-and-tuning/sample_conf.json) for an example of the configuration file.
+
 ## Garbling PII
 
 anonlink will garble personally identifiable information (PII) in a way that it can be used for linkage later on. The CODI PPRL process garbles information a number of different ways. The `garble.py` script will manage executing anonlink multiple times and package the information for transmission to the linkage agent.
