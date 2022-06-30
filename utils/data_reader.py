@@ -90,39 +90,31 @@ def add_parser_db_args(parser):
     )
 
 
+def map_key(row, key):
+    if key in row:
+        return key
+    else:
+        lower_key = key.lower()
+        for row_key in row.keys():
+            if row_key.lower() == lower_key:
+                return row_key
+
+
 def case_insensitive_lookup(row, key, version):
-    desired_key = DATA_DICTIONARY[key][version]
-
-    if desired_key in row:
-        return row[desired_key]
-    else:
-        for actual_key in row.keys():
-            if actual_key.lower() == desired_key:
-                return row[actual_key]
+    mapped_key = map_key(row, DATA_DICTIONARY[version][key])
+    return row[mapped_key] if (mapped_key) else None
 
 
-def translation_lookup(row, key, version):
-    defaults = {}
-    if type(version) == str:
-        desired_key = DATA_DICTIONARY[version][key]
-    else:
-        desired_key = version.get(key, key)
-        defaults = version.get("default_values", {})
+def translation_lookup(row, key, translation_map):
+    desired_key = translation_map.get(key, key)
+    mapped_key = map_key(row, desired_key)
+    defaults = translation_map.get("default_values", {})
 
-    if desired_key in row:
-        return row[desired_key]
-    else:
-        for actual_key in row.keys():
-            if actual_key.lower() == desired_key.lower():
-                return row[actual_key]
-
-    if desired_key in defaults:
-        return defaults[desired_key]
-    else:
-        for actual_key in defaults.keys():
-            if actual_key.lower() == desired_key.lower():
-                return defaults[actual_key]
-        return False
+    if (mapped_key := map_key(row, desired_key)) is not None:
+        return row[mapped_key]
+    elif (mapped_key := map_key(defaults, desired_key)) is not None:
+        return defaults[map_key(defaults, desired_key)]
+    return None
 
 
 def get_query(engine, version, args):
