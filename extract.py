@@ -171,14 +171,11 @@ def translate_row(row, report, conf):
     output_row = []
     value_maps = conf["value_mapping_rules"]
     column_maps = conf["translation_map"]
-    defaults = column_maps.get("default_values", {})
 
     record_id = translation_lookup(row, "record_id", column_maps)
     output_row.append(record_id)
 
     given_name = translation_lookup(row, "given_name", column_maps)
-    if given_name is None and "given_name" in defaults:
-        given_name = defaults["given_name"]
     validate(report, "given_name", given_name, value_maps)
     clean_given_name = clean_string(given_name)
     output_row.append(
@@ -186,8 +183,6 @@ def translate_row(row, report, conf):
     )
 
     family_name = translation_lookup(row, "family_name", column_maps)
-    if family_name is None and "family_name" in defaults:
-        family_name = defaults["family_name"]
     validate(report, "family_name", family_name, value_maps)
     clean_family_name = clean_string(family_name)
     output_row.append(
@@ -195,21 +190,16 @@ def translate_row(row, report, conf):
     )
 
     dob = translation_lookup(row, "DOB", column_maps)
-    if dob is None and "DOB" in defaults:
-        dob = defaults["DOB"]
     dob = clean_dob_fromstr(dob, conf["date_format"])
     validate(report, "DOB", dob, value_maps)
     output_row.append(value_maps.get("DOB", {}).get(dob, dob))
 
     sex = translation_lookup(row, "sex", column_maps)
-    if sex is None and "sex" in defaults:
-        sex = defaults["sex"]
     validate(report, "sex", sex, value_maps)
     output_row.append(value_maps.get("sex", {}).get(sex, sex))
 
+    # is phone or phone_number the canonical field name?
     phone_number = translation_lookup(row, "phone", column_maps)
-    if phone_number is None and "phone" in defaults:
-        phone_number = defaults["phone"]
     validate(report, "phone", phone_number, value_maps)
     clean_phone_number = clean_phone(phone_number)
     output_row.append(
@@ -217,8 +207,6 @@ def translate_row(row, report, conf):
     )
 
     household_street_address = translation_lookup(row, "address", column_maps)
-    if household_street_address is None and "address" in defaults:
-        household_street_address = defaults["address"]
     validate(report, "address", household_street_address, value_maps)
     clean_household_street_address = clean_string(household_street_address)
     output_row.append(
@@ -228,8 +216,6 @@ def translate_row(row, report, conf):
     )
 
     household_zip = translation_lookup(row, "zip", column_maps)
-    if household_zip is None and "zip" in defaults:
-        household_zip = defaults["zip"]
     validate(report, "zip", household_zip, value_maps)
     cleaned_zip = clean_zip(household_zip)
     output_row.append(value_maps.get("zip", {}).get(cleaned_zip, cleaned_zip))
