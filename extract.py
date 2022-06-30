@@ -11,8 +11,12 @@ from time import strftime, strptime
 
 from sqlalchemy import create_engine
 
-from utils.data_reader import add_parser_db_args, case_insensitive_lookup, \
-    translation_lookup, get_query
+from utils.data_reader import (
+    add_parser_db_args,
+    case_insensitive_lookup,
+    translation_lookup,
+    get_query,
+)
 from utils.validate import validate_csv_conf
 
 HEADER = [
