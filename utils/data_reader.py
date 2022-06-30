@@ -91,6 +91,17 @@ def add_parser_db_args(parser):
 
 
 def case_insensitive_lookup(row, key, version):
+    desired_key = DATA_DICTIONARY[key][version]
+
+    if desired_key in row:
+        return row[desired_key]
+    else:
+        for actual_key in row.keys():
+            if actual_key.lower() == desired_key:
+                return row[actual_key]
+
+
+def translation_lookup(row, key, version):
     defaults = {}
     if type(version) == str:
         desired_key = DATA_DICTIONARY[version][key]

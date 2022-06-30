@@ -11,7 +11,8 @@ from time import strftime, strptime
 
 from sqlalchemy import create_engine
 
-from utils.data_reader import add_parser_db_args, case_insensitive_lookup, get_query
+from utils.data_reader import add_parser_db_args, case_insensitive_lookup, \
+    translation_lookup, get_query
 from utils.validate import validate_csv_conf
 
 HEADER = [
@@ -20,8 +21,8 @@ HEADER = [
     "family_name",
     "DOB",
     "sex",
-    "phone_number",
-    "household_street_address",
+    "phone",
+    "address",
     "household_zip",
 ]
 
@@ -54,7 +55,7 @@ def parse_arguments():
         help="Specify an output file. Default is temp-data/pii.csv",
     )
     parser.add_argument(
-        "--csv",
+        "--csv_config",
         dest="csv_conf",
         default=False,
         help="Specify path to csv translation config file",
@@ -143,20 +144,14 @@ def extract_database(args):
     return output_rows
 
 
-def extract_csv(args, mapping=None, init_id=0, date_format="%y%m%d", reg_rules=None):
-    if mapping is None:
-        mapping = dict()
-    if reg_rules is None:
-        reg_rules = dict()
-    translation = {"meta": {"reg_rules": reg_rules}, "mapping": mapping}
-    translation["meta"]["date_format"] = date_format
+def extract_csv(args, conf):
     output_rows = []
     report = get_report()
-    person_id = init_id
+    person_id = conf.get("initial_id", 0)
     with open(args.source, "r") as datasource:
         rows = csv.DictReader(datasource)
         for row in rows:
-            handled_row = translate_row(row, report, translation)
+            handled_row = translate_row(row, report, conf)
             if not handled_row[0]:
                 handled_row[0] = person_id
                 person_id += 1
@@ -168,58 +163,58 @@ def extract_csv(args, mapping=None, init_id=0, date_format="%y%m%d", reg_rules=N
     return output_rows
 
 
-def translate_row(row, report, translation):
+def translate_row(row, report, conf):
     output_row = []
-    reg_rules = translation["meta"]["reg_rules"]
-    mapping = translation["mapping"]
+    value_maps = conf["value_mapping_rules"]
+    column_maps = conf["translation_map"]
 
-    record_id = case_insensitive_lookup(row, "record_id", mapping)
+    record_id = translation_lookup(row, "record_id", column_maps)
     output_row.append(record_id)
 
-    given_name = case_insensitive_lookup(row, "given_name", mapping)
-    validate(report, "given_name", given_name, reg_rules)
+    given_name = translation_lookup(row, "given_name", column_maps)
+    validate(report, "given_name", given_name, value_maps)
     clean_given_name = clean_string(given_name)
     output_row.append(
-        reg_rules.get("given_name", {}).get(clean_given_name, clean_given_name)
+        value_maps.get("given_name", {}).get(clean_given_name, clean_given_name)
     )
 
-    family_name = case_insensitive_lookup(row, "family_name", mapping)
-    validate(report, "family_name", family_name, reg_rules)
+    family_name = translation_lookup(row, "family_name", column_maps)
+    validate(report, "family_name", family_name, value_maps)
     clean_family_name = clean_string(family_name)
     output_row.append(
-        reg_rules.get("family_name", {}).get(clean_family_name, clean_family_name)
+        value_maps.get("family_name", {}).get(clean_family_name, clean_family_name)
     )
 
-    dob = case_insensitive_lookup(row, "DOB", mapping)
-    dob = clean_dob_fromstr(dob, translation["meta"]["date_format"])
-    validate(report, "DOB", dob, reg_rules)
-    output_row.append(reg_rules.get("DOB", {}).get(dob, dob))
+    dob = translation_lookup(row, "DOB", column_maps)
+    dob = clean_dob_fromstr(dob, conf["date_format"])
+    validate(report, "DOB", dob, value_maps)
+    output_row.append(value_maps.get("DOB", {}).get(dob, dob))
 
-    sex = case_insensitive_lookup(row, "sex", mapping)
-    validate(report, "sex", sex, reg_rules)
-    output_row.append(reg_rules.get("sex", {}).get(sex, sex))
+    sex = translation_lookup(row, "sex", column_maps)
+    validate(report, "sex", sex, value_maps)
+    output_row.append(value_maps.get("sex", {}).get(sex, sex))
 
     # is phone or phone_number the canonical field name?
-    phone_number = case_insensitive_lookup(row, "phone", mapping)
-    validate(report, "phone_number", phone_number, reg_rules)
+    phone_number = translation_lookup(row, "phone", column_maps)
+    validate(report, "phone", phone_number, value_maps)
     clean_phone_number = clean_phone(phone_number)
     output_row.append(
-        reg_rules.get("phone", {}).get(clean_phone_number, clean_phone_number)
+        value_maps.get("phone", {}).get(clean_phone_number, clean_phone_number)
     )
 
-    household_street_address = case_insensitive_lookup(row, "address", mapping)
-    validate(report, "household_street_address", household_street_address, reg_rules)
+    household_street_address = translation_lookup(row, "address", column_maps)
+    validate(report, "address", household_street_address, value_maps)
     clean_household_street_address = clean_string(household_street_address)
     output_row.append(
-        reg_rules.get("household_street_address", {}).get(
+        value_maps.get("address", {}).get(
             clean_household_street_address, clean_household_street_address
         )
     )
 
-    household_zip = case_insensitive_lookup(row, "zip", mapping)
-    validate(report, "household_zip", household_zip, reg_rules)
+    household_zip = translation_lookup(row, "zip", column_maps)
+    validate(report, "household_zip", household_zip, value_maps)
     cleaned_zip = clean_zip(household_zip)
-    output_row.append(reg_rules.get("zip", {}).get(cleaned_zip, cleaned_zip))
+    output_row.append(value_maps.get("zip", {}).get(cleaned_zip, cleaned_zip))
 
     return output_row
 
@@ -284,13 +279,7 @@ def main():
             print()
         with open(args.csv_conf, "r") as f:
             conf = json.load(f)
-        ingest_kwargs = {
-            "mapping": conf["translation_map"],
-            "init_id": int(conf["initial_id"]),
-            "date_format": conf["date_format"],
-            "reg_rules": conf["regularization_rules"],
-        }
-        output_rows = extract_csv(args, **ingest_kwargs)
+        output_rows = extract_csv(args, conf)
     else:
         output_rows = extract_database(args)
     write_data(output_rows, args)
