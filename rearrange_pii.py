@@ -1,18 +1,39 @@
 import argparse
 import csv
-from datetime import date
 import json
+from datetime import date
 
-parser = argparse.ArgumentParser(description='Tool for rearraging PII CSV based on two sets of hashes')
-parser.add_argument('--newpii', required=True, help='Current PII CSV file')
-parser.add_argument('--oldhashes', required=True, help='Hashes constructed from the PII file to recreate')
-parser.add_argument('--newhashes', required=True, help='Hashes constructed from the current PII file')
+parser = argparse.ArgumentParser(
+    description="Tool for rearraging PII CSV based on two sets of hashes"
+)
+parser.add_argument("--newpii", required=True, help="Current PII CSV file")
+parser.add_argument(
+    "--oldhashes",
+    required=True,
+    help="Hashes constructed from the PII file to recreate",
+)
+parser.add_argument(
+    "--newhashes", required=True, help="Hashes constructed from the current PII file"
+)
+parser.add_argument(
+    "--output", required=False, help="Filename for reconstructed output PII file"
+)
 
 args = parser.parse_args()
 
-header = ['record_id', 'given_name', 'family_name', 'DOB', 'sex', 'phone_number',
-  'household_street_address', 'household_zip', 'parent_given_name' , 'parent_family_name',
-  'parent_email']
+header = [
+    "record_id",
+    "given_name",
+    "family_name",
+    "DOB",
+    "sex",
+    "phone_number",
+    "household_street_address",
+    "household_zip",
+    "parent_given_name",
+    "parent_family_name",
+    "parent_email",
+]
 
 # step 1, determine the alignment of old hashes to new hashes
 with open(args.oldhashes) as oldhashesfile:
@@ -24,13 +45,13 @@ with open(args.newhashes) as newhashesfile:
     new_hashes = new_hash_json["clks"]
 
 if len(old_hashes) != len(new_hashes):
-    print(f"Hash lengths do not align! Exiting.")
+    print("Hash lengths do not align! Exiting.")
     exit(1)
 
 # a couple possible approaches here:
-#  1. load new hashes into a dictionary: {hash: line_number} 
+#  1. load new hashes into a dictionary: {hash: line_number}
 #     then iterate over each hash in old hashes to find the line number
-#  2. turn each hash into a tuple (hash, line num) then sort both by hash hashes
+#  2. turn each hash into a tuple (hash, line #) then sort both by hash hashes
 #
 # for simplicity of validation I go with #2 here
 old_hashes_with_line_num = list(enumerate(old_hashes))
@@ -48,8 +69,6 @@ for i in range(len(old_hashes)):
 
     line_num_map[sorted_old[i][0]] = sorted_new[i][0]
 
-# import pdb; pdb.set_trace()
-
 # step 2, read pii.csv to a list
 with open(args.newpii) as source:
     source_reader = csv.reader(source)
@@ -66,8 +85,8 @@ for i in range(len(newpii_lines)):
 
 # step 4, write new pii file
 today = date.today().strftime("%Y-%m-%d")
-rearrangedpiifile = f"pii-{today}.csv"
-with open(rearrangedpiifile, 'w', newline='', encoding='utf-8') as csvfile:
+rearrangedpiifile = args.output or f"pii-{today}.csv"
+with open(rearrangedpiifile, "w", newline="", encoding="utf-8") as csvfile:
     writer = csv.writer(csvfile)
     writer.writerow(header)
     for output_row in output_rows:
