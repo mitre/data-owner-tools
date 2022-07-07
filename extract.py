@@ -269,8 +269,6 @@ def write_data(output_rows, args):
 
 def main():
     args = parse_arguments()
-    print()
-    print("csv-conf:", args.csv_conf)
     if args.csv_conf:
 
         issues = validate_csv_conf(args.csv_conf)

@@ -130,8 +130,8 @@ NULL Value: 9
 
 The configuration file used to extract and translate data for PPRL from a `.csv` file must be a `.json` file, the path to which is specified with the `--csv_config` flag.
 
-```python
-python extract.py my_data.csv --csv_conf my_config.json
+```shell
+python extract.py my_data.csv --csv_config my_config.json
 ```
 
 The `.json` file must contain the following fields:
