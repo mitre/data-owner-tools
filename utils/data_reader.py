@@ -9,18 +9,36 @@ CSV = "csv"
 # This provides a mapping of our field names
 # to the field names used across versions of the DM and the CSV
 DATA_DICTIONARY = {
-    "record_id": {V1: "patid", V2: "patid", CSV: "record_id"},
-    "given_name": {V1: "given_name", V2: "pat_firstname", CSV: "given_name"},
-    "family_name": {V1: "family_name", V2: "pat_lastname", CSV: "family_name"},
-    "DOB": {V1: "birth_date", V2: "birth_date", CSV: "DOB"},
-    "sex": {V1: "sex", V2: "sex", CSV: "sex"},
-    "phone": {V1: "household_phone", V2: "primary_phone", CSV: "phone_number"},
-    "address": {
-        V1: "household_street_address",
-        V2: "address_street",
-        CSV: "household_street_address",
+    V1: {
+        "record_id": "patid",
+        "given_name": "given_name",
+        "family_name": "family_name",
+        "DOB": "birth_date",
+        "sex": "sex",
+        "phone": "household_phone",
+        "address": "household_street_address",
+        "zip": "household_zip",
     },
-    "zip": {V1: "household_zip", V2: "address_zip5", CSV: "household_zip"},
+    V2: {
+        "record_id": "patid",
+        "given_name": "pat_firstname",
+        "family_name": "pat_lastname",
+        "DOB": "birth_date",
+        "sex": "sex",
+        "phone": "primary_phone",
+        "address": "address_street",
+        "zip": "address_zip5",
+    },
+    CSV: {
+        "record_id": "record_id",
+        "given_name": "given_name",
+        "family_name": "family_name",
+        "DOB": "DOB",
+        "sex": "sex",
+        "phone": "phone_number",
+        "address": "household_street_address",
+        "zip": "household_zip",
+    },
 }
 
 
@@ -57,20 +75,35 @@ def add_parser_db_args(parser):
     )
 
 
-def case_insensitive_lookup(row, key, version):
-    desired_key = DATA_DICTIONARY[key][version]
-
-    if desired_key in row:
-        return row[desired_key]
+def map_key(row, key):
+    if key in row:
+        return key
     else:
-        for actual_key in row.keys():
-            if actual_key.lower() == desired_key:
-                return row[actual_key]
+        lower_key = key.lower()
+        for row_key in row.keys():
+            if row_key.lower() == lower_key:
+                return row_key
+
+
+def case_insensitive_lookup(row, key, version):
+    mapped_key = map_key(row, DATA_DICTIONARY[version][key])
+    return row[mapped_key] if (mapped_key) else None
+
+
+def translation_lookup(row, key, translation_map):
+    desired_key = translation_map.get(key, key)
+    mapped_key = map_key(row, desired_key)
+    defaults = translation_map.get("default_values", {})
+
+    if (mapped_key := map_key(row, desired_key)) and row[mapped_key].strip() != "":
+        return row[mapped_key]
+    else:
+        return defaults.get(key, None)
 
 
 def get_query(engine, version, args):
     if version == V1:
-        DATA_DICTIONARY["record_id"][V1] = args.v1_idcolumn
+        DATA_DICTIONARY[V1]["record_id"] = args.v1_idcolumn
 
         identifier = Table(
             args.v1_table,  # default: "identifier"
