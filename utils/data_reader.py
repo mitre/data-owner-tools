@@ -8,21 +8,6 @@ CSV = "csv"
 
 # This provides a mapping of our field names
 # to the field names used across versions of the DM and the CSV
-OLD_DATA_DICTIONARY = {
-    "record_id": {V1: "patid", V2: "patid", CSV: "record_id"},
-    "given_name": {V1: "given_name", V2: "pat_firstname", CSV: "given_name"},
-    "family_name": {V1: "family_name", V2: "pat_lastname", CSV: "family_name"},
-    "DOB": {V1: "birth_date", V2: "birth_date", CSV: "DOB"},
-    "sex": {V1: "sex", V2: "sex", CSV: "sex"},
-    "phone": {V1: "household_phone", V2: "primary_phone", CSV: "phone_number"},
-    "address": {
-        V1: "household_street_address",
-        V2: "address_street",
-        CSV: "household_street_address",
-    },
-    "zip": {V1: "household_zip", V2: "address_zip5", CSV: "household_zip"},
-}
-
 DATA_DICTIONARY = {
     V1: {
         "record_id": "patid",
@@ -110,16 +95,15 @@ def translation_lookup(row, key, translation_map):
     mapped_key = map_key(row, desired_key)
     defaults = translation_map.get("default_values", {})
 
-    if (mapped_key := map_key(row, desired_key)) is not None:
+    if (mapped_key := map_key(row, desired_key)) and row[mapped_key].strip() != "":
         return row[mapped_key]
-    elif (mapped_key := map_key(defaults, desired_key)) is not None:
-        return defaults[map_key(defaults, desired_key)]
-    return None
+    else:
+        return defaults.get(key, None)
 
 
 def get_query(engine, version, args):
     if version == V1:
-        DATA_DICTIONARY["record_id"][V1] = args.v1_idcolumn
+        DATA_DICTIONARY[V1]["record_id"] = args.v1_idcolumn
 
         identifier = Table(
             args.v1_table,  # default: "identifier"
