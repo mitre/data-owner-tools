@@ -264,7 +264,6 @@ def write_data(output_rows, args):
     file_parts = args.output_file.split(".")
     os.makedirs("temp-data", exist_ok=True)
     csvname = ".".join(file_parts[:-2] + [file_parts[-2], timestamp[-1]])
-    print(csvname)
     with open(csvname, "w", newline="", encoding="utf-8") as csvfile:
         writer = csv.writer(csvfile)
         writer.writerow(HEADER)
