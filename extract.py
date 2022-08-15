@@ -2,6 +2,7 @@
 
 import argparse
 import csv
+import datetime
 import json
 import os
 import unicodedata
@@ -273,8 +274,12 @@ def handle_row(row, report, version):
 
 
 def write_data(output_rows, args):
+    timestamp = datetime.strftime(datetime.now(), "%Y%m%dT%H%M%S")
+    file_parts = args.output_file.split(".")
     os.makedirs("temp-data", exist_ok=True)
-    with open(args.output_file, "w", newline="", encoding="utf-8") as csvfile:
+    csvname = ".".join(file_parts[:-2] + [file_parts[-2], timestamp[-1]])
+    print(csvname)
+    with open(csvname, "w", newline="", encoding="utf-8") as csvfile:
         writer = csv.writer(csvfile)
         writer.writerow(HEADER)
         for output_row in output_rows:
