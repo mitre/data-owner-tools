@@ -2,12 +2,12 @@
 
 import argparse
 import csv
-import datetime
 import json
 import os
 import unicodedata
 import uuid
 from collections import Counter
+from datetime import datetime
 from random import shuffle
 from time import strftime, strptime
 
@@ -264,7 +264,7 @@ def write_metadata(n_rows, creation_time, datafile_name):
     metadata = {
         "number_of_records": n_rows,
         "creation_date": creation_time.isoformat(),
-        "UUID": uuid.uuid1(),
+        "uuid1": str(uuid.uuid1()),
     }
     file_parts = datafile_name.split(".")
     metaname = ".".join(file_parts[:-2] + [file_parts[-2] + "metadata", "json"])
