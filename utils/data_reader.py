@@ -95,7 +95,7 @@ def translation_lookup(row, key, translation_map):
     mapped_key = map_key(row, desired_key)
     defaults = translation_map.get("default_values", {})
 
-    if (mapped_key == map_key(row, desired_key)) and row[mapped_key].strip() != "":
+    if (mapped_key := map_key(row, desired_key)) and row[mapped_key].strip() != "":
         return row[mapped_key]
     else:
         return defaults.get(key, None)
