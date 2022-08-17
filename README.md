@@ -18,7 +18,7 @@ Tools for Clinical and Community Data Initiative (CODI) data owners to extract p
 
 ### Dependency Overview
 
-These tools were created and tested on Python 3.7.4. The tools rely on two libraries: [SQLAlchemy](https://www.sqlalchemy.org/) and [anonlink](https://github.com/data61/anonlink).
+These tools were created and tested on Python 3.9.12. The tools rely on two libraries: [SQLAlchemy](https://www.sqlalchemy.org/) and [anonlink](https://github.com/data61/anonlink).
 
 SQLAlchemy is a library that allows the tools to connect to a database in a vendor independent fashion. This allows the tools to connect to a database that conforms to the CODI Identity Data Model implented in PostgreSQL or Microsoft SQLServer (and a number of others).
 
