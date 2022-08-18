@@ -2,7 +2,9 @@
 
 import argparse
 import glob
+import json
 import os
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -53,10 +55,32 @@ def validate_secret_file(secret_file):
     return secret
 
 
+def validate_clks(clk_files, metadata_file):
+    with open(metadata_file, "r") as meta_fp:
+        metadata = json.load(meta_fp)
+    n_lines_expected = metadata["number_of_records"]
+    for clk_file in clk_files:
+        with open(clk_file, "r") as clk_fp:
+            data = json.load(clk_fp)
+        n_lines_actual = len(data["clks"])
+        assert (
+            n_lines_expected == n_lines_actual
+        ), f"Expected {n_lines_expected} in {clk_file.name}, found {n_lines_actual}"
+
+
 def garble_pii(args):
     secret_file = Path(args.secretfile)
     source_file = args.sourcefile
     os.makedirs("output", exist_ok=True)
+
+    source_file_parts = source_file.split("/")
+    source_file_name = source_file_parts[-1]
+    metadata_file_name = source_file_name.replace("pii", "metadata").replace(
+        ".csv", ".json"
+    )
+    metadata_file = Path("/".join(source_file_parts[:-1] + [metadata_file_name]))
+    shutil.copyfile(metadata_file, f"output/{metadata_file_name}")
+
     secret = validate_secret_file(secret_file)
     individuals_secret = derive_subkey(secret, "individuals")
 
@@ -82,20 +106,23 @@ def garble_pii(args):
             check=True,
         )
         clk_files.append(output_file)
-    return clk_files
+    validate_clks(clk_files, metadata_file)
+    return clk_files + [Path(f"output/{metadata_file_name}")]
 
 
-def create_clk_zip(clk_files, args):
+def create_output_zip(clk_files, args):
     with ZipFile(os.path.join(args.outputdir, args.outputzip), "w") as garbled_zip:
-        for clk_file in clk_files:
-            garbled_zip.write(clk_file)
+        for output_file in clk_files:
+            garbled_zip.write(output_file)
+            if "metadata" in output_file.name:
+                os.remove(output_file)
     print("Zip file created at: " + args.outputdir + "/" + args.outputzip)
 
 
 def main():
     args = parse_arguments()
-    clk_files = garble_pii(args)
-    create_clk_zip(clk_files, args)
+    output_files = garble_pii(args)
+    create_output_zip(output_files, args)
 
 
 if __name__ == "__main__":

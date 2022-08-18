@@ -54,13 +54,6 @@ def parse_arguments():
         help="Verbose mode prints output to console",
     )
     parser.add_argument(
-        "-o",
-        "--output",
-        dest="output_file",
-        default="temp-data/pii.csv",
-        help="Specify an output file. Default is temp-data/pii.csv",
-    )
-    parser.add_argument(
         "--csv_config",
         dest="csv_conf",
         default=False,
@@ -260,14 +253,14 @@ def handle_row(row, report, version):
     return output_row
 
 
-def write_metadata(n_rows, creation_time, datafile_name):
+def write_metadata(n_rows, creation_time):
     metadata = {
         "number_of_records": n_rows,
         "creation_date": creation_time.isoformat(),
         "uuid1": str(uuid.uuid1()),
     }
-    file_parts = datafile_name.split(".")
-    metaname = ".".join(file_parts[:-2] + [file_parts[-2] + "metadata", "json"])
+    timestamp = datetime.strftime(creation_time, "%Y%m%dT%H%M%S")
+    metaname = f"temp-data/metadata{timestamp}.json"
     with open(metaname, "w", newline="", encoding="utf-8") as metafile:
         metafile.write(json.dumps(metadata))
 
@@ -275,15 +268,16 @@ def write_metadata(n_rows, creation_time, datafile_name):
 def write_data(output_rows, args):
     creation_time = datetime.now()
     timestamp = datetime.strftime(creation_time, "%Y%m%dT%H%M%S")
-    file_parts = args.output_file.split(".")
     os.makedirs("temp-data", exist_ok=True)
-    csvname = ".".join(file_parts[:-2] + [file_parts[-2] + timestamp, file_parts[-1]])
+    csvname = f"temp-data/pii{timestamp}.csv"
     with open(csvname, "w", newline="", encoding="utf-8") as csvfile:
         writer = csv.writer(csvfile)
         writer.writerow(HEADER)
         for output_row in output_rows:
             writer.writerow(output_row)
-    write_metadata(len(output_rows), creation_time, csvname)
+    write_metadata(len(output_rows), creation_time)
+
+    return timestamp
 
 
 def main():
