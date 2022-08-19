@@ -138,10 +138,11 @@ def garble_pii(args):
         )
         clk_files.append(output_file)
     validate_clks(clk_files, metadata_file)
-    return clk_files + [Path(f"output/{metadata_file_name}")]
+    return clk_files + [Path(f"output/metadata.json")]
 
 
 def create_output_zip(clk_files, args):
+    print(args.outputdir, args.outputzip)
     with ZipFile(os.path.join(args.outputdir, args.outputzip), "w") as garbled_zip:
         for output_file in clk_files:
             garbled_zip.write(output_file)
