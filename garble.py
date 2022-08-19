@@ -75,15 +75,17 @@ def garble_pii(args):
 
     source_file_parts = source_file.split("/")
     source_file_name = source_file_parts[-1]
-    source_timestamp = source_file_name.replace("pii", "").replace(".csv","")
+    source_timestamp = source_file_name.replace("pii", "").replace(".csv", "")
     metadata_file_name = source_file_name.replace("pii", "metadata").replace(
         ".csv", ".json"
     )
     metadata_file = Path("/".join(source_file_parts[:-1] + [metadata_file_name]))
     with open(metadata_file, "r") as fp:
         metadata = json.load(fp)
-    meta_timestamp = metadata["creation_date"].replace("-","").replace(":", "")[:-7]
-    assert source_timestamp == meta_timestamp, "Metadata creation date does not match pii file timestamp"
+    meta_timestamp = metadata["creation_date"].replace("-", "").replace(":", "")[:-7]
+    assert (
+        source_timestamp == meta_timestamp
+    ), "Metadata creation date does not match pii file timestamp"
 
     shutil.copyfile(metadata_file, f"output/{metadata_file_name}")
 
