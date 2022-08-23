@@ -107,10 +107,14 @@ def garble_pii(args):
         source_timestamp == meta_timestamp
     ), "Metadata creation date does not match pii file timestamp"
 
-    metadata["garble_time"] = datetime.now().isoformat()
+    garble_time = datetime.now()
 
-    with open(Path("output") / metadata_file_name, "w+") as metafile:
-        json.dump(metadata, metafile, indent=2)
+    metadata["garble_date"] = garble_time.isoformat()
+
+    timestamp = datetime.strftime(garble_time, TIMESTAMP_FMT)
+
+    with open(f"output/metadata{timestamp}.json", "w+") as fp:
+        json.dump(metadata, fp)
 
     secret = validate_secret_file(secret_file)
     individuals_secret = derive_subkey(secret, "individuals")
@@ -125,6 +129,9 @@ def garble_pii(args):
                     "The following schema uses doubleHash, which is insecure: " + str(s)
                 )
         output_file = Path(args.outputdir) / os.path.basename(s)
+
+        outfile = str(output_file).replace(".json", f"{timestamp}.json")
+
         subprocess.run(
             [
                 "anonlink",
@@ -132,13 +139,17 @@ def garble_pii(args):
                 source_file,
                 individuals_secret,
                 str(s),
-                str(output_file),
+                outfile,
             ],
             check=True,
         )
-        clk_files.append(output_file)
+        clk_files.append(Path(outfile))
     validate_clks(clk_files, metadata_file)
+<<<<<<< HEAD
     return clk_files + [Path("output/metadata.json")]
+=======
+    return clk_files + [Path(f"output/metadata{timestamp}.json")]
+>>>>>>> c2ef5de... garble time now added to file names in output archive
 
 
 def create_output_zip(clk_files, args):
