@@ -6,12 +6,8 @@ from datetime import date, datetime
 
 import pandas as pd
 
-from utils.data_reader import (
-    add_parser_db_args,
-    case_insensitive_lookup,
-    load_csv,
-    load_db,
-)
+from utils.data_reader import (add_parser_db_args, case_insensitive_lookup,
+                               load_csv, load_db)
 
 
 def parse_args():

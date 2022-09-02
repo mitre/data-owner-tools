@@ -13,12 +13,8 @@ from time import strftime, strptime
 
 from sqlalchemy import create_engine
 
-from utils.data_reader import (
-    add_parser_db_args,
-    case_insensitive_lookup,
-    get_query,
-    translation_lookup,
-)
+from utils.data_reader import (add_parser_db_args, case_insensitive_lookup,
+                               get_query, translation_lookup)
 from utils.validate import validate_csv_conf
 
 HEADER = [
@@ -63,7 +59,7 @@ def parse_arguments():
         "--schema_name",
         dest="v2_schema",
         default="cdm",
-        help="Name of the database schema containing the CODI DEMOGRAPHIC and PRIVATE_DEMOGRAPHIC tables"
+        help="Name of the database schema containing the CODI DEMOGRAPHIC and PRIVATE_DEMOGRAPHIC tables",
     )
 
     add_parser_db_args(parser)
