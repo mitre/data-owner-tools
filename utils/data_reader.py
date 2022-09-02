@@ -73,6 +73,13 @@ def add_parser_db_args(parser):
         help="Column name for patient unique ID in a v1 database. "
         "Default is 'patid'",
     )
+    parser.add_argument(
+        "--schema_name",
+        dest="v2_schema",
+        default="cdm",
+        help="Name of the database schema containing the CODI DEMOGRAPHIC"
+        " and PRIVATE_DEMOGRAPHIC tables",
+    )
 
 
 def map_key(row, key):

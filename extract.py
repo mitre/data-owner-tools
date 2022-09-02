@@ -59,12 +59,6 @@ def parse_arguments():
         default=False,
         help="Specify path to csv translation config file",
     )
-    parser.add_argument(
-        "--schema_name",
-        dest="v2_schema",
-        default="cdm",
-        help="Name of the database schema containing the CODI DEMOGRAPHIC and PRIVATE_DEMOGRAPHIC tables",
-    )
 
     add_parser_db_args(parser)
 
