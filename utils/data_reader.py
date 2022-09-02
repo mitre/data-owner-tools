@@ -125,7 +125,7 @@ def get_query(engine, version, args):
             MetaData(),
             autoload=True,
             autoload_with=engine,
-            schema="cdm",
+            schema=args.v2_schema,
         )
 
         prv_address = Table(
@@ -133,7 +133,7 @@ def get_query(engine, version, args):
             MetaData(),
             autoload=True,
             autoload_with=engine,
-            schema="cdm",
+            schema=args.v2_schema,
         )
 
         # the expectation is there will only be one record per individual
