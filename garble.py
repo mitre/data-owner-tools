@@ -101,7 +101,7 @@ def garble_pii(args):
                 sys.exit(
                     "The following schema uses doubleHash, which is insecure: " + str(s)
                 )
-        output_file = Path(args.outputdir, s.split("/")[-1])
+        output_file = Path(args.outputdir) / os.path.basename(s)
         subprocess.run(
             [
                 "anonlink",
