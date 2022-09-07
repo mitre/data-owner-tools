@@ -88,6 +88,8 @@ The CODI PPRL process depends on information pulled from a database or translate
 
 To extract from a database, `extract.py` requires a database connection string to connect. Consult the [SQLAlchemy documentation](https://docs.sqlalchemy.org/en/13/core/engines.html#database-urls) to determine the exact string for the database in use.
 
+By default, `extract.py` expects a schema named `cdm` containing the CODI Data Model DEMOGRAPHIC and PRIVATE_DEMOGRAPHIC tables. The `--schema_name` option can be used to provide the name of schema containing these tables in the source system if other than `cdm`.
+
 To translate from a `.csv` file, `extract.py` requires a `.json` configuration file, the path to which must be specified with the `--csv_config` flag. The requirements of this configuration file are described [below](#csv-translation-configuration-file)
 
 When finished, if you specify the `--verbose` flag, the script will print a report to the terminal, documenting various issues it found when extracting the data. An example execution of the script is included below:
