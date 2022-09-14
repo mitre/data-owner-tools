@@ -84,7 +84,6 @@ def garble_pii(args):
     with open(metadata_file, "r") as fp:
         metadata = json.load(fp)
     meta_timestamp = metadata["creation_date"].replace("-", "").replace(":", "")[:-7]
-    import pdb; pdb.set_trace()
     assert (
         source_timestamp == meta_timestamp
     ), "Metadata creation date does not match pii file timestamp"
