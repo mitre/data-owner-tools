@@ -19,7 +19,7 @@ def parse_args():
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument(
         "--csv",
-        help="Location of pii.csv file to analyze",
+        help="Location of pii-TIMESTAMP.csv file to analyze",
     )
     group.add_argument(
         "--db",

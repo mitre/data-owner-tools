@@ -17,7 +17,7 @@ def parse_arguments():
     parser = argparse.ArgumentParser(
         description="Tool for garbling PII in for PPRL purposes in the CODI project"
     )
-    parser.add_argument("sourcefile", help="Source PII CSV file")
+    parser.add_argument("sourcefile", help="Source pii-TIMESTAMP.csv file")
     parser.add_argument("schemadir", help="Directory of linkage schema")
     parser.add_argument("secretfile", help="Location of de-identification secret file")
     parser.add_argument(
@@ -70,16 +70,17 @@ def validate_clks(clk_files, metadata_file):
 
 def garble_pii(args):
     secret_file = Path(args.secretfile)
-    source_file = args.sourcefile
+    source_file = Path(args.sourcefile)
     os.makedirs("output", exist_ok=True)
 
-    source_file_parts = source_file.split("/")
-    source_file_name = source_file_parts[-1]
-    source_timestamp = source_file_name.replace("pii", "").replace(".csv", "")
+    source_file_name = os.path.basename(source_file)
+    source_dir_name = os.path.dirname(source_file)
+
+    source_timestamp = os.path.splitext(source_file_name.replace("pii-", ""))[0]
     metadata_file_name = source_file_name.replace("pii", "metadata").replace(
         ".csv", ".json"
     )
-    metadata_file = Path("/".join(source_file_parts[:-1] + [metadata_file_name]))
+    metadata_file = Path(source_dir_name) / metadata_file_name
     with open(metadata_file, "r") as fp:
         metadata = json.load(fp)
     meta_timestamp = metadata["creation_date"].replace("-", "").replace(":", "")[:-7]

@@ -260,7 +260,7 @@ def write_metadata(n_rows, creation_time):
         "uuid1": str(uuid.uuid1()),
     }
     timestamp = datetime.strftime(creation_time, "%Y%m%dT%H%M%S")
-    metaname = f"temp-data/metadata{timestamp}.json"
+    metaname = f"temp-data/metadata-{timestamp}.json"
     with open(metaname, "w", newline="", encoding="utf-8") as metafile:
         metafile.write(json.dumps(metadata))
 
@@ -269,7 +269,7 @@ def write_data(output_rows, args):
     creation_time = datetime.now()
     timestamp = datetime.strftime(creation_time, "%Y%m%dT%H%M%S")
     os.makedirs("temp-data", exist_ok=True)
-    csvname = f"temp-data/pii{timestamp}.csv"
+    csvname = f"temp-data/pii-{timestamp}.csv"
     with open(csvname, "w", newline="", encoding="utf-8") as csvfile:
         writer = csv.writer(csvfile)
         writer.writerow(HEADER)
