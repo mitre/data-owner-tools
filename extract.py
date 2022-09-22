@@ -262,7 +262,7 @@ def write_metadata(n_rows, creation_time):
     timestamp = datetime.strftime(creation_time, "%Y%m%dT%H%M%S")
     metaname = f"temp-data/metadata-{timestamp}.json"
     with open(metaname, "w", newline="", encoding="utf-8") as metafile:
-        metafile.write(json.dumps(metadata))
+        json.dump(metadata, metafile, indent=2)
 
 
 def write_data(output_rows, args):

@@ -88,7 +88,7 @@ def garble_pii(args):
         source_timestamp == meta_timestamp
     ), "Metadata creation date does not match pii file timestamp"
 
-    shutil.copyfile(metadata_file, f"output/{metadata_file_name}")
+    shutil.copyfile(metadata_file, Path("output") / metadata_file_name)
 
     secret = validate_secret_file(secret_file)
     individuals_secret = derive_subkey(secret, "individuals")
@@ -125,7 +125,7 @@ def create_output_zip(clk_files, args):
             garbled_zip.write(output_file)
             if "metadata" in output_file.name:
                 os.remove(output_file)
-    print("Zip file created at: " + args.outputdir + "/" + args.outputzip)
+    print("Zip file created at: " + str(Path(args.outputdir) / args.outputzip))
 
 
 def main():
