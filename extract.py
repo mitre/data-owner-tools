@@ -260,7 +260,7 @@ def write_metadata(n_rows, creation_time):
         "uuid1": str(uuid.uuid1()),
     }
     timestamp = datetime.strftime(creation_time, "%Y%m%dT%H%M%S")
-    metaname = f"temp-data/metadata-{timestamp}.json"
+    metaname = Path("temp-data") / f"metadata-{timestamp}.json"
     with open(metaname, "w", newline="", encoding="utf-8") as metafile:
         json.dump(metadata, metafile, indent=2)
 
