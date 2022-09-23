@@ -273,7 +273,7 @@ def create_output_zip(args, n_households):
         metadata = json.load(fp)
     meta_timestamp = metadata["creation_date"].replace("-", "").replace(":", "")[:-7]
     assert (
-            source_timestamp == meta_timestamp
+        source_timestamp == meta_timestamp
     ), "Metadata creation date does not match pii file timestamp"
 
     metadata["number_of_households"] = n_households
