@@ -287,7 +287,7 @@ def create_output_zip(args, n_households):
 
     os.remove(Path("output") / metadata_file_name)
 
-    print("Zip file created at: " + args.outputfile)
+    print("Zip file created at: " + str(Path(args.outputfile)))
 
 
 def main():
