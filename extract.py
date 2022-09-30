@@ -8,6 +8,7 @@ import unicodedata
 import uuid
 from collections import Counter
 from datetime import datetime
+from pathlib import Path
 from random import shuffle
 from time import strftime, strptime
 
@@ -260,9 +261,9 @@ def write_metadata(n_rows, creation_time):
         "uuid1": str(uuid.uuid1()),
     }
     timestamp = datetime.strftime(creation_time, "%Y%m%dT%H%M%S")
-    metaname = f"temp-data/metadata-{timestamp}.json"
+    metaname = Path("temp-data") / f"metadata-{timestamp}.json"
     with open(metaname, "w", newline="", encoding="utf-8") as metafile:
-        metafile.write(json.dumps(metadata))
+        json.dump(metadata, metafile, indent=2)
 
 
 def write_data(output_rows, args):

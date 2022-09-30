@@ -2,6 +2,7 @@
 
 import argparse
 import csv
+import json
 import os
 import subprocess
 import sys
@@ -152,7 +153,9 @@ def write_mapping_file(pos_pid_rows, hid_pat_id_rows, args):
     source_file = Path(args.sourcefile)
     pii_lines = parse_source_file(source_file)
     output_rows = []
-    with open(args.mappingfile, "w", newline="", encoding="utf-8") as csvfile:
+    mapping_file = Path(args.mappingfile)
+    n_households = 0
+    with open(mapping_file, "w", newline="", encoding="utf-8") as csvfile:
         writer = csv.writer(csvfile)
         writer.writerow(HEADERS)
         already_added = set()
@@ -181,6 +184,7 @@ def write_mapping_file(pos_pid_rows, hid_pat_id_rows, args):
             string_pat_clks = [str(int) for int in pat_clks]
             pat_string = ",".join(string_pat_clks)
             writer.writerow([hclk_position, pat_string])
+            n_households += 1
             pos_pid_rows.append([hclk_position, line[0]])
             for patid in pat_ids:
                 hid_pat_id_rows.append([hclk_position, patid])
@@ -189,7 +193,7 @@ def write_mapping_file(pos_pid_rows, hid_pat_id_rows, args):
             output_row = [line[2], line[5], line[6], line[7], pat_ids_str]
             hclk_position += 1
             output_rows.append(output_row)
-    return output_rows
+    return output_rows, n_households
 
 
 def write_scoring_file(hid_pat_id_rows):
@@ -243,27 +247,57 @@ def hash_households(args):
 def infer_households(args):
     pos_pid_rows = []
     hid_pat_id_rows = []
-    os.makedirs("output/households", exist_ok=True)
+    os.makedirs(Path("output") / "households", exist_ok=True)
     os.makedirs("temp-data", exist_ok=True)
-    output_rows = write_mapping_file(pos_pid_rows, hid_pat_id_rows, args)
+    output_rows, n_households = write_mapping_file(pos_pid_rows, hid_pat_id_rows, args)
     write_households_pii(output_rows)
     if args.testrun:
         write_scoring_file(hid_pat_id_rows)
         write_hid_hh_pos_map(pos_pid_rows)
+    return n_households
 
 
-def create_clk_zip(args):
-    with ZipFile(args.outputfile, "w") as garbled_zip:
-        garbled_zip.write("output/households/fn-phone-addr-zip.json")
-    print("Zip file created at: " + args.outputfile)
+def create_output_zip(args, n_households):
+
+    source_file = Path(args.sourcefile)
+
+    source_file_name = os.path.basename(source_file)
+    source_dir_name = os.path.dirname(source_file)
+
+    source_timestamp = os.path.splitext(source_file_name.replace("pii-", ""))[0]
+    metadata_file_name = source_file_name.replace("pii", "metadata").replace(
+        ".csv", ".json"
+    )
+    metadata_file = Path(source_dir_name) / metadata_file_name
+    with open(metadata_file, "r") as fp:
+        metadata = json.load(fp)
+    meta_timestamp = metadata["creation_date"].replace("-", "").replace(":", "")[:-7]
+    assert (
+        source_timestamp == meta_timestamp
+    ), "Metadata creation date does not match pii file timestamp"
+
+    metadata["number_of_households"] = n_households
+
+    with open(Path("output") / metadata_file_name, "w") as metadata_file:
+        json.dump(metadata, metadata_file)
+
+    with ZipFile(Path(args.outputfile), "w") as garbled_zip:
+        garbled_zip.write(Path("output") / "households" / "fn-phone-addr-zip.json")
+        garbled_zip.write(Path("output") / metadata_file_name)
+
+    os.remove(Path("output") / metadata_file_name)
+
+    print("Zip file created at: " + str(Path(args.outputfile)))
 
 
 def main():
     args = parse_arguments()
     if not args.householddef:
-        infer_households(args)
+        n_households = infer_households(args)
+    else:
+        n_households = 0
     hash_households(args)
-    create_clk_zip(args)
+    create_output_zip(args, n_households)
 
 
 if __name__ == "__main__":
