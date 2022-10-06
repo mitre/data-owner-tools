@@ -10,7 +10,6 @@ Tools for Clinical and Community Data Initiative (CODI) data owners to extract p
 1. [Extract PII](#extract-pii)
 1. [Garbling](#garbling-pii)
 1. [Mapping LINKIDs to PATIDs](#mapping-linkids-to-patids)
-1. [Verifying Result Metadata](#verify-result-metadata)
 1. [Additional Information for Developer Testing and Tuning](#developer-testing)
 1. [Notice](#notice)
 
@@ -283,26 +282,28 @@ To map the LINK_IDs back to PATIDs, use the `linkid_to_patid.py` script. The scr
 
 1. The path to the pii-timestamp.csv file. 
 2. The path to the LINK_ID CSV file provided by the linkage agent
-3. The path to the Household pii-timestamp.csv file, either provided by the data owner directly or inferred by the `households.py` script
+3. The path to the household pii CSV file, either provided by the data owner directly or inferred by the `households.py` script (which by default is named `household_pii-timestamp.csv`)
 4. The path to the HOUSEHOLDID CSV file provided by the linkage agent if you provided household information
 
 If both the pii-timestamp.csv and LINK_ID CSV file are provided as arguments, the script will create a file called `linkid_to_patid.csv` with the mapping of LINK_IDs to PATIDs in the `output/` folder by default. If both the household pii-timestamp.csv and LINK_ID CSV file are provided as arguments this will also create a `householdid_to_patid.csv` file in the `output/` folder.
+
+### [Optional] Independently Validate Result Metadata
+
+The metadata created by the garbling process is used to validate the metadata returned by the linkage agent within the `linkid_to_patid.py` script. Additionally, the metadata returned by the linkage agents can be validated outside of the `linkid_to_patid.py` script using the `validate_metadata.py` script in the `utils` directory. The syntax from the root directory is 
+```
+python utils\validate_metadata.py <path-to-garbled.zip> <path-to-result.zip>
+```
+So, assuming that the output of `garble.py` is a file, `garble.zip` located in the `output` directory, and assuming that the results from the linkage agent are received as a zip archive named `results.zip` located in the `inbox` directory, the syntax would be
+```
+python utils\validate_metadata.py output\garble.py inbox\results.zip
+```
+By default, the script will only return the number of issues found during the validation process. Use the `-v` flag in order to print detailled information about each of the issues encountered during validation.
 
 ## Cleanup
 
 In between runs it is advisable to run `rm temp-data/*` to clean up temporary data files used for individuals runs.
 
-## Verify Result Metadata
 
-Once LINK_IDs have been received from the linkage agent, the metadata contained in the results archive can be compared to original garbled data with the `verify-linkage-metadata.py` script. The syntax is 
-```
-python verify-linkage-metadata.py <path-to-garbled.zip> <path-to-result.zip>
-```
-So, assuming that the output of `garble.py` is a file, `garble.zip` located in the `output` directory, and assuming that the results from the linkage agent are received as a zip archive named `results.zip` located in the `inbox` directory, the syntax would be
-```
-python verify-linkage-metadata.py output\garble.py inbox\results.zip
-```
-By default, the script will only return the number of issues found during the validation process. Use the `-v` flag in order to print detailled information about each of the issues encountered during validation.
 
 ## Developer Testing
 
