@@ -10,6 +10,7 @@ Tools for Clinical and Community Data Initiative (CODI) data owners to extract p
 1. [Extract PII](#extract-pii)
 1. [Garbling](#garbling-pii)
 1. [Mapping LINKIDs to PATIDs](#mapping-linkids-to-patids)
+1. [Verifying Result Metadata](#verify-result-metadata)
 1. [Additional Information for Developer Testing and Tuning](#developer-testing)
 1. [Notice](#notice)
 
@@ -290,6 +291,18 @@ If both the pii-timestamp.csv and LINK_ID CSV file are provided as arguments, th
 ## Cleanup
 
 In between runs it is advisable to run `rm temp-data/*` to clean up temporary data files used for individuals runs.
+
+## Verify Result Metadata
+
+Once LINK_IDs have been received from the linkage agent, the metadata contained in the results archive can be compared to original garbled data with the `verify-linkage-metadata.py` script. The syntax is 
+```
+python verify-linkage-metadata.py <path-to-garbled.zip> <path-to-result.zip>
+```
+So, assuming that the output of `garble.py` is a file, `garble.zip` located in the `output` directory, and assuming that the results from the linkage agent are received as a zip archive named `results.zip` located in the `inbox` directory, the syntax would be
+```
+python verify-linkage-metadata.py output\garble.py inbox\results.zip
+```
+By default, the script will only return the number of issues found during the validation process. Use the `-v` flag in order to print detailled information about each of the issues encountered during validation.
 
 ## Developer Testing
 
