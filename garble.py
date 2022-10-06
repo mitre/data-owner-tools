@@ -7,6 +7,7 @@ import os
 import shutil
 import subprocess
 import sys
+from datetime import datetime
 from pathlib import Path
 from zipfile import ZipFile
 
@@ -17,7 +18,9 @@ def parse_arguments():
     parser = argparse.ArgumentParser(
         description="Tool for garbling PII in for PPRL purposes in the CODI project"
     )
-    parser.add_argument("sourcefile", help="Source pii-TIMESTAMP.csv file")
+    parser.add_argument(
+        "sourcefile", default=None, nargs="?", help="Source pii-TIMESTAMP.csv file"
+    )
     parser.add_argument("schemadir", help="Directory of linkage schema")
     parser.add_argument("secretfile", help="Location of de-identification secret file")
     parser.add_argument(
@@ -70,7 +73,22 @@ def validate_clks(clk_files, metadata_file):
 
 def garble_pii(args):
     secret_file = Path(args.secretfile)
-    source_file = Path(args.sourcefile)
+
+    if args.sourcefile:
+        source_file = Path(args.sourcefile)
+    else:
+        oldest_ts = datetime.fromtimestamp(0)
+        oldest_name = ""
+        for filename in filter(
+            lambda x: "pii" in x and len(x) == 23, os.listdir("temp-data")
+        ):
+            timestamp = datetime.strptime(filename[4:-4], "%Y%m%dT%H%M%S")
+            if timestamp > oldest_ts:
+                oldest_name = filename
+                oldest_ts = timestamp
+        source_file = Path("temp-data") / oldest_name
+        print(f"PII Source: {str(source_file)}")
+
     os.makedirs("output", exist_ok=True)
 
     source_file_name = os.path.basename(source_file)
