@@ -55,13 +55,11 @@ def verify_metadata(
     for key in source_keys.union(linkage_keys):
         if key not in source_keys:
             metadata_issues.append(
-                f"Found key {key} in {linkage_name}, "
-                f"but not in {source_name}"
+                f"Found key {key} in {linkage_name}, " f"but not in {source_name}"
             )
         elif key not in linkage_keys:
             metadata_issues.append(
-                f"Found key {key} in {source_name},"
-                f" but not in {linkage_name}"
+                f"Found key {key} in {source_name}," f" but not in {linkage_name}"
             )
         elif source_json[key] != linkage_json[key]:
             metadata_issues.append(

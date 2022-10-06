@@ -121,7 +121,10 @@ def write_households_pii(output_rows, household_time):
     shuffle(output_rows)
     timestamp = household_time.strftime("%Y%m%dT%H%M%S")
     with open(
-        Path("temp-data") / f"households_pii-{timestamp}.csv", "w", newline="", encoding="utf-8"
+        Path("temp-data") / f"households_pii-{timestamp}.csv",
+        "w",
+        newline="",
+        encoding="utf-8",
     ) as house_csv:
         writer = csv.writer(house_csv)
         writer.writerow(HOUSEHOLD_PII_HEADERS)
@@ -201,7 +204,7 @@ def write_mapping_file(pos_pid_rows, hid_pat_id_rows, args):
 def write_scoring_file(hid_pat_id_rows):
     # Format is used for scoring
     with open(
-        Path("temp-data")/ "hh_pos_patids.csv", "w", newline="", encoding="utf-8"
+        Path("temp-data") / "hh_pos_patids.csv", "w", newline="", encoding="utf-8"
     ) as hpos_pat_csv:
         writer = csv.writer(hpos_pat_csv)
         writer.writerow(HOUSEHOLD_POS_PID_HEADERS)
@@ -234,7 +237,9 @@ def hash_households(args, household_time):
                 + str(schema_file)
             )
     output_file = Path("output") / "households" / "fn-phone-addr-zip.json"
-    household_pii_file = args.householddef or Path("temp-data") / f"households_pii-{timestamp}.csv"
+    household_pii_file = (
+        args.householddef or Path("temp-data") / f"households_pii-{timestamp}.csv"
+    )
     subprocess.run(
         [
             "anonlink",

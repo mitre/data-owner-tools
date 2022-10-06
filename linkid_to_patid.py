@@ -155,7 +155,7 @@ def translate_linkids(args):
             source_metadata,
             link_metadata,
             source_name=source_metadata_filename,
-            linkage_name=args.hhlinkszip
+            linkage_name=args.hhlinkszip,
         )
         if len(metadata_issues) == 0:
             write_hh_links(args)
