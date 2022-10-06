@@ -2,14 +2,13 @@
 
 import argparse
 import csv
-import os
 import json
-
+import os
 from io import TextIOWrapper
 from pathlib import Path
 from zipfile import ZipFile
 
-from utils.validate_metadata import verify_metadata, get_metadata
+from utils.validate_metadata import get_metadata, verify_metadata
 
 HEADERS = ["LINK_ID", "PATID"]
 HH_HEADERS = ["HOUSEHOLD_ID", "PATID"]
@@ -22,8 +21,8 @@ def parse_arguments():
     parser.add_argument("--sourcefile", help="Source pii-TIMESTAMP.csv file")
     parser.add_argument("--linkszip", help="LINK_ID CSV file from linkage agent")
     parser.add_argument(
-        "--hhsourcezip",
-        help="Household PII zip, either inferred by households.py"
+        "--hhsourcefile",
+        help="Household PII csv, either inferred by households.py"
         " or provided by data owner",
     )
     parser.add_argument(
@@ -63,10 +62,15 @@ def write_patid_links(args):
         with ZipFile(links_archive) as link_zip:
             links_list = list(filter(lambda x: ".csv" in x, link_zip.namelist()))
             if len(links_list) > 1:
-                print(f"WARNING: found more than one .csv file in link archive {links_archive.name}")
+                print(
+                    f"WARNING: found more than one .csv "
+                    f"file in link archive {links_archive.name}"
+                )
                 print(f"\tUsing {links_list[0]}")
             with link_zip.open(links_list[0]) as links:
-                links_reader = csv.reader(TextIOWrapper(links, encoding="UTF-8", newline=""))
+                links_reader = csv.reader(
+                    TextIOWrapper(links, encoding="UTF-8", newline="")
+                )
                 # Skipping header
                 next(links_reader)
                 for row in links_reader:
@@ -77,7 +81,7 @@ def write_patid_links(args):
 
 
 def write_hh_links(args):
-    hh_links_file = Path(args.hhlinksfile)
+    hh_links_file = Path(args.hhlinkszip)
     hh_pii_lines = parse_source_file(args.hhsourcefile)
     with open(
         os.path.join(args.outputdir, "householdid_to_patid.csv"),
@@ -90,10 +94,15 @@ def write_hh_links(args):
         with ZipFile(hh_links_file) as hh_archive:
             hh_links_list = list(filter(lambda x: ".csv" in x, hh_archive.namelist()))
             if len(hh_links_list) > 1:
-                print(f"WARNING: found more than one .csv file in link archive {links_archive.name}")
+                print(
+                    f"WARNING: found more than one .csv "
+                    f"file in link archive {hh_links_file.name}"
+                )
                 print(f"\tUsing {hh_links_list[0]}")
             with hh_archive.open(hh_links_list[0]) as links:
-                links_reader = csv.reader(TextIOWrapper(links, encoding="UTF-8", newline=""))
+                links_reader = csv.reader(
+                    TextIOWrapper(links, encoding="UTF-8", newline="")
+                )
                 # Skipping header
                 next(links_reader)
 
@@ -122,31 +131,42 @@ def translate_linkids(args):
             source_metadata,
             link_metadata,
             source_name=source_metadata_filename,
-            linkage_name=args.linkszip
+            linkage_name=args.linkszip,
         )
         if len(metadata_issues) == 0:
             write_patid_links(args)
         else:
-            print(f"ERROR: Inconsistencies found in source metadata file {args.sourcefile}"
-                  f" and linkage archive metadata in {args.linkszip}:")
+            print(
+                f"ERROR: Inconsistencies found in "
+                f"source metadata file {args.sourcefile}"
+                f" and linkage archive metadata in {args.linkszip}:"
+            )
             for issue in metadata_issues:
-                print('\t'+issue)
+                print("\t" + issue)
 
-    if args.hhlinkszip and args.hhsourcezip:
-        source_metadata_filename = Path(args.sourcefile).parent / Path(
-            args.sourcefile
+    if args.hhlinkszip and args.hhsourcefile:
+        source_metadata_filename = Path(args.hhsourcefile).parent / Path(
+            args.hhsourcefile
         ).name.replace("pii", "metadata").replace(".csv", ".json")
         with open(source_metadata_filename) as source_metadata_file:
             source_metadata = json.load(source_metadata_file)
         link_metadata = get_metadata(args.hhlinkszip)["input_system_metadata"]
-        metadata_issues = verify_metadata(source_metadata, link_metadata)
+        metadata_issues = verify_metadata(
+            source_metadata,
+            link_metadata,
+            source_name=source_metadata_filename,
+            linkage_name=args.hhlinkszip
+        )
         if len(metadata_issues) == 0:
             write_hh_links(args)
         else:
-            print(f"ERROR: Inconsistencies found in source metadata file {args.sourcefile}"
-                  f" and linkage archive metadata in {args.linkszip}:")
+            print(
+                f"ERROR: Inconsistencies found in source "
+                f"metadata file {args.sourcefile}"
+                f" and linkage archive metadata in {args.linkszip}:"
+            )
             for issue in metadata_issues:
-                print('\t'+issue)
+                print("\t" + issue)
 
 
 def main():

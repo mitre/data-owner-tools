@@ -46,20 +46,22 @@ def get_metadata(archive_path_str):
     return metadata
 
 
-def verify_metadata(source_json, linkage_json, source_name="source_json", linkage_name="linkage_json"):
+def verify_metadata(
+    source_json, linkage_json, source_name="source_json", linkage_name="linkage_json"
+):
     metadata_issues = []
     source_keys = set(source_json.keys())
     linkage_keys = set(linkage_json.keys())
     for key in source_keys.union(linkage_keys):
         if key not in source_keys:
             metadata_issues.append(
-                f"Found key {key} in {args.linkage_archive}, "
-                f"but not in {args.source_archive}"
+                f"Found key {key} in {linkage_name}, "
+                f"but not in {source_name}"
             )
         elif key not in linkage_keys:
             metadata_issues.append(
-                f"Found key {key} in {args.source_archive},"
-                f" but not in {args.linkage_archive}"
+                f"Found key {key} in {source_name},"
+                f" but not in {linkage_name}"
             )
         elif source_json[key] != linkage_json[key]:
             metadata_issues.append(
