@@ -1,16 +1,21 @@
 import argparse
 import json
-
 from pathlib import Path
 from zipfile import ZipFile
 
 
 def parse_arguments():
     parser = argparse.ArgumentParser(
-        description="Tool for verifying metadata sent to and received from linkage agent against one another."
+        description="Tool for verifying metadata sent to and received from"
+        "linkage agent against one another."
     )
-    parser.add_argument("source_archive", help="path to ZIP archive containing garbled PII")
-    parser.add_argument("linkage_archive", help="path ZIP archive containing PPRL results from linkage agent")
+    parser.add_argument(
+        "source_archive", help="path to ZIP archive containing garbled PII"
+    )
+    parser.add_argument(
+        "linkage_archive",
+        help="path ZIP archive containing PPRL results from linkage agent",
+    )
     parser.add_argument(
         "-v",
         "--verbose",
@@ -50,11 +55,13 @@ def verify_metadata(args):
     for key in source_keys.union(linkage_keys):
         if key not in source_keys:
             metadata_issues.append(
-                f"Found key {key} in {args.linkage_archive}, but not in {args.source_archive}"
+                f"Found key {key} in {args.linkage_archive}, "
+                f"but not in {args.source_archive}"
             )
         elif key not in linkage_keys:
             metadata_issues.append(
-                f"Found key {key} in {args.source_archive}, but not in {args.linkage_archive}"
+                f"Found key {key} in {args.source_archive},"
+                f" but not in {args.linkage_archive}"
             )
         elif source_json[key] != linkage_json[key]:
             metadata_issues.append(
@@ -72,10 +79,10 @@ def main():
         print(f"Validation Failed: \nFound {len(metadata_issues)} issues")
         if args.verbose:
             for issue in metadata_issues:
-                print("\t"+issue)
+                print("\t" + issue)
     else:
         print(f"Validation Successful: Found {len(metadata_issues)} issues")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
