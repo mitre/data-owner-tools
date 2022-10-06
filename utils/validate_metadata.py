@@ -46,9 +46,7 @@ def get_metadata(archive_path_str):
     return metadata
 
 
-def verify_metadata(args):
-    source_json = get_metadata(args.source_archive)
-    linkage_json = get_metadata(args.linkage_archive)["input_system_metadata"]
+def verify_metadata(source_json, linkage_json, source_name="source_json", linkage_name="linkage_json"):
     metadata_issues = []
     source_keys = set(source_json.keys())
     linkage_keys = set(linkage_json.keys())
@@ -66,15 +64,17 @@ def verify_metadata(args):
         elif source_json[key] != linkage_json[key]:
             metadata_issues.append(
                 f"Disagreement in value for key {key}"
-                f"\n\t {args.source_archive} has value {source_json[key]}"
-                f"\n\t {args.linkage_archive} has value {linkage_json[key]}"
+                f"\n\t {source_name} has value {source_json[key]}"
+                f"\n\t {linkage_name} has value {linkage_json[key]}"
             )
     return metadata_issues
 
 
 def main():
     args = parse_arguments()
-    metadata_issues = verify_metadata(args)
+    source_json = get_metadata(args.source_archive)
+    linkage_json = get_metadata(args.linkage_archive)["input_system_metadata"]
+    metadata_issues = verify_metadata(source_json, linkage_json)
     if len(metadata_issues) > 0:
         print(f"Validation Failed: \nFound {len(metadata_issues)} issues")
         if args.verbose:
