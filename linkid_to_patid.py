@@ -4,6 +4,7 @@ import argparse
 import csv
 import json
 import os
+import sys
 from io import TextIOWrapper
 from pathlib import Path
 from zipfile import ZipFile
@@ -62,11 +63,10 @@ def write_patid_links(args):
         with ZipFile(links_archive) as link_zip:
             links_list = list(filter(lambda x: ".csv" in x, link_zip.namelist()))
             if len(links_list) > 1:
-                print(
-                    f"WARNING: found more than one .csv "
+                sys.exit(
+                    f"ERROR: found more than one .csv "
                     f"file in link archive {links_archive.name}"
                 )
-                print(f"\tUsing {links_list[0]}")
             with link_zip.open(links_list[0]) as links:
                 links_reader = csv.reader(
                     TextIOWrapper(links, encoding="UTF-8", newline="")
