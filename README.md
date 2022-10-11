@@ -175,10 +175,10 @@ Any aberrant results should be investigated rectified within the data set before
 
 anonlink will garble personally identifiable information (PII) in a way that it can be used for linkage later on. The CODI PPRL process garbles information a number of different ways. The `garble.py` script will manage executing anonlink multiple times and package the information for transmission to the linkage agent.
 
-`garble.py` requires 2 different inputs:
-1. The location of a CSV file containing the PII to garble
-1. The location of a directory of anonlink linkage schema files
-1. The location of a secret file to use in the garbling process - this should be a text file containing a single hexadecimal string of at least 128 bits (32 characters); the `testing-and-tuning/generate_secret.py` script will create this for you if require it, e.g.:
+`garble.py` accepts the following positional inputs:
+1. (optional) The location of a CSV file containing the PII to garble. If not provided, the script will look for the newest `pii-TIMESTAMP.csv` file in the `temp-data` directory.
+1. (required) The location of a directory of anonlink linkage schema files
+1. (required)  The location of a secret file to use in the garbling process - this should be a text file containing a single hexadecimal string of at least 128 bits (32 characters); the `testing-and-tuning/generate_secret.py` script will create this for you if require it, e.g.:
 ```
 python testing-and-tuning/generate_secret.py
 ```
