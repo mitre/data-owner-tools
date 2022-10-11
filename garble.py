@@ -77,12 +77,11 @@ def garble_pii(args):
     if args.sourcefile:
         source_file = Path(args.sourcefile)
     else:
-        filenames = list(filter(
-            lambda x: "pii" in x and len(x) == 23, os.listdir("temp-data")
-        ))
+        filenames = list(
+            filter(lambda x: "pii" in x and len(x) == 23, os.listdir("temp-data"))
+        )
         timestamps = [
-            datetime.strptime(filename[4:-4], "%Y%m%dT%H%M%S")
-            for filename in filenames
+            datetime.strptime(filename[4:-4], "%Y%m%dT%H%M%S") for filename in filenames
         ]
         newest_name = filenames[timestamps.index(max(timestamps))]
         source_file = Path("temp-data") / newest_name

@@ -157,12 +157,9 @@ def bfs_traverse_matches(pos_to_pairs, position):
 
 
 def get_default_pii_csv(dirname="temp-data"):
-    filenames = list(filter(
-        lambda x: "pii" in x and len(x) == 23, os.listdir(dirname)
-    ))
+    filenames = list(filter(lambda x: "pii" in x and len(x) == 23, os.listdir(dirname)))
     timestamps = [
-        datetime.strptime(filename[4:-4], "%Y%m%dT%H%M%S")
-        for filename in filenames
+        datetime.strptime(filename[4:-4], "%Y%m%dT%H%M%S") for filename in filenames
     ]
     newest_name = filenames[timestamps.index(max(timestamps))]
     source_file = Path("temp-data") / newest_name
