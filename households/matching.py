@@ -255,13 +255,11 @@ def get_houshold_matches(pii_lines):
     # indexing step defines the pairs of records for comparison
     # indexer.all() does a full n^2 comparison, but we can do better
     indexer = recordlinkage.Index()
-    # use sorted naighborhood here to allow for typos and close matches:
-    # "This algorithm returns record pairs that agree on the sorting key,
-    #  but also records pairs in their neighbourhood."
-    # potentially match on close zips and street names
-    # note that the default "window" aka distance to consider pairs is 3
-    indexer.sortedneighbourhood("household_zip")
-    indexer.sortedneighbourhood("street")
+    # use a block index on zip and street name to reduce the number of candidates.
+    # sortedneighborhood on zip probably doesn't make sense
+    # (zip codes in a geographic area will be too similar)
+    # but if data is dirty then blocks may discard typos
+    indexer.block(['household_zip', 'street'])
     candidate_links = indexer.index(pii_lines)
 
     # Comparison step performs the defined comparison algorithms
