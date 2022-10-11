@@ -12,9 +12,9 @@ from pathlib import Path
 from random import shuffle
 from time import strftime, strptime
 
-from definitions import TIMESTAMP_FMT
 from sqlalchemy import create_engine
 
+from definitions import TIMESTAMP_FMT
 from utils.data_reader import (
     add_parser_db_args,
     case_insensitive_lookup,
