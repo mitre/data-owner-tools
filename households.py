@@ -16,7 +16,6 @@ import pandas as pd
 from definitions import TIMESTAMP_FMT
 from derive_subkey import derive_subkey
 from households.matching import addr_parse, get_houshold_matches
-from utils.constants import timestamp_fmt_str
 
 HEADERS = ["HOUSEHOLD_POSITION", "PII_POSITIONS"]
 HOUSEHOLD_PII_HEADERS = [
@@ -27,8 +26,6 @@ HOUSEHOLD_PII_HEADERS = [
     "record_ids",
 ]
 HOUSEHOLD_POS_PID_HEADERS = ["household_position", "pid"]
-
-TIMESTAMP_FMT = timestamp_fmt_str
 
 
 def parse_arguments():

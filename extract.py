@@ -11,7 +11,6 @@ from datetime import datetime
 from pathlib import Path
 from random import shuffle
 from time import strftime, strptime
-
 from sqlalchemy import create_engine
 
 from definitions import TIMESTAMP_FMT
