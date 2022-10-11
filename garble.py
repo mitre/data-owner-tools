@@ -77,16 +77,15 @@ def garble_pii(args):
     if args.sourcefile:
         source_file = Path(args.sourcefile)
     else:
-        oldest_ts = datetime.fromtimestamp(0)
-        oldest_name = ""
-        for filename in filter(
+        filenames = list(filter(
             lambda x: "pii" in x and len(x) == 23, os.listdir("temp-data")
-        ):
-            timestamp = datetime.strptime(filename[4:-4], "%Y%m%dT%H%M%S")
-            if timestamp > oldest_ts:
-                oldest_name = filename
-                oldest_ts = timestamp
-        source_file = Path("temp-data") / oldest_name
+        ))
+        timestamps = [
+            datetime.strptime(filename[4:-4], "%Y%m%dT%H%M%S")
+            for filename in filenames
+        ]
+        newest_name = filenames[timestamps.index(max(timestamps))]
+        source_file = Path("temp-data") / newest_name
         print(f"PII Source: {str(source_file)}")
 
     os.makedirs("output", exist_ok=True)

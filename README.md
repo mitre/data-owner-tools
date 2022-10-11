@@ -184,15 +184,13 @@ python testing-and-tuning/generate_secret.py
 ```
 This should create a new file called deidentification_secret.txt in your root directory.
 
-`garble.py` requires that the location of the PII file, schema directory, and secret file are provided via positional arguments. If only two positional arguments are given, `garble.py` will use them as the schema directory and secret file locations, and will look for the newest `pii-TIMESTAMP.csv` file in the `temp-data` directory.
-
 The [anonlink schema files](https://anonlink-client.readthedocs.io/en/latest/schema.html) specify the fields that will be used in the hashing process as well as assigning weights to those fields. The `example-schema` directory contains a set of example schema that can be used to test the tools.
 
 `garble.py`, and all other scripts in the repository, will provide usage information with the `-h` flag:
 
 ```
 $ python garble.py -h
-usage: garble.py [-h] [-o OUTPUTFILE] sourcefile schemadir secretfile
+usage: garble.py [-h] [-z OUTPUTZIP] [-o OUTPUTDIR] [sourcefile] schemadir secretfile
 
 Tool for garbling PII in for PPRL purposes in the CODI project
 
@@ -203,8 +201,10 @@ positional arguments:
 
 optional arguments:
   -h, --help            show this help message and exit
-  -o OUTPUTFILE, --output OUTPUTFILE
-                        Specify an output file. Default is output/garbled.zip
+  -z OUTPUTZIP, --outputzip OUTPUTZIP
+                        Specify an name for the .zip file. Default is garbled.zip
+  -o OUTPUTDIR, --outputdir OUTPUTDIR
+                        Specify an output directory. Default is output/
 ```
 
 `garble.py` will package up the garbled PII files into a [zip file](https://en.wikipedia.org/wiki/Zip_(file_format)) called `garbled.zip` and place it in the `output/` folder by default, you can change this with an `--output` flag if desired.
@@ -231,7 +231,7 @@ Zip file created at: output/garbled.zip
 ```
 ### [Optional] Household Extract and Garble
 
-You may now run `households.py` with the same arguments as the `garble.py` script, with the only difference being specifying a specific schema file instead of a schema directory - if no schema is specified it will default to the `example-schema/household-schema/fn-phone-addr-zip.json` (use `-h` flag for more information). NOTE: If you want to generate the testing and tuning files for development on a synthetic dataset, you need to specify the `-t` or `--testrun` flags
+You may now run `households.py` with the same arguments as the `garble.py` script, with the only difference being specifying a specific schema file instead of a schema directory - if no schema is specified it will default to the `example-schema/household-schema/fn-phone-addr-zip.json`. To specify a schemafile, it must be preceeded by the flag `--schemafile` (use `-h` flag for more information). NOTE: If you want to generate the testing and tuning files for development on a synthetic dataset, you need to specify the `-t` or `--testrun` flags
 
 The households script will do the following:
   1. Attempt to group individuals into households and store those records in a csv file in temp-data
