@@ -15,7 +15,6 @@ from definitions import TIMESTAMP_FMT
 from derive_subkey import derive_subkey
 
 
-
 def parse_arguments():
     parser = argparse.ArgumentParser(
         description="Tool for garbling PII in for PPRL purposes in the CODI project"
