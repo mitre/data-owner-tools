@@ -20,7 +20,7 @@ def parse_arguments():
         description="Tool for translating LINK_IDs back into PATIDs"
     )
     parser.add_argument("--sourcefile", help="Source pii-TIMESTAMP.csv file")
-    parser.add_argument("--linkszip", help="LINK_ID CSV file from linkage agent")
+    parser.add_argument("--linkszip", help="LINK_ID ZIP file from linkage agent")
     parser.add_argument(
         "--hhsourcefile",
         help="Household PII csv, either inferred by households.py"
