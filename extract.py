@@ -201,8 +201,10 @@ def translate_row(row, report, conf):
     output_row.append(
         value_maps.get("phone", {}).get(clean_phone_number, clean_phone_number)
     )
-
-    household_street_address = translation_lookup(row, "address", column_maps)
+    # address_street and address_detail are both possible in csv
+    # fix below depends on addition of default value for address_detail to sample_conf.json 
+    # to convert empty address_detail to empty string instead of returning None
+    household_street_address = translation_lookup(row, "address_street", column_maps) + " " + translation_lookup(row, "address_detail", column_maps)
     validate(report, "household_street_address", household_street_address, value_maps)
     clean_household_street_address = clean_string(household_street_address)
     output_row.append(

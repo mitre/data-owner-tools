@@ -9,7 +9,8 @@
     "address": "Street Address 1",
     "zip": "Zip",
     "default_values": {
-      "sex": "F"
+      "sex": "F",
+      "address_detail": "",
     }
   },
   "value_mapping_rules": {
