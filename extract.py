@@ -12,9 +12,9 @@ from pathlib import Path
 from random import shuffle
 from time import strftime, strptime
 
+from definitions import TIMESTAMP_FMT
 from sqlalchemy import create_engine
 
-from utils.constants import timestamp_fmt_str
 from utils.data_reader import (
     add_parser_db_args,
     case_insensitive_lookup,
@@ -36,8 +36,6 @@ HEADER = [
 
 V1 = "v1"
 V2 = "v2"
-
-TIMESTAMP_FMT = timestamp_fmt_str
 
 
 def parse_arguments():
