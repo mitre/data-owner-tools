@@ -87,9 +87,12 @@
       "format": {
         "type": "enum",
         "values": [
-          "M",
+          "A",
           "F",
-          "UN"
+          "M",
+          "NI",
+          "UN",
+          "OT"
         ]
       },
       "hashing": {
