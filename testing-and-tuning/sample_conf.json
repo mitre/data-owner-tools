@@ -10,12 +10,13 @@
     "zip": "Zip",
     "default_values": {
       "sex": "F",
-      "address_street": "",
-      "address_detail": ""
+      "address detail": ""
     }
   },
   "value_mapping_rules": {
     "sex": {"Female": "F", "Male": "M"},
-    "phone": {"1234567890": "PLACEHOLDER/UNKNOWN"}
+    "phone": {"1234567890": "PLACEHOLDER/UNKNOWN"},
+    "address street": {"N/A" : ""},
+    "address detail": {"N/A" : ""}
   }
 }

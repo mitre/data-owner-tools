@@ -29,7 +29,8 @@ HEADER = [
     "DOB",
     "sex",
     "phone_number",
-    "household_street_address",
+    "address street",
+    "address detail",
     "household_zip",
 ]
 
@@ -96,7 +97,6 @@ def clean_phone(phone):
     if phone is None:
         return None
     return "".join(filter(lambda x: x.isdigit(), phone.strip()))
-
 
 def clean_zip(household_zip):
     if household_zip is None:
@@ -203,11 +203,18 @@ def translate_row(row, report, conf):
     )
     # address_street and address_detail are both possible in csv
     # fix below depends on addition of default value for address_detail to sample_conf.json 
-    # to convert empty address_detail to empty string instead of returning None
-    household_street_address = translation_lookup(row, "address_street", column_maps) + " " + translation_lookup(row, "address_detail", column_maps)
-    validate(report, "household_street_address", household_street_address, value_maps)
-    clean_household_street_address = clean_string(household_street_address)
+    # to convert potential empty address_detail to empty string instead of returning None
+    household_street_address1 = translation_lookup(row, "address street", column_maps)
+    household_street_address2 = translation_lookup(row, "address detail", column_maps)
+    validate(report, "address street", household_street_address1, value_maps)
+    validate(report, "address detail", household_street_address2 , value_maps)
+    household_street_address1 = value_maps.get("address street", {}).get(
+        household_street_address1, household_street_address1)
+    household_street_address2 = value_maps.get("address detail", {}).get(
+        household_street_address2, household_street_address2)
+    clean_household_street_address = clean_string(household_street_address1.strip() + " " + household_street_address2.strip())
     output_row.append(
+        # keep call to mapping below in case there are replacements desired for entire address
         value_maps.get("address", {}).get(
             clean_household_street_address, clean_household_street_address
         )
