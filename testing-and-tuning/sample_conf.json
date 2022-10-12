@@ -10,7 +10,8 @@
     "zip": "Zip",
     "default_values": {
       "sex": "F",
-      "address_detail": "",
+      "address_street": "",
+      "address_detail": ""
     }
   },
   "value_mapping_rules": {
