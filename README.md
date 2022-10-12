@@ -231,7 +231,7 @@ Zip file created at: output/garbled.zip
 ```
 ### [Optional] Household Extract and Garble
 
-You may now run `households.py` with the same arguments as the `garble.py` script, with the only difference being specifying a specific schema file instead of a schema directory - if no schema is specified it will default to the `example-schema/household-schema/fn-phone-addr-zip.json`. To specify a schemafile, it must be preceeded by the flag `--schemafile` (use `-h` flag for more information). NOTE: If you want to generate the testing and tuning files for development on a synthetic dataset, you need to specify the `-t` or `--testrun` flags
+You may now run `households.py`. The arguments are similar to `garble.py` script, with the only difference being that specifying a specific schema file must be done using the keyword `--schemafile` instead of positionally. If the `--schemafile` is not used to specify a specefic schema, it will default to the `example-schema/household-schema/fn-phone-addr-zip.json` (use `-h` flag for more information). NOTE: If you want to generate the testing and tuning files for development on a synthetic dataset, you need to specify the `-t` or `--testrun` flags
 
 The households script will do the following:
   1. Attempt to group individuals into households and store those records in a csv file in temp-data
