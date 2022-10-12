@@ -2,6 +2,7 @@
 
 import argparse
 import csv
+import datetime
 import json
 import os
 import subprocess
@@ -116,10 +117,14 @@ def parse_source_file(source_file):
     return df
 
 
-def write_households_pii(output_rows):
+def write_households_pii(output_rows, household_time):
     shuffle(output_rows)
+    timestamp = household_time.strftime("%Y%m%dT%H%M%S")
     with open(
-        "temp-data/households_pii.csv", "w", newline="", encoding="utf-8"
+        Path("temp-data") / f"households_pii-{timestamp}.csv",
+        "w",
+        newline="",
+        encoding="utf-8",
     ) as house_csv:
         writer = csv.writer(house_csv)
         writer.writerow(HOUSEHOLD_PII_HEADERS)
@@ -199,7 +204,7 @@ def write_mapping_file(pos_pid_rows, hid_pat_id_rows, args):
 def write_scoring_file(hid_pat_id_rows):
     # Format is used for scoring
     with open(
-        "temp-data/hh_pos_patids.csv", "w", newline="", encoding="utf-8"
+        Path("temp-data") / "hh_pos_patids.csv", "w", newline="", encoding="utf-8"
     ) as hpos_pat_csv:
         writer = csv.writer(hpos_pat_csv)
         writer.writerow(HOUSEHOLD_POS_PID_HEADERS)
@@ -210,7 +215,7 @@ def write_scoring_file(hid_pat_id_rows):
 def write_hid_hh_pos_map(pos_pid_rows):
     # Format is used for generating a hid to hh_pos for full answer key
     with open(
-        "temp-data/household_pos_pid.csv", "w", newline="", encoding="utf-8"
+        Path("temp-data") / "household_pos_pid.csv", "w", newline="", encoding="utf-8"
     ) as house_pos_csv:
         writer = csv.writer(house_pos_csv)
         writer.writerow(HOUSEHOLD_POS_PID_HEADERS)
@@ -218,7 +223,8 @@ def write_hid_hh_pos_map(pos_pid_rows):
             writer.writerow(output_row)
 
 
-def hash_households(args):
+def hash_households(args, household_time):
+    timestamp = household_time.strftime("%Y%m%dT%H%M%S")
     schema_file = Path(args.schemafile)
     secret_file = Path(args.secretfile)
     secret = validate_secret_file(secret_file)
@@ -230,8 +236,10 @@ def hash_households(args):
                 "The following schema uses doubleHash, which is insecure: "
                 + str(schema_file)
             )
-    output_file = Path("output/households/fn-phone-addr-zip.json")
-    household_pii_file = args.householddef or "temp-data/households_pii.csv"
+    output_file = Path("output") / "households" / "fn-phone-addr-zip.json"
+    household_pii_file = (
+        args.householddef or Path("temp-data") / f"households_pii-{timestamp}.csv"
+    )
     subprocess.run(
         [
             "anonlink",
@@ -244,20 +252,22 @@ def hash_households(args):
     )
 
 
-def infer_households(args):
+def infer_households(args, household_time):
     pos_pid_rows = []
     hid_pat_id_rows = []
     os.makedirs(Path("output") / "households", exist_ok=True)
     os.makedirs("temp-data", exist_ok=True)
     output_rows, n_households = write_mapping_file(pos_pid_rows, hid_pat_id_rows, args)
-    write_households_pii(output_rows)
+    write_households_pii(output_rows, household_time)
     if args.testrun:
         write_scoring_file(hid_pat_id_rows)
         write_hid_hh_pos_map(pos_pid_rows)
     return n_households
 
 
-def create_output_zip(args, n_households):
+def create_output_zip(args, n_households, household_time):
+
+    timestamp = household_time.strftime("%Y%m%dT%H%M%S")
 
     source_file = Path(args.sourcefile)
 
@@ -271,6 +281,8 @@ def create_output_zip(args, n_households):
     metadata_file = Path(source_dir_name) / metadata_file_name
     with open(metadata_file, "r") as fp:
         metadata = json.load(fp)
+
+    new_metadata_filename = f"households_metadata-{timestamp}.json"
     meta_timestamp = metadata["creation_date"].replace("-", "").replace(":", "")[:-7]
     assert (
         source_timestamp == meta_timestamp
@@ -278,26 +290,39 @@ def create_output_zip(args, n_households):
 
     metadata["number_of_households"] = n_households
 
-    with open(Path("output") / metadata_file_name, "w") as metadata_file:
-        json.dump(metadata, metadata_file)
+    if not args.householddef:
+        metadata["household_inference_time"] = household_time.isoformat()
+        metadata["households_inferred"] = True
+    else:
+        metadata["households_inferred"] = False
+
+    with open(Path("temp-data") / new_metadata_filename, "w") as metadata_file:
+        json.dump(metadata, metadata_file, indent=2)
+
+    with open(Path("output") / new_metadata_filename, "w") as metadata_file:
+        json.dump(metadata, metadata_file, indent=2)
 
     with ZipFile(Path(args.outputfile), "w") as garbled_zip:
         garbled_zip.write(Path("output") / "households" / "fn-phone-addr-zip.json")
-        garbled_zip.write(Path("output") / metadata_file_name)
+        garbled_zip.write(Path("output") / new_metadata_filename)
 
-    os.remove(Path("output") / metadata_file_name)
+    os.remove(Path("output") / new_metadata_filename)
 
     print("Zip file created at: " + str(Path(args.outputfile)))
 
 
 def main():
     args = parse_arguments()
+    household_time = datetime.datetime.now()
     if not args.householddef:
-        n_households = infer_households(args)
+        n_households = infer_households(args, household_time)
     else:
-        n_households = 0
-    hash_households(args)
-    create_output_zip(args, n_households)
+        with open(args.householddef) as household_file:
+            households = household_file.read()
+        n_households = len(households.split()) - 1
+
+    hash_households(args, household_time)
+    create_output_zip(args, n_households, household_time)
 
 
 if __name__ == "__main__":
