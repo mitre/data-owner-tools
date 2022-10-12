@@ -175,16 +175,14 @@ Any aberrant results should be investigated rectified within the data set before
 
 anonlink will garble personally identifiable information (PII) in a way that it can be used for linkage later on. The CODI PPRL process garbles information a number of different ways. The `garble.py` script will manage executing anonlink multiple times and package the information for transmission to the linkage agent.
 
-`garble.py` requires 3 different inputs:
-1. The location of a CSV file containing the PII to garble
-1. The location of a directory of anonlink linkage schema files
-1. The location of a secret file to use in the garbling process - this should be a text file containing a single hexadecimal string of at least 128 bits (32 characters); the `testing-and-tuning/generate_secret.py` script will create this for you if require it, e.g.:
+`garble.py` accepts the following positional inputs:
+1. (optional) The location of a CSV file containing the PII to garble. If not provided, the script will look for the newest `pii-TIMESTAMP.csv` file in the `temp-data` directory.
+1. (required) The location of a directory of anonlink linkage schema files
+1. (required)  The location of a secret file to use in the garbling process - this should be a text file containing a single hexadecimal string of at least 128 bits (32 characters); the `testing-and-tuning/generate_secret.py` script will create this for you if require it, e.g.:
 ```
 python testing-and-tuning/generate_secret.py
 ```
 This should create a new file called deidentification_secret.txt in your root directory.
-
-`garble.py` requires that the location of the PII file, schema directory, and secret file are provided via positional arguments.
 
 The [anonlink schema files](https://anonlink-client.readthedocs.io/en/latest/schema.html) specify the fields that will be used in the hashing process as well as assigning weights to those fields. The `example-schema` directory contains a set of example schema that can be used to test the tools.
 
@@ -192,7 +190,7 @@ The [anonlink schema files](https://anonlink-client.readthedocs.io/en/latest/sch
 
 ```
 $ python garble.py -h
-usage: garble.py [-h] [-o OUTPUTFILE] sourcefile schemadir secretfile
+usage: garble.py [-h] [-z OUTPUTZIP] [-o OUTPUTDIR] [sourcefile] schemadir secretfile
 
 Tool for garbling PII in for PPRL purposes in the CODI project
 
@@ -203,13 +201,15 @@ positional arguments:
 
 optional arguments:
   -h, --help            show this help message and exit
-  -o OUTPUTFILE, --output OUTPUTFILE
-                        Specify an output file. Default is output/garbled.zip
+  -z OUTPUTZIP, --outputzip OUTPUTZIP
+                        Specify an name for the .zip file. Default is garbled.zip
+  -o OUTPUTDIR, --outputdir OUTPUTDIR
+                        Specify an output directory. Default is output/
 ```
 
 `garble.py` will package up the garbled PII files into a [zip file](https://en.wikipedia.org/wiki/Zip_(file_format)) called `garbled.zip` and place it in the `output/` folder by default, you can change this with an `--output` flag if desired.
 
-Example execution of `garble.py` is shown below:
+Two example executions of `garble.py` is shown below–first with the PII CSV specified via positional argument:
 
 ```
 $ python garble.py temp-data/pii-TIMESTAMP.csv example-schema ../deidentification_secret.txt
@@ -219,9 +219,19 @@ CLK data written to output/name-sex-dob-parents.json
 CLK data written to output/name-sex-dob-addr.json
 Zip file created at: output/garbled.zip
 ```
+And second without the PII CSV specified as a positional argument:
+```
+$ python garble.py example-schema ../deidentification_secret.txt
+PII Source: temp-data/pii-TIMESTAMP.csv
+CLK data written to output/name-sex-dob-phone.json
+CLK data written to output/name-sex-dob-zip.json
+CLK data written to output/name-sex-dob-parents.json
+CLK data written to output/name-sex-dob-addr.json
+Zip file created at: output/garbled.zip
+```
 ### [Optional] Household Extract and Garble
 
-You may now run `households.py` with the same arguments as the `garble.py` script, with the only difference being specifying a specific schema file instead of a schema directory - if no schema is specified it will default to the `example-schema/household-schema/fn-phone-addr-zip.json` (use `-h` flag for more information). NOTE: If you want to generate the testing and tuning files for development on a synthetic dataset, you need to specify the `-t` or `--testrun` flags
+You may now run `households.py` with the same arguments as the `garble.py` script, with the only difference being specifying a specific schema file instead of a schema directory - if no schema is specified it will default to the `example-schema/household-schema/fn-phone-addr-zip.json`. To specify a schemafile, it must be preceeded by the flag `--schemafile` (use `-h` flag for more information). NOTE: If you want to generate the testing and tuning files for development on a synthetic dataset, you need to specify the `-t` or `--testrun` flags
 
 The households script will do the following:
   1. Attempt to group individuals into households and store those records in a csv file in temp-data
@@ -229,10 +239,16 @@ The households script will do the following:
 
 This information must be provided to the linkage agent if you would like to get a household linkages table as well.
 
-Example run:
+Example run with PII CSV specified:
 ```
 $ python households.py temp-data/pii-TIMESTAMP.csv ../deidentification_secret.txt
-Grouping individuals into households: 100%|███████████████████████| 819/819 [01:12<00:00, 11.37it/s]
+CLK data written to output/households/fn-phone-addr-zip.json
+Zip file created at: output/garbled_households.zip
+```
+and without PII CSV specified:
+```
+$ python households.py ../deidentification_secret.txt
+PII Source: temp-data/pii-TIMESTAMP.csv
 CLK data written to output/households/fn-phone-addr-zip.json
 Zip file created at: output/garbled_households.zip
 ```

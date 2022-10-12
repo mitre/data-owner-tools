@@ -2,11 +2,11 @@
 
 import argparse
 import csv
-import datetime
 import json
 import os
 import subprocess
 import sys
+from datetime import datetime
 from pathlib import Path
 from random import shuffle
 from zipfile import ZipFile
@@ -32,7 +32,9 @@ def parse_arguments():
         description="Tool for garbling household PII for PPRL purposes"
         " in the CODI project"
     )
-    parser.add_argument("sourcefile", help="Source PII CSV file")
+    parser.add_argument(
+        "sourcefile", default=None, nargs="?", help="Source pii-TIMESTAMP.csv file"
+    )
     parser.add_argument("secretfile", help="Location of de-identification secret file")
     parser.add_argument(
         "-d",
@@ -66,7 +68,7 @@ def parse_arguments():
         help="Optional generate files used for testing against an answer key",
     )
     args = parser.parse_args()
-    if not Path(args.sourcefile).exists():
+    if args.sourcefile and not Path(args.sourcefile).exists():
         parser.error("Unable to find source file: " + args.secretfile)
     if not Path(args.schemafile).exists():
         parser.error("Unable to find schema file: " + args.secretfile)
@@ -154,8 +156,22 @@ def bfs_traverse_matches(pos_to_pairs, position):
     return visited
 
 
+def get_default_pii_csv(dirname="temp-data"):
+    filenames = list(filter(lambda x: "pii" in x and len(x) == 23, os.listdir(dirname)))
+    timestamps = [
+        datetime.strptime(filename[4:-4], "%Y%m%dT%H%M%S") for filename in filenames
+    ]
+    newest_name = filenames[timestamps.index(max(timestamps))]
+    source_file = Path("temp-data") / newest_name
+    return source_file
+
+
 def write_mapping_file(pos_pid_rows, hid_pat_id_rows, args):
-    source_file = Path(args.sourcefile)
+    if args.sourcefile:
+        source_file = Path(args.sourcefile)
+    else:
+        source_file = get_default_pii_csv()
+        print(f"PII Source: {str(source_file)}")
     pii_lines = parse_source_file(source_file)
     output_rows = []
     mapping_file = Path(args.mappingfile)
@@ -269,7 +285,10 @@ def create_output_zip(args, n_households, household_time):
 
     timestamp = household_time.strftime("%Y%m%dT%H%M%S")
 
-    source_file = Path(args.sourcefile)
+    if args.sourcefile:
+        source_file = Path(args.sourcefile)
+    else:
+        source_file = get_default_pii_csv()
 
     source_file_name = os.path.basename(source_file)
     source_dir_name = os.path.dirname(source_file)
@@ -313,7 +332,7 @@ def create_output_zip(args, n_households, household_time):
 
 def main():
     args = parse_arguments()
-    household_time = datetime.datetime.now()
+    household_time = datetime.now()
     if not args.householddef:
         n_households = infer_households(args, household_time)
     else:
