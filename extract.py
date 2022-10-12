@@ -98,6 +98,7 @@ def clean_phone(phone):
         return None
     return "".join(filter(lambda x: x.isdigit(), phone.strip()))
 
+
 def clean_zip(household_zip):
     if household_zip is None:
         return None
@@ -202,19 +203,25 @@ def translate_row(row, report, conf):
         value_maps.get("phone", {}).get(clean_phone_number, clean_phone_number)
     )
     # address_street and address_detail are both possible in csv
-    # fix below depends on addition of default value for address_detail to sample_conf.json 
-    # to convert potential empty address_detail to empty string instead of returning None
+    # fix below depends on addition of default value for address_detail to
+    # sample_conf.json to convert potential empty address_detail to empty string
+    # instead of returning None
     household_street_address1 = translation_lookup(row, "address street", column_maps)
     household_street_address2 = translation_lookup(row, "address detail", column_maps)
     validate(report, "address street", household_street_address1, value_maps)
-    validate(report, "address detail", household_street_address2 , value_maps)
+    validate(report, "address detail", household_street_address2, value_maps)
     household_street_address1 = value_maps.get("address street", {}).get(
-        household_street_address1, household_street_address1)
+        household_street_address1, household_street_address1
+    )
     household_street_address2 = value_maps.get("address detail", {}).get(
-        household_street_address2, household_street_address2)
-    clean_household_street_address = clean_string(household_street_address1.strip() + " " + household_street_address2.strip())
+        household_street_address2, household_street_address2
+    )
+    clean_household_street_address = clean_string(
+        household_street_address1.strip() + " " + household_street_address2.strip()
+    )
     output_row.append(
-        # keep call to mapping below in case there are replacements desired for entire address
+        # keep call to mapping below in case there are replacements
+        # desired for entire address
         value_maps.get("address", {}).get(
             clean_household_street_address, clean_household_street_address
         )
