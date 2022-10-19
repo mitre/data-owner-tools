@@ -4,7 +4,6 @@ import argparse
 import csv
 import json
 import os
-
 import uuid
 from collections import Counter
 from datetime import datetime

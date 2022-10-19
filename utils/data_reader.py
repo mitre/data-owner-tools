@@ -1,5 +1,6 @@
-import pandas as pd
 import unicodedata
+
+import pandas as pd
 from sqlalchemy import MetaData, Table, create_engine
 from sqlalchemy.sql import select
 
@@ -114,10 +115,9 @@ def translation_lookup(row, key, translation_map):
     translation_rules = translation_map.get("value_mapping_rules", {})
     if type(desired_keys) == list:
         for desired_key in desired_keys:
-            if (
-                    (mapped_key := map_key(row, desired_key))
-                    and (row_data := row[mapped_key].strip()) != ""
-            ):
+            if (mapped_key := map_key(row, desired_key)) and (
+                row_data := row[mapped_key].strip()
+            ) != "":
                 clean_str = clean_string(row_data)
             else:
                 clean_str = clean_string(defaults.get(desired_key, ""))
@@ -126,8 +126,10 @@ def translation_lookup(row, key, translation_map):
             )
     elif (mapped_key := map_key(row, desired_keys)) and row[mapped_key].strip() != "":
         data.append(
-            clean_string(translation_rules.get(mapped_key, {}).get(
-                row[mapped_key], row[mapped_key])
+            clean_string(
+                translation_rules.get(mapped_key, {}).get(
+                    row[mapped_key], row[mapped_key]
+                )
             )
         )
     else:
