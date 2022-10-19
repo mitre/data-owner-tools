@@ -29,8 +29,7 @@ HEADER = [
     "DOB",
     "sex",
     "phone_number",
-    "address street",
-    "address detail",
+    "household_street_address",
     "household_zip",
 ]
 
