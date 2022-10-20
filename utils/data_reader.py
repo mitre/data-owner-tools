@@ -148,7 +148,7 @@ def get_query(engine, version, args):
         # with no further filtering
         query = select([prv_demo, prv_address]).filter(
             prv_demo.columns.patid == prv_address.columns.patid
-        )
+        ).distinct(prv_address.columns.patid)
 
         return query
 
