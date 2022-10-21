@@ -28,7 +28,7 @@ DATA_DICTIONARY = {
         "DOB": "birth_date",
         "sex": "sex",
         "phone": "primary_phone",
-        "address": "address_street",
+        "address": ["address_street", "address_detail"],
         "zip": "address_zip5",
     },
     CSV: {
@@ -103,9 +103,27 @@ def map_key(row, key):
                 return row_key
 
 
+def empty_str_from_none(string):
+    if string is None:
+        return ""
+    else:
+        return str(string)
+
+
 def case_insensitive_lookup(row, key, version):
-    mapped_key = map_key(row, DATA_DICTIONARY[version][key])
-    return row[mapped_key] if (mapped_key) else None
+    data_key = DATA_DICTIONARY[version][key]
+    data = ""
+    if type(data_key) == list:
+        for subkey in data_key:
+            mapped_subkey = map_key(row, subkey)
+            if mapped_subkey:
+                subdata = empty_str_from_none(row[mapped_subkey])
+                data = " ".join([data, subdata]).strip()
+    else:
+        mapped_key = map_key(row, data_key)
+        if mapped_key:
+            data = row[mapped_key]
+    return data if (data != "") else None
 
 
 def translation_lookup(row, key, translation_map):
