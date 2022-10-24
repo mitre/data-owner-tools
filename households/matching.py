@@ -261,8 +261,9 @@ def get_houshold_matches(pii_lines):
     # note sortedneighborhood on zip probably doesn't make sense
     # (zip codes in a geographic area will be too similar)
     # but if data is dirty then blocks may discard typos
-    indexer.block(['household_zip', 'street'])
-    indexer.block(['household_zip', 'family_name'])
+
+    indexer.block(["household_zip", "street"])
+    indexer.block(["household_zip", "family_name"])
 
     candidate_links = indexer.index(pii_lines)
 
