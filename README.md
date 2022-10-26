@@ -309,7 +309,7 @@ The metadata created by the garbling process is used to validate the metadata re
 ```
 python utils\validate_metadata.py <path-to-garbled.zip> <path-to-result.zip>
 ```
-So, assuming that the output of `garble.py` is a file, `garble.zip` located in the `output` directory, and assuming that the results from the linkage agent are received as a zip archive named `results.zip` located in the `inbox` directory, the syntax would be
+So, assuming that the output of `garble.py` is a file, `garble.zip` located in the `output` directory, and that the results from the linkage agent are received as a zip archive named `results.zip` located in the `inbox` directory, the syntax would be
 ```
 python utils\validate_metadata.py output\garble.py inbox\results.zip
 ```
