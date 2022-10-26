@@ -79,7 +79,10 @@ def garble_pii(args):
         source_file = Path(args.sourcefile)
     else:
         filenames = list(
-            filter(lambda x: "pii" in x and len(x) == 8 + TIMESTAMP_LEN, os.listdir("temp-data"))
+            filter(
+                lambda x: "pii" in x and len(x) == 8 + TIMESTAMP_LEN,
+                os.listdir("temp-data"),
+            )
         )
         timestamps = [
             datetime.strptime(filename[4:-4], TIMESTAMP_FMT) for filename in filenames
