@@ -298,7 +298,7 @@ To map the LINK_IDs back to PATIDs, use the `linkid_to_patid.py` script. The scr
 
 1. The path to the pii-timestamp.csv file. 
 2. The path to the LINK_ID CSV file provided by the linkage agent
-3. The path to the household pii CSV file, either provided by the data owner directly or inferred by the `households.py` script (which by default is named `household_pii-timestamp.csv`)
+3. The path to the household pii CSV file, either provided by the data owner directly or inferred by the `households.py` script (which by default is named `household_pii-TIMESTAMP.csv`)
 4. The path to the HOUSEHOLDID CSV file provided by the linkage agent if you provided household information
 
 If both the pii-timestamp.csv and LINK_ID CSV file are provided as arguments, the script will create a file called `linkid_to_patid.csv` with the mapping of LINK_IDs to PATIDs in the `output/` folder by default. If both the household pii-timestamp.csv and LINK_ID CSV file are provided as arguments this will also create a `householdid_to_patid.csv` file in the `output/` folder.
