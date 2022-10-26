@@ -11,7 +11,7 @@ from datetime import datetime
 from pathlib import Path
 from zipfile import ZipFile
 
-from definitions import TIMESTAMP_FMT
+from definitions import TIMESTAMP_FMT, TIMESTAMP_LEN
 from derive_subkey import derive_subkey
 
 
@@ -79,7 +79,7 @@ def garble_pii(args):
         source_file = Path(args.sourcefile)
     else:
         filenames = list(
-            filter(lambda x: "pii" in x and len(x) == 23, os.listdir("temp-data"))
+            filter(lambda x: "pii" in x and len(x) == 8 + TIMESTAMP_LEN, os.listdir("temp-data"))
         )
         timestamps = [
             datetime.strptime(filename[4:-4], TIMESTAMP_FMT) for filename in filenames
