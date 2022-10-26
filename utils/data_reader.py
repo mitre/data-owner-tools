@@ -143,11 +143,19 @@ def get_query(engine, version, args):
             schema=args.v2_schema,
         )
 
-        query = (
-            select([prv_demo, prv_address])
-            .filter(prv_demo.columns.patid == prv_address.columns.patid)
-            .distinct(prv_address.columns.patid)
+        subquery = (
+            select(prv_address.columns.addressid)
+            .filter(prv_address.columns.patid == prv_demo.columns.patid)
+            .order_by(prv_address.columns.address_preferred.desc())
+            .order_by(prv_address.columns.address_period_start.desc())
+            .limit(1)
+            .correlate(prv_demo)
         )
+
+        query = select([prv_demo, prv_address]).filter(
+            prv_address.columns.addressid == subquery
+        )
+        print(query.compile(engine))
 
         return query
 
