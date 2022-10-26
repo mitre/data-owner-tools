@@ -155,7 +155,6 @@ def get_query(engine, version, args):
         query = select([prv_demo, prv_address]).filter(
             prv_address.columns.addressid == subquery
         )
-        print(query.compile(engine))
 
         return query
 
