@@ -233,7 +233,7 @@ def handle_row(row, report, version):
     output_row.append(clean_string(family_name))
 
     dob = case_insensitive_lookup(row, "DOB", version)
-    output_row.append(dob.isoformat())
+    output_row.append(dob.strftime("%Y-%m-%d"))
 
     sex = case_insensitive_lookup(row, "sex", version)
     validate(report, "sex", sex)
