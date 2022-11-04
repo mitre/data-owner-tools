@@ -309,16 +309,17 @@ def create_output_zip(args, n_households, household_time):
 
     metadata["number_of_households"] = n_households
 
+    metadata["household_garble_time"] = household_time.isoformat()
+
     if not args.householddef:
-        metadata["household_inference_time"] = household_time.isoformat()
         metadata["households_inferred"] = True
     else:
         metadata["households_inferred"] = False
 
-    with open(Path("temp-data") / new_metadata_filename, "w") as metadata_file:
+    with open(Path("temp-data") / new_metadata_filename, "w+") as metadata_file:
         json.dump(metadata, metadata_file, indent=2)
 
-    with open(Path("output") / new_metadata_filename, "w") as metadata_file:
+    with open(Path("output") / new_metadata_filename, "w+") as metadata_file:
         json.dump(metadata, metadata_file, indent=2)
 
     with ZipFile(Path(args.outputfile), "w") as garbled_zip:
