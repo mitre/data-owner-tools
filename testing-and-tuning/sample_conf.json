@@ -6,14 +6,29 @@
     "family_name": "Last Name",
     "DOB": "DateOfBirth",
     "phone": "Telephone Number",
-    "address": "Street Address 1",
+    "address": [
+      "Address Street",
+      "Address Detail"
+    ],
     "zip": "Zip",
     "default_values": {
-      "sex": "F"
+      "sex": "F",
+      "Address Detail": "N/A"
+    },
+    "value_mapping_rules": {
+      "sex": {
+        "Female": "F",
+        "Male": "M"
+      },
+      "phone": {
+        "1234567890": "PLACEHOLDER/UNKNOWN"
+      },
+      "Address Street": {
+        "N/A": ""
+      },
+      "Address Detail": {
+        "N/A": ""
+      }
     }
-  },
-  "value_mapping_rules": {
-    "sex": {"Female": "F", "Male": "M"},
-    "phone": {"1234567890": "PLACEHOLDER/UNKNOWN"}
   }
 }

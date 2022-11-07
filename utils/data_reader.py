@@ -1,3 +1,5 @@
+import unicodedata
+
 import pandas as pd
 from sqlalchemy import MetaData, Table, create_engine
 from sqlalchemy.sql import select
@@ -26,7 +28,7 @@ DATA_DICTIONARY = {
         "DOB": "birth_date",
         "sex": "sex",
         "phone": "primary_phone",
-        "address": "address_street",
+        "address": ["address_street", "address_detail"],
         "zip": "address_zip5",
     },
     CSV: {
@@ -82,6 +84,15 @@ def add_parser_db_args(parser):
     )
 
 
+def clean_string(pii_string):
+    if pii_string is None:
+        return None
+    ascii_pii_string = unicodedata.normalize("NFKD", pii_string).encode(
+        "ascii", "ignore"
+    )
+    return ascii_pii_string.strip().upper().decode("ascii")
+
+
 def map_key(row, key):
     if key in row:
         return key
@@ -92,20 +103,57 @@ def map_key(row, key):
                 return row_key
 
 
+def empty_str_from_none(string):
+    if string is None:
+        return ""
+    else:
+        return str(string)
+
+
 def case_insensitive_lookup(row, key, version):
-    mapped_key = map_key(row, DATA_DICTIONARY[version][key])
-    return row[mapped_key] if (mapped_key) else None
+    data_key = DATA_DICTIONARY[version][key]
+    data = ""
+    if type(data_key) == list:
+        for subkey in data_key:
+            mapped_subkey = map_key(row, subkey)
+            if mapped_subkey:
+                subdata = empty_str_from_none(row[mapped_subkey])
+                data = " ".join([data, subdata]).strip()
+    else:
+        mapped_key = map_key(row, data_key)
+        if mapped_key:
+            data = row[mapped_key]
+    return data if (data != "") else None
 
 
 def translation_lookup(row, key, translation_map):
-    desired_key = translation_map.get(key, key)
-    mapped_key = map_key(row, desired_key)
+    desired_keys = translation_map.get(key, key)
+    data = []
     defaults = translation_map.get("default_values", {})
-
-    if (mapped_key := map_key(row, desired_key)) and row[mapped_key].strip() != "":
-        return row[mapped_key]
+    translation_rules = translation_map.get("value_mapping_rules", {})
+    if type(desired_keys) == list:
+        for desired_key in desired_keys:
+            if (mapped_key := map_key(row, desired_key)) and (
+                row_data := row[mapped_key].strip()
+            ) != "":
+                clean_str = clean_string(row_data)
+            else:
+                clean_str = clean_string(defaults.get(desired_key, ""))
+            data.append(
+                translation_rules.get(desired_key, {}).get(clean_str, clean_str)
+            )
+    elif (mapped_key := map_key(row, desired_keys)) and row[mapped_key].strip() != "":
+        data.append(
+            clean_string(
+                translation_rules.get(mapped_key, {}).get(
+                    row[mapped_key], row[mapped_key]
+                )
+            )
+        )
     else:
-        return defaults.get(key, None)
+        data.append(clean_string(defaults.get(key, "")))
+
+    return " ".join(data)
 
 
 def get_query(engine, version, args):

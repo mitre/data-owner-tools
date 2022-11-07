@@ -4,7 +4,6 @@ import argparse
 import csv
 import json
 import os
-import unicodedata
 import uuid
 from collections import Counter
 from datetime import datetime
@@ -17,6 +16,7 @@ from sqlalchemy import create_engine
 from utils.data_reader import (
     add_parser_db_args,
     case_insensitive_lookup,
+    clean_string,
     get_query,
     translation_lookup,
 )
@@ -83,15 +83,6 @@ def validate(report, field, value, value_mapping=None):
             report[field]["No Mapping Available"] += 1
 
 
-def clean_string(pii_string):
-    if pii_string is None:
-        return None
-    ascii_pii_string = unicodedata.normalize("NFKD", pii_string).encode(
-        "ascii", "ignore"
-    )
-    return ascii_pii_string.strip().upper().decode("ascii")
-
-
 def clean_phone(phone):
     if phone is None:
         return None
@@ -105,8 +96,7 @@ def clean_zip(household_zip):
 
 
 def clean_dob_fromstr(dob_str, date_format):
-    norm_str = unicodedata.normalize("NFKD", dob_str).encode("ascii", "ignore")
-    return strftime("%Y-%m-%d", strptime(norm_str.decode("ascii"), date_format))
+    return strftime("%Y-%m-%d", strptime(dob_str, date_format))
 
 
 def get_report():
@@ -152,7 +142,7 @@ def extract_csv(args, conf):
         rows = csv.DictReader(datasource)
         for row in rows:
             handled_row = translate_row(row, report, conf)
-            if not handled_row[0]:
+            if handled_row[0] == "":
                 handled_row[0] = person_id
                 person_id += 1
             output_rows.append(handled_row)
@@ -165,53 +155,59 @@ def extract_csv(args, conf):
 
 def translate_row(row, report, conf):
     output_row = []
-    value_maps = conf["value_mapping_rules"]
-    column_maps = conf["translation_map"]
 
-    record_id = translation_lookup(row, "record_id", column_maps)
+    translation_maps = conf["translation_map"]
+    value_maps = translation_maps["value_mapping_rules"]
+
+    record_id = translation_lookup(row, "record_id", translation_maps)
     output_row.append(record_id)
 
-    given_name = translation_lookup(row, "given_name", column_maps)
+    given_name = translation_lookup(row, "given_name", translation_maps)
     validate(report, "given_name", given_name, value_maps)
     clean_given_name = clean_string(given_name)
     output_row.append(
         value_maps.get("given_name", {}).get(clean_given_name, clean_given_name)
     )
 
-    family_name = translation_lookup(row, "family_name", column_maps)
+    family_name = translation_lookup(row, "family_name", translation_maps)
     validate(report, "family_name", family_name, value_maps)
     clean_family_name = clean_string(family_name)
     output_row.append(
         value_maps.get("family_name", {}).get(clean_family_name, clean_family_name)
     )
 
-    dob = translation_lookup(row, "DOB", column_maps)
+    dob = translation_lookup(row, "DOB", translation_maps)
     dob = clean_dob_fromstr(dob, conf["date_format"])
     validate(report, "DOB", dob, value_maps)
     output_row.append(value_maps.get("DOB", {}).get(dob, dob))
 
-    sex = translation_lookup(row, "sex", column_maps)
+    sex = translation_lookup(row, "sex", translation_maps)
     validate(report, "sex", sex, value_maps)
     output_row.append(value_maps.get("sex", {}).get(sex, sex))
 
     # is phone or phone_number the canonical field name?
-    phone_number = translation_lookup(row, "phone", column_maps)
+    phone_number = translation_lookup(row, "phone", translation_maps)
     validate(report, "phone_number", phone_number, value_maps)
     clean_phone_number = clean_phone(phone_number)
     output_row.append(
         value_maps.get("phone", {}).get(clean_phone_number, clean_phone_number)
     )
-
-    household_street_address = translation_lookup(row, "address", column_maps)
+    # address_street and address_detail are both possible in csv
+    # fix below depends on addition of default value for address_detail to
+    # sample_conf.json to convert potential empty address_detail to empty string
+    # instead of returning None
+    household_street_address = translation_lookup(row, "address", translation_maps)
     validate(report, "household_street_address", household_street_address, value_maps)
     clean_household_street_address = clean_string(household_street_address)
     output_row.append(
+        # keep call to mapping below in case there are replacements
+        # desired for entire address
         value_maps.get("address", {}).get(
             clean_household_street_address, clean_household_street_address
         )
     )
 
-    household_zip = translation_lookup(row, "zip", column_maps)
+    household_zip = translation_lookup(row, "zip", translation_maps)
     validate(report, "household_zip", household_zip, value_maps)
     cleaned_zip = clean_zip(household_zip)
     output_row.append(value_maps.get("zip", {}).get(cleaned_zip, cleaned_zip))
