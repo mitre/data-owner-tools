@@ -191,11 +191,19 @@ def get_query(engine, version, args):
             schema=args.v2_schema,
         )
 
-        # the expectation is there will only be one record per individual
-        # in private_address_history, so we simply join the tables
-        # with no further filtering
+        subquery = (
+            select(prv_address.columns.addressid)
+            .filter(prv_address.columns.patid == prv_demo.columns.patid)
+            .order_by(prv_address.columns.address_preferred.desc())
+            .order_by(prv_address.columns.address_period_start.desc().nulls_last())
+            .limit(1)
+            .correlate(prv_demo)
+            .scalar_subquery()
+        )
+
         query = select([prv_demo, prv_address]).filter(
-            prv_demo.columns.patid == prv_address.columns.patid
+            prv_demo.columns.patid == prv_address.columns.patid,
+            prv_address.columns.addressid == subquery,
         )
 
         return query
