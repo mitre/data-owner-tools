@@ -4,7 +4,6 @@ import argparse
 import glob
 import json
 import os
-import shutil
 import subprocess
 import sys
 from datetime import datetime
@@ -104,7 +103,10 @@ def garble_pii(args):
         source_timestamp == meta_timestamp
     ), "Metadata creation date does not match pii file timestamp"
 
-    shutil.copyfile(metadata_file, Path("output") / metadata_file_name)
+    metadata["garble_time"] = datetime.now().isoformat()
+
+    with open(Path("output") / metadata_file_name, "w+") as metafile:
+        json.dump(metadata, metafile, indent=2)
 
     secret = validate_secret_file(secret_file)
     individuals_secret = derive_subkey(secret, "individuals")
