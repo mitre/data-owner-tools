@@ -147,12 +147,14 @@ def get_query(engine, version, args):
             select(prv_address.columns.addressid)
             .filter(prv_address.columns.patid == prv_demo.columns.patid)
             .order_by(prv_address.columns.address_preferred.desc())
-            .order_by(prv_address.columns.address_period_start.desc())
+            .order_by(prv_address.columns.address_period_start.desc().nulls_last())
             .limit(1)
             .correlate(prv_demo)
+            .scalar_subquery()
         )
 
         query = select([prv_demo, prv_address]).filter(
+            prv_demo.columns.patid == prv_address.columns.patid,
             prv_address.columns.addressid == subquery
         )
 
