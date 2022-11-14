@@ -189,7 +189,7 @@ def summary(series):
     # list_chars is a list of lists e.g: [[J,o,h,n],[J,a,n,e],...]
     flat_list = [item for sublist in list_chars.tolist() for item in sublist]
     # flat_list is now a single list [J,o,h,n,J,a,n,e,....]
-    total_chars = pd.Series(flat_list).value_counts().to_dict()
+    total_chars = pd.Series(flat_list, dtype=str).value_counts().to_dict()
 
     return {"missing": int(missing), "length": length, "characters": total_chars}
 
