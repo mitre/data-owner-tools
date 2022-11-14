@@ -119,7 +119,7 @@ def case_insensitive_lookup(row, key, version):
             mapped_subkey = map_key(row, subkey)
             if mapped_subkey:
                 subdata = empty_str_from_none(row[mapped_subkey])
-                data = (data + " " + subdata)
+                data = data + " " + subdata
 
         return data
 
