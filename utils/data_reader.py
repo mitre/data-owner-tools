@@ -107,23 +107,25 @@ def empty_str_from_none(string):
     if string is None:
         return ""
     else:
-        return str(string)
+        return string
 
 
 def case_insensitive_lookup(row, key, version):
     data_key = DATA_DICTIONARY[version][key]
-    data = ""
-    if type(data_key) == list:
-        for subkey in data_key:
+    if isinstance(data_key, list):
+        first_key = map_key(row, data_key[0])
+        data = empty_str_from_none(row[first_key])
+        for subkey in data_key[1:]:
             mapped_subkey = map_key(row, subkey)
             if mapped_subkey:
                 subdata = empty_str_from_none(row[mapped_subkey])
-                data = " ".join([data, subdata]).strip()
+                data = data + " " + subdata
+
+        return data
+
     else:
         mapped_key = map_key(row, data_key)
-        if mapped_key:
-            data = row[mapped_key]
-    return data if (data != "") else None
+        return row[mapped_key] if mapped_key else None
 
 
 def translation_lookup(row, key, translation_map):
