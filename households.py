@@ -13,6 +13,7 @@ from zipfile import ZipFile
 
 import pandas as pd
 
+from definitions import TIMESTAMP_FMT
 from derive_subkey import derive_subkey
 from households.matching import addr_parse, get_houshold_matches
 
@@ -121,7 +122,7 @@ def parse_source_file(source_file):
 
 def write_households_pii(output_rows, household_time):
     shuffle(output_rows)
-    timestamp = household_time.strftime("%Y%m%dT%H%M%S")
+    timestamp = household_time.strftime(TIMESTAMP_FMT)
     with open(
         Path("temp-data") / f"households_pii-{timestamp}.csv",
         "w",
@@ -159,7 +160,7 @@ def bfs_traverse_matches(pos_to_pairs, position):
 def get_default_pii_csv(dirname="temp-data"):
     filenames = list(filter(lambda x: "pii" in x and len(x) == 23, os.listdir(dirname)))
     timestamps = [
-        datetime.strptime(filename[4:-4], "%Y%m%dT%H%M%S") for filename in filenames
+        datetime.strptime(filename[4:-4], TIMESTAMP_FMT) for filename in filenames
     ]
     newest_name = filenames[timestamps.index(max(timestamps))]
     source_file = Path("temp-data") / newest_name
@@ -240,7 +241,7 @@ def write_hid_hh_pos_map(pos_pid_rows):
 
 
 def hash_households(args, household_time):
-    timestamp = household_time.strftime("%Y%m%dT%H%M%S")
+    timestamp = household_time.strftime(TIMESTAMP_FMT)
     schema_file = Path(args.schemafile)
     secret_file = Path(args.secretfile)
     secret = validate_secret_file(secret_file)
@@ -283,7 +284,7 @@ def infer_households(args, household_time):
 
 def create_output_zip(args, n_households, household_time):
 
-    timestamp = household_time.strftime("%Y%m%dT%H%M%S")
+    timestamp = household_time.strftime(TIMESTAMP_FMT)
 
     if args.sourcefile:
         source_file = Path(args.sourcefile)

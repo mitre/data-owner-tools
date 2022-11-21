@@ -13,6 +13,7 @@ from time import strftime, strptime
 
 from sqlalchemy import create_engine
 
+from definitions import TIMESTAMP_FMT
 from utils.data_reader import (
     add_parser_db_args,
     case_insensitive_lookup,
@@ -256,7 +257,7 @@ def write_metadata(n_rows, creation_time):
         "creation_date": creation_time.isoformat(),
         "uuid1": str(uuid.uuid1()),
     }
-    timestamp = datetime.strftime(creation_time, "%Y%m%dT%H%M%S")
+    timestamp = datetime.strftime(creation_time, TIMESTAMP_FMT)
     metaname = Path("temp-data") / f"metadata-{timestamp}.json"
     with open(metaname, "w", newline="", encoding="utf-8") as metafile:
         json.dump(metadata, metafile, indent=2)
@@ -264,7 +265,7 @@ def write_metadata(n_rows, creation_time):
 
 def write_data(output_rows, args):
     creation_time = datetime.now()
-    timestamp = datetime.strftime(creation_time, "%Y%m%dT%H%M%S")
+    timestamp = datetime.strftime(creation_time, TIMESTAMP_FMT)
     os.makedirs("temp-data", exist_ok=True)
     csvname = f"temp-data/pii-{timestamp}.csv"
     with open(csvname, "w", newline="", encoding="utf-8") as csvfile:
