@@ -2,6 +2,7 @@
 
 import argparse
 import csv
+import cx_Oracle
 import json
 import os
 import unicodedata
@@ -45,6 +46,8 @@ def parse_arguments():
         "source",
         help="Specify an extraction source."
         "Valid source is database connection string or path to csv file",
+        default=None,
+        nargs='?'
     )
 
     parser.add_argument(
@@ -127,7 +130,20 @@ def print_report(report):
 
 def extract_database(args):
     output_rows = []
-    connection_string = args.source
+    if args.source is None:
+        oracle_connection_string = (
+                'oracle+cx_oracle://{username}:{password}@' +
+                cx_Oracle.makedsn('{hostname}', '{port}', service_name='{service_name}')
+        )
+        connection_string = oracle_connection_string.format(
+            username='SITE_A',
+            password='MySecretPassword',
+            hostname='localhost',
+            port='11521',
+            service_name='XEPDB1',
+        )
+    else:
+        connection_string = args.source
     version = args.schema
     report = get_report()
     engine = create_engine(connection_string)
