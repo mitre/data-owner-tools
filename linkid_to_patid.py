@@ -39,13 +39,13 @@ def parse_arguments():
     )
     parser.add_argument(
         "--force",
-        'f',
+        "-f",
         dest="force",
-        action='store_true',
+        action="store_true",
         default=False,
         nargs="?",
         help="Attempt resolution of patids from linkids even if issues are found"
-             "in metadata file. USE ONLY AS LAST RESORT"
+        "in metadata file. USE ONLY AS LAST RESORT",
     )
     args = parser.parse_args()
     return args
