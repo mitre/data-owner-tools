@@ -113,6 +113,9 @@ def garble_pii(args):
 
     timestamp = datetime.strftime(garble_time, TIMESTAMP_FMT)
 
+    with open(metadata_file, "w") as original_metafile:
+        json.dump(metadata, original_metafile, indent=2)
+
     with open("output/metadata.json", "w+") as fp:
         json.dump(metadata, fp, indent=2)
 
