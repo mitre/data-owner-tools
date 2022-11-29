@@ -37,6 +37,16 @@ def parse_arguments():
         default="output",
         help="Specify an output directory for links. Default is './output'",
     )
+    parser.add_argument(
+        "--force",
+        'f',
+        dest="force",
+        action='store_true',
+        default=False,
+        nargs="?",
+        help="Attempt resolution of patids from linkids even if issues are found"
+             "in metadata file. USE ONLY AS LAST RESORT"
+    )
     args = parser.parse_args()
     return args
 
@@ -157,16 +167,28 @@ def translate_linkids(args):
             source_name=source_metadata_filename,
             linkage_name=args.hhlinkszip,
         )
-        if len(metadata_issues) == 0:
-            write_hh_links(args)
+        if not args.force:
+            if len(metadata_issues) == 0:
+                write_hh_links(args)
+                return
+            else:
+                print(
+                    f"ERROR: Inconsistencies found in source "
+                    f"metadata file {args.sourcefile}"
+                    f" and linkage archive metadata in {args.linkszip}:"
+                )
+                for issue in metadata_issues:
+                    print("\t" + issue)
+                return
         else:
-            print(
-                f"ERROR: Inconsistencies found in source "
-                f"metadata file {args.sourcefile}"
-                f" and linkage archive metadata in {args.linkszip}:"
-            )
-            for issue in metadata_issues:
-                print("\t" + issue)
+            if len(metadata_issues) > 0:
+                print(
+                    f"WARNING: Inconsistencies found in source "
+                    f"metadata file {args.sourcefile}"
+                    f" and linkage archive metadata in {args.linkszip}."
+                    f"Proceeding anyway (this may yield meaningless data)"
+                )
+            write_hh_links(args)
 
 
 def main():
