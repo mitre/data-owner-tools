@@ -109,8 +109,17 @@ def garble_pii(args):
 
     metadata["garble_time"] = datetime.now().isoformat()
 
+<<<<<<< HEAD
     with open(Path("output") / metadata_file_name, "w+") as metafile:
         json.dump(metadata, metafile, indent=2)
+=======
+    metadata["garble_time"] = garble_time.isoformat()
+
+    timestamp = datetime.strftime(garble_time, TIMESTAMP_FMT)
+
+    with open("output/metadata.json", "w+") as fp:
+        json.dump(metadata, fp, indent=2)
+>>>>>>> cca4322... minor tweaks so it can merge
 
     secret = validate_secret_file(secret_file)
     individuals_secret = derive_subkey(secret, "individuals")
@@ -139,6 +148,7 @@ def garble_pii(args):
         clk_files.append(output_file)
     validate_clks(clk_files, metadata_file)
     return clk_files + [Path(f"output/{metadata_file_name}")]
+
 
 
 def create_output_zip(clk_files, args):
