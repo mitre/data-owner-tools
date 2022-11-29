@@ -109,12 +109,12 @@ def garble_pii(args):
 
     garble_time = datetime.now()
 
-    metadata["garble_date"] = garble_time.isoformat()
+    metadata["garble_time"] = garble_time.isoformat()
 
     timestamp = datetime.strftime(garble_time, TIMESTAMP_FMT)
 
-    with open(f"output/metadata{timestamp}.json", "w+") as fp:
-        json.dump(metadata, fp)
+    with open("output/metadata.json", "w+") as fp:
+        json.dump(metadata, fp, indent=2)
 
     secret = validate_secret_file(secret_file)
     individuals_secret = derive_subkey(secret, "individuals")
@@ -145,11 +145,7 @@ def garble_pii(args):
         )
         clk_files.append(Path(outfile))
     validate_clks(clk_files, metadata_file)
-<<<<<<< HEAD
     return clk_files + [Path("output/metadata.json")]
-=======
-    return clk_files + [Path(f"output/metadata{timestamp}.json")]
->>>>>>> c2ef5de... garble time now added to file names in output archive
 
 
 def create_output_zip(clk_files, args):
