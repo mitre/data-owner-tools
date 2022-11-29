@@ -43,7 +43,6 @@ def parse_arguments():
         dest="force",
         action="store_true",
         default=False,
-        nargs="?",
         help="Attempt resolution of patids from linkids even if issues are found"
         "in metadata file. USE ONLY AS LAST RESORT",
     )
