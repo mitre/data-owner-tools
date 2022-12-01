@@ -193,11 +193,27 @@ def get_query(engine, version, args):
             schema=args.v2_schema,
         )
 
+        addr_period_order = prv_address.columns.address_period_start.desc()
+
+        # Different SQL engines have different semantics for sorting DESC:
+        # Postgres and Oracle put nulls first, so we want NULLS LAST
+        # MSSQL puts nulls last, but doesn't support NULLS LAST
+        # so we use this hack to get NULLS LAST for all main dialects.
+        # For safety, in case other engines also don't support NULLS LAST,
+        #  only apply it to the ones that we know it works on
+        #  (vs not applying it to the ones we know it doesn't)
+
+        # TODO: test on MySQL - deferring since none of our partners use it now
+
+        # known engine dialect names are "mssql", "postgresql", and "oracle"
+        if engine.dialect.name in ["postgresql", "oracle"]:
+            addr_period_order = addr_period_order.nulls_last()
+
         subquery = (
             select(prv_address.columns.addressid)
             .filter(prv_address.columns.patid == prv_demo.columns.patid)
             .order_by(prv_address.columns.address_preferred.desc())
-            .order_by(prv_address.columns.address_period_start.desc().nulls_last())
+            .order_by(addr_period_order)
             .limit(1)
             .correlate(prv_demo)
             .scalar_subquery()
