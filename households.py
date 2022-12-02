@@ -81,7 +81,7 @@ def parse_arguments():
 def validate_secret_file(secret_file):
     secret = None
     with open(secret_file, "r") as secret_text:
-        secret = secret_text.read()
+        secret = secret_text.read().strip()
         try:
             int(secret, 16)
         except ValueError:
