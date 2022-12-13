@@ -142,16 +142,18 @@ def translate_linkids(args):
             source_name=source_metadata_filename,
             linkage_name=args.linkszip,
         )
-        if len(metadata_issues) == 0:
-            write_patid_links(args)
-        else:
+        if len(metadata_issues) > 0:
             print(
-                f"ERROR: Inconsistencies found in "
-                f"source metadata file {args.sourcefile}"
+                f"{'ERROR' if args.force else 'WARNING'}: "
+                f"Inconsistencies found in source "
+                f"metadata file {args.sourcefile}"
                 f" and linkage archive metadata in {args.linkszip}:"
             )
             for issue in metadata_issues:
                 print("\t" + issue)
+
+        if len(metadata_issues) == 0 or args.force:
+            write_patid_links(args)
 
     if args.hhlinkszip and args.hhsourcefile:
         source_metadata_filename = Path(args.hhsourcefile).parent / Path(
@@ -166,27 +168,17 @@ def translate_linkids(args):
             source_name=source_metadata_filename,
             linkage_name=args.hhlinkszip,
         )
-        if not args.force:
-            if len(metadata_issues) == 0:
-                write_hh_links(args)
-                return
-            else:
-                print(
-                    f"ERROR: Inconsistencies found in source "
-                    f"metadata file {args.sourcefile}"
-                    f" and linkage archive metadata in {args.linkszip}:"
-                )
-                for issue in metadata_issues:
-                    print("\t" + issue)
-                return
-        else:
-            if len(metadata_issues) > 0:
-                print(
-                    f"WARNING: Inconsistencies found in source "
-                    f"metadata file {args.sourcefile}"
-                    f" and linkage archive metadata in {args.linkszip}."
-                    f"Proceeding anyway (this may yield meaningless data)"
-                )
+        if len(metadata_issues) > 0:
+            print(
+                f"{'ERROR' if args.force else 'WARNING'}: "
+                f"Inconsistencies found in source "
+                f"metadata file {args.sourcefile}"
+                f" and linkage archive metadata in {args.linkszip}:"
+            )
+            for issue in metadata_issues:
+                print("\t" + issue)
+
+        if len(metadata_issues) == 0 or args.force:
             write_hh_links(args)
 
 
