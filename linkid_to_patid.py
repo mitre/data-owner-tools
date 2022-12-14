@@ -37,6 +37,15 @@ def parse_arguments():
         default="output",
         help="Specify an output directory for links. Default is './output'",
     )
+    parser.add_argument(
+        "--force",
+        "-f",
+        dest="force",
+        action="store_true",
+        default=False,
+        help="Attempt resolution of patids from linkids even if issues are found"
+        "in metadata file. USE ONLY AS LAST RESORT",
+    )
     args = parser.parse_args()
     return args
 
@@ -133,16 +142,18 @@ def translate_linkids(args):
             source_name=source_metadata_filename,
             linkage_name=args.linkszip,
         )
-        if len(metadata_issues) == 0:
-            write_patid_links(args)
-        else:
+        if len(metadata_issues) > 0:
             print(
-                f"ERROR: Inconsistencies found in "
-                f"source metadata file {args.sourcefile}"
+                f"{'WARNING' if args.force else 'ERROR'}: "
+                f"Inconsistencies found in source "
+                f"metadata file {args.sourcefile}"
                 f" and linkage archive metadata in {args.linkszip}:"
             )
             for issue in metadata_issues:
                 print("\t" + issue)
+
+        if len(metadata_issues) == 0 or args.force:
+            write_patid_links(args)
 
     if args.hhlinkszip and args.hhsourcefile:
         source_metadata_filename = Path(args.hhsourcefile).parent / Path(
@@ -157,16 +168,18 @@ def translate_linkids(args):
             source_name=source_metadata_filename,
             linkage_name=args.hhlinkszip,
         )
-        if len(metadata_issues) == 0:
-            write_hh_links(args)
-        else:
+        if len(metadata_issues) > 0:
             print(
-                f"ERROR: Inconsistencies found in source "
+                f"{'WARNING' if args.force else 'ERROR'}: "
+                f"Inconsistencies found in source "
                 f"metadata file {args.sourcefile}"
                 f" and linkage archive metadata in {args.linkszip}:"
             )
             for issue in metadata_issues:
                 print("\t" + issue)
+
+        if len(metadata_issues) == 0 or args.force:
+            write_hh_links(args)
 
 
 def main():
