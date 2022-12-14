@@ -144,7 +144,7 @@ def translate_linkids(args):
         )
         if len(metadata_issues) > 0:
             print(
-                f"{'ERROR' if args.force else 'WARNING'}: "
+                f"{'WARNING' if args.force else 'ERROR'}: "
                 f"Inconsistencies found in source "
                 f"metadata file {args.sourcefile}"
                 f" and linkage archive metadata in {args.linkszip}:"
@@ -170,7 +170,7 @@ def translate_linkids(args):
         )
         if len(metadata_issues) > 0:
             print(
-                f"{'ERROR' if args.force else 'WARNING'}: "
+                f"{'WARNING' if args.force else 'ERROR'}: "
                 f"Inconsistencies found in source "
                 f"metadata file {args.sourcefile}"
                 f" and linkage archive metadata in {args.linkszip}:"
