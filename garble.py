@@ -107,10 +107,15 @@ def garble_pii(args):
         source_timestamp == meta_timestamp
     ), "Metadata creation date does not match pii file timestamp"
 
-    metadata["garble_time"] = datetime.now().isoformat()
+    garble_time = datetime.now()
 
-    with open(Path("output") / metadata_file_name, "w+") as metafile:
-        json.dump(metadata, metafile, indent=2)
+    metadata["garble_time"] = garble_time.isoformat()
+
+    with open(Path("output") / metadata_file_name, "w+") as fp:
+        json.dump(metadata, fp, indent=2)
+
+    with open(metadata_file, "w") as fp:
+        json.dump(metadata, fp, indent=2)
 
     secret = validate_secret_file(secret_file)
     individuals_secret = derive_subkey(secret, "individuals")
