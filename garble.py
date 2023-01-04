@@ -48,7 +48,9 @@ def parse_arguments():
 def validate_secret_file(secret_file):
     secret = None
     with open(secret_file, "r") as secret_text:
-        secret = secret_text.read()
+        # strip whitespace just in case someone copy & pastes the salt text
+        #  instead of the file itself (eg, trim extra newline)
+        secret = secret_text.read().strip()
         try:
             int(secret, 16)
         except ValueError:
