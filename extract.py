@@ -139,7 +139,7 @@ def extract_csv(args, conf):
     output_rows = []
     report = get_report()
     person_id = conf.get("initial_id", 0)
-    with open(args.source, "r") as datasource:
+    with open(args.source, "r", encoding="utf-8") as datasource:
         rows = csv.DictReader(datasource)
         for row in rows:
             handled_row = translate_row(row, report, conf)
@@ -274,7 +274,7 @@ def write_data(output_rows, args):
         for output_row in output_rows:
             writer.writerow(output_row)
     write_metadata(len(output_rows), creation_time)
-
+    print(f"Wrote {csvname}")
     return timestamp
 
 
