@@ -52,7 +52,7 @@ def add_parser_db_args(parser):
         default=V2,
         choices=[V1, V2],
         help="Version of the CODI Data Model schema to use. "
-        f'Valid options are "{V1}" or "{V2}". Default is "{V2}',
+        f'Valid options are "{V1}" or "{V2}". Default is "{V2}"',
     )
 
     parser.add_argument(
