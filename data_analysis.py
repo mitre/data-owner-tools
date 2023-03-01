@@ -2,7 +2,7 @@ import argparse
 import json
 import re
 import time
-from datetime import date, datetime
+from datetime import datetime
 
 import pandas as pd
 
@@ -56,16 +56,8 @@ def analyze(data, source):
         "missing": int(dob_col.isna().sum()),
     }
 
-    expected_min_dob = "1997-01-01"
-    # roughly, 19 years old at the start of CODI observation period (2016)
-    # expected_max_dob is trickier because we don't know when the data was populated
-    # TODO: add another command line arg?
-
     if source == "csv":
-        if "-" in notnull_dobs[0]:
-            out_of_range = notnull_dobs[notnull_dobs < expected_min_dob]
-            stats["dob"]["count_earlier_dob_than_expected"] = len(out_of_range)
-        else:
+        if "-" not in notnull_dobs.iloc[0]:
             # the date format will either be YYYY-MM-DD or YYMMDD
             # we'll assume it's consistent across a single file
 
@@ -80,21 +72,6 @@ def analyze(data, source):
                 parsed_dobs.min()
             )  # str-ify the Timestamps again
             stats["dob"]["max_parsed"] = str(parsed_dobs.max())
-
-            expected_min_dob = pd.to_datetime(expected_min_dob, format="%Y-%m-%d")
-
-            out_of_range = parsed_dobs[parsed_dobs < expected_min_dob]
-            stats["dob"]["count_earlier_dob_than_expected"] = len(out_of_range)
-
-    else:
-        # different DBs may return different data types for the DOB column
-        if type(notnull_dobs[0]) is date:
-            expected_min_dob = date.fromisoformat(expected_min_dob)
-        # else
-        #   assume it's a string in ISO format, no change should be needed
-
-        out_of_range = notnull_dobs[notnull_dobs < expected_min_dob]
-        stats["dob"]["count_earlier_dob_than_expected"] = len(out_of_range)
 
     sex_col = case_insensitive_lookup(data, "sex", source)
     stats["sex"] = top_N(sex_col)
