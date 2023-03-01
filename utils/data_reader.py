@@ -89,11 +89,11 @@ def add_parser_db_args(parser):
         choices=["full", "preferred", "single"],
         default="full",
         help="Determines the approach for selecting a single address per PATID"
-        " from PRIVATE_ADDRESS_HISTORY. Options: Use \"single\" if "
+        ' from PRIVATE_ADDRESS_HISTORY. Options: Use "single" if '
         "the data is already guaranteed to only contain one address per PATID."
-        " Use \"preferred\" if the database is guaranteed to only contain one "
+        ' Use "preferred" if the database is guaranteed to only contain one '
         "address with address_preferred='Y' per PATID. "
-        "Use \"full\" if the database may contain multiple preferred addresses"
+        'Use "full" if the database may contain multiple preferred addresses'
         " for different dates/types/use. This option will select "
         "the most recent preferred address by start date."
         "Default if not specified is 'full'",
@@ -231,7 +231,7 @@ def get_query(engine, version, args):
             # This simplifies the query to just select ADDRESS_PREFERRED=Y
             query = select([prv_demo, prv_address]).filter(
                 prv_demo.columns.patid == prv_address.columns.patid,
-                prv_address.columns.address_preferred == 'Y',
+                prv_address.columns.address_preferred == "Y",
             )
         else:
             # The user indicated the data may have multiple preferreds,
@@ -267,7 +267,7 @@ def get_query(engine, version, args):
                 select(prv_address.columns.addressid)
                 .filter(
                     prv_address.columns.patid == prv_demo.columns.patid,
-                    prv_address.columns.address_preferred == 'Y'
+                    prv_address.columns.address_preferred == "Y",
                 )
                 .order_by(prv_address.columns.address_preferred.desc())
                 .order_by(addr_period_order)
