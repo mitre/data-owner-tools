@@ -97,6 +97,8 @@ def clean_zip(household_zip):
 
 
 def clean_dob_fromstr(dob_str, date_format):
+    if not dob_str:
+        return ""
     return strftime("%Y-%m-%d", strptime(dob_str, date_format))
 
 
