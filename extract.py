@@ -230,11 +230,17 @@ def handle_row(row, report, version):
     output_row.append(clean_string(family_name))
 
     dob = case_insensitive_lookup(row, "DOB", version)
-    output_row.append(dob.strftime("%Y-%m-%d"))
+    if dob:
+        output_row.append(dob.strftime("%Y-%m-%d"))
+    else:
+        output_row.append("")
 
     sex = case_insensitive_lookup(row, "sex", version)
     validate(report, "sex", sex)
-    output_row.append(sex.strip())
+    if sex:
+        output_row.append(sex.strip())
+    else:
+        output_row.append("")
 
     phone_number = case_insensitive_lookup(row, "phone", version)
     validate(report, "phone_number", phone_number)
