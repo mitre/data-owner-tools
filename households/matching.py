@@ -1,3 +1,5 @@
+import datetime
+
 import numpy as np
 import pandas as pd
 import recordlinkage
@@ -251,7 +253,9 @@ class AddressComparison(BaseCompareFeature):
         return c
 
 
-def get_houshold_matches(pii_lines):
+def get_houshold_matches(pii_lines, split_factor=4):
+
+    print(f"[{datetime.datetime.now()}] starting indexing")
     # indexing step defines the pairs of records for comparison
     # indexer.full() does a full n^2 comparison, but we can do better
     indexer = recordlinkage.Index()
@@ -265,7 +269,39 @@ def get_houshold_matches(pii_lines):
     indexer.block(["household_zip", "street"])
     indexer.block(["household_zip", "family_name"])
 
-    candidate_links = indexer.index(pii_lines)
+    candidate_links = None
+
+    for subset_A in np.array_split(pii_lines, split_factor):
+        first_item_in_A = subset_A.index.min()
+        # don't compare against earlier items
+        # TODO: make sure this works if the file isn't sorted by patid
+        lines_to_compare = pii_lines[first_item_in_A:]
+        for subset_B in np.array_split(lines_to_compare, split_factor):
+            pairs_subset = indexer.index(subset_A, subset_B)
+
+            if candidate_links is None:
+                candidate_links = pairs_subset
+            else:
+                candidate_links = candidate_links.append(pairs_subset)
+
+    # now we have to remove duplicate and invalid pairs
+    # e.g. (1, 2) and (2, 1) should not both be in the list
+    #      and (1, 1) should not be in the list
+    # the simple approach is just take the items where a < b
+
+    # unfortunately we have to loop it through a dataframe to drop items
+    pre_links = candidate_links
+    clf = candidate_links.to_frame()
+    clf = clf[clf[0] < clf[1]]
+    candidate_links = pd.MultiIndex.from_frame(clf)
+
+    # full_candidate_links = indexer.index(pii_lines)
+
+    # import pdb; pdb.set_trace()
+
+    print(
+        f"[{datetime.datetime.now()}] done indexing -- found {len(candidate_links)} candidate links"
+    )
 
     # Comparison step performs the defined comparison algorithms
     # against the candidate pairs
@@ -293,6 +329,8 @@ def get_houshold_matches(pii_lines):
 
     features = compare_cl.compute(candidate_links, pii_lines)
 
+    print(f"[{datetime.datetime.now()}] done computing")
+
     features["family_name"] *= FN_WEIGHT
     features["phone_number"] *= PHONE_WEIGHT
     features["household_street_address"] *= ADDR_WEIGHT
@@ -316,5 +354,7 @@ def get_houshold_matches(pii_lines):
             pos_to_pairs[pair[1]].append(pair)
         else:
             pos_to_pairs[pair[1]] = [pair]
+
+    print(f"[{datetime.datetime.now()}] done building pairs")
 
     return pos_to_pairs
