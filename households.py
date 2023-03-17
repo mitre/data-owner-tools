@@ -15,7 +15,7 @@ import pandas as pd
 
 from definitions import TIMESTAMP_FMT
 from derive_subkey import derive_subkey
-from households.matching import addr_parse, get_houshold_matches
+from households.matching import addr_parse, get_household_matches
 
 HEADERS = ["HOUSEHOLD_POSITION", "PII_POSITIONS"]
 HOUSEHOLD_PII_HEADERS = [
@@ -68,6 +68,19 @@ def parse_arguments():
         action="store_true",
         help="Optional generate files used for testing against an answer key",
     )
+    parser.add_argument(
+        "--split_factor",
+        type=int,
+        default=4,
+        help="Number of segments to split data into when inferring households."
+        " Smaller numbers may result in out of memory errors. Larger numbers"
+        " may increase runtime. Default is 4",
+    )
+    parser.add_argument(
+        "--debug",
+        action="store_true",
+        help="Enable debug-level logging",
+    )
     args = parser.parse_args()
     if args.sourcefile and not Path(args.sourcefile).exists():
         parser.error("Unable to find source file: " + args.secretfile)
@@ -91,22 +104,12 @@ def validate_secret_file(secret_file):
     return secret
 
 
-def parse_source_file(source_file):
-    all_strings = {
-        "record_id": "str",
-        "given_name": "str",
-        "family_name": "str",
-        "DOB": "str",
-        "sex": "str",
-        "phone_number": "str",
-        "household_street_address": "str",
-        "household_zip": "str",
-        "parent_given_name": "str",
-        "parent_family_name": "str",
-        "parent_email": "str",
-    }
+def parse_source_file(source_file, debug=False):
+    if debug:
+        print(f"[{datetime.now()}] Start loading PII file")
+
     # force all columns to be strings, even if they look numeric
-    df = pd.read_csv(source_file, dtype=all_strings)
+    df = pd.read_csv(source_file, dtype=str)
 
     # break out the address into number, street, suffix, etc,
     # so we can prefilter matches based on those
@@ -116,6 +119,9 @@ def parse_source_file(source_file):
         result_type="expand",
     )
     df = pd.concat([df, addr_cols], axis="columns")
+
+    if debug:
+        print(f"[{datetime.now()}] Done pre-processing PII file")
 
     return df
 
@@ -173,7 +179,7 @@ def write_mapping_file(pos_pid_rows, hid_pat_id_rows, args):
     else:
         source_file = get_default_pii_csv()
         print(f"PII Source: {str(source_file)}")
-    pii_lines = parse_source_file(source_file)
+    pii_lines = parse_source_file(source_file, args.debug)
     output_rows = []
     mapping_file = Path(args.mappingfile)
     n_households = 0
@@ -186,7 +192,10 @@ def write_mapping_file(pos_pid_rows, hid_pat_id_rows, args):
         # (patient position) --> [matching pairs that include that patient]
         # so it can be traversed sort of like a graph from any given patient
         # note the key is patient position within the pii_lines dataframe
-        pos_to_pairs = get_houshold_matches(pii_lines)
+        pos_to_pairs = get_household_matches(pii_lines, args.split_factor, args.debug)
+
+        if args.debug:
+            print(f"[{datetime.now()}] Assembling output file")
 
         hclk_position = 0
         # Match households

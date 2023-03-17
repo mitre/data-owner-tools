@@ -1,3 +1,5 @@
+from datetime import datetime
+
 import numpy as np
 import pandas as pd
 import recordlinkage
@@ -251,7 +253,7 @@ class AddressComparison(BaseCompareFeature):
         return c
 
 
-def get_houshold_matches(pii_lines):
+def get_household_matches(pii_lines, split_factor=4, debug=False):
     # indexing step defines the pairs of records for comparison
     # indexer.full() does a full n^2 comparison, but we can do better
     indexer = recordlinkage.Index()
@@ -265,7 +267,52 @@ def get_houshold_matches(pii_lines):
     indexer.block(["household_zip", "street"])
     indexer.block(["household_zip", "family_name"])
 
-    candidate_links = indexer.index(pii_lines)
+    candidate_links = None
+    # break up the dataframe into subframes,
+    # and iterate over every pair of subframes.
+    # we improve performance somewhat by only comparing looking forward,
+    # that is, only comparing a given set of rows
+    # against rows with higher indices.
+    for subset_A in np.array_split(pii_lines, split_factor):
+        first_item_in_A = subset_A.index.min()
+        # don't compare against earlier items
+        # Note: this assumes that the index is the row number
+        # (NOT the record_id/patid) and the df is sequential
+        # this is currently the case in households.py#parse_source_file()
+        lines_to_compare = pii_lines[first_item_in_A:]
+
+        # pick a sub split factor to give us ~same size subset_A and subset_B.
+        # the idea is that there's some implicit overhead to splitting,
+        # so don't split more tha necessary
+        sub_split_factor = int(len(lines_to_compare) / len(subset_A))
+        for subset_B in np.array_split(lines_to_compare, sub_split_factor):
+            if debug:
+                print(
+                    f"[{datetime.now()}]  Indexing rows "
+                    f"[{subset_A.index.min()}..{subset_A.index.max()}]"
+                    " against "
+                    f"[{subset_B.index.min()}..{subset_B.index.max()}]"
+                )
+
+            pairs_subset = indexer.index(subset_A, subset_B)
+
+            if candidate_links is None:
+                candidate_links = pairs_subset
+            else:
+                candidate_links = candidate_links.append(pairs_subset)
+
+    # now we have to remove duplicate and invalid pairs
+    # e.g. (1, 2) and (2, 1) should not both be in the list
+    #      and (1, 1) should not be in the list
+    # the simple approach is just take the items where a < b
+
+    # unfortunately we have to loop it through a dataframe to drop items
+    clf = candidate_links.to_frame()
+    clf = clf[clf[0] < clf[1]]
+    candidate_links = pd.MultiIndex.from_frame(clf)
+
+    if debug:
+        print(f"[{datetime.now()}] Found {len(candidate_links)} candidate pairs")
 
     # Comparison step performs the defined comparison algorithms
     # against the candidate pairs
@@ -291,6 +338,9 @@ def get_houshold_matches(pii_lines):
     # but levenshtein is. the two metrics are likely similar enough
     # that it's not worth implementing hamming again
 
+    if debug:
+        print(f"[{datetime.now()}] Starting detailed comparison of indexed pairs")
+
     features = compare_cl.compute(candidate_links, pii_lines)
 
     features["family_name"] *= FN_WEIGHT
@@ -304,6 +354,9 @@ def get_houshold_matches(pii_lines):
     matching_pairs = list(matches.index)
     # matching pairs are bi-directional and not duplicated,
     # ex if (1,9) is in the list then (9,1) won't be
+
+    if debug:
+        print(f"[{datetime.now()}] Found {len(matching_pairs)} pairs")
 
     pos_to_pairs = {}
     for pair in matching_pairs:
