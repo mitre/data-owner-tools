@@ -43,14 +43,10 @@ def addr_parse(addr):
 
 
 # Python version of FRIL matchStreetName functionality
-def address_distance(a1, a2):
+# addr1 and addr2 are dicts that were returned from addr_parse
+def address_distance(addr1, addr2):
     score = 0
     secondary_score = 0
-    # Need to parse because usaddress returns list of tuples without set indices
-    addr1 = addr_parse(a1)
-    addr2 = addr_parse(a2)
-    # Alternative way to parse usaddress.parse(a1) return (less efficient I think)
-    # addr_number_1 = next((v[0] for v in addr1 if v[1] == 'AddressNumber'), None)
 
     # Change weights based on existence of second level address
     if (
@@ -212,6 +208,8 @@ def address_distance(a1, a2):
 
     # See if simple string compare of all things combined
     # with a 0.6 adjustment is better
+    a1 = addr1["household_street_address"]
+    a2 = addr2["household_street_address"]
     score = max(
         score,
         textdistance.jaro_winkler(a1, a2) * (weight_number + weight_street_name) * 0.6,
@@ -326,8 +324,8 @@ def get_household_matches(pii_lines, split_factor=4, debug=False):
     )
     compare_cl.add(
         AddressComparison(
-            "household_street_address",
-            "household_street_address",
+            "exploded_address",
+            "exploded_address",
             label="household_street_address",
         )
     )
@@ -341,19 +339,42 @@ def get_household_matches(pii_lines, split_factor=4, debug=False):
     if debug:
         print(f"[{datetime.now()}] Starting detailed comparison of indexed pairs")
 
-    features = compare_cl.compute(candidate_links, pii_lines)
+    matching_pairs = []
+    # we know that we could support len(subset_A) in memory above,
+    # so use the same amount here
+    len_subset_A = int(len(pii_lines) / split_factor)
 
-    features["family_name"] *= FN_WEIGHT
-    features["phone_number"] *= PHONE_WEIGHT
-    features["household_street_address"] *= ADDR_WEIGHT
-    features["household_zip"] *= ZIP_WEIGHT
+    # note: np.array_split had unexpectedly poor performance here for very large indices
+    for i in range(0, len(candidate_links), len_subset_A):
+        subset_links = candidate_links[i : i + len_subset_A]
 
-    # filter the matches down based on the cumulative score
-    matches = features[features.sum(axis=1) > MATCH_THRESHOLD]
+        # filtering the relevant pii lines before passing into compute() below
+        #  seems to have a small positive impact on performance.
+        # subset_links is a MultiIndex so get the unique values from each level
+        #  to get the overall relevant pii lines for this iteration
+        keys = set(subset_links.get_level_values(0)) | set(
+            subset_links.get_level_values(1)
+        )
+        relevant_pii_lines = pii_lines[pii_lines.index.isin(keys)]
+        if debug:
+            print(
+                f"[{datetime.now()}]  Detailed comparing rows "
+                f"[{i}..{i + len_subset_A}]"
+            )
 
-    matching_pairs = list(matches.index)
-    # matching pairs are bi-directional and not duplicated,
-    # ex if (1,9) is in the list then (9,1) won't be
+        features = compare_cl.compute(subset_links, relevant_pii_lines)
+
+        features["family_name"] *= FN_WEIGHT
+        features["phone_number"] *= PHONE_WEIGHT
+        features["household_street_address"] *= ADDR_WEIGHT
+        features["household_zip"] *= ZIP_WEIGHT
+
+        # filter the matches down based on the cumulative score
+        matches = features[features.sum(axis=1) > MATCH_THRESHOLD]
+
+        matching_pairs.extend(list(matches.index))
+        # matching pairs are bi-directional and not duplicated,
+        # ex if (1,9) is in the list then (9,1) won't be
 
     if debug:
         print(f"[{datetime.now()}] Found {len(matching_pairs)} pairs")

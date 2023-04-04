@@ -114,7 +114,7 @@ def parse_source_file(source_file, debug=False):
     # break out the address into number, street, suffix, etc,
     # so we can prefilter matches based on those
     addr_cols = df.apply(
-        lambda row: addr_parse(row.household_street_address),
+        explode_address,
         axis="columns",
         result_type="expand",
     )
@@ -126,15 +126,29 @@ def parse_source_file(source_file, debug=False):
     return df
 
 
+def explode_address(row):
+    # this addr_parse function is relatively slow so only run it once per row.
+    # by caching the exploded dict this way we ensure
+    #  that we have it in the right form in all the right places its needed
+    parsed = addr_parse(row.household_street_address)
+    parsed["exploded_address"] = parsed.copy()
+    parsed["exploded_address"][
+        "household_street_address"
+    ] = row.household_street_address
+    return parsed
+
+
 def write_households_pii(output_rows, household_time):
     shuffle(output_rows)
     timestamp = household_time.strftime(TIMESTAMP_FMT)
+    hh_pii_path = Path("temp-data") / f"households_pii-{timestamp}.csv"
     with open(
-        Path("temp-data") / f"households_pii-{timestamp}.csv",
+        hh_pii_path,
         "w",
         newline="",
         encoding="utf-8",
     ) as house_csv:
+        print(f"Writing households PII to {hh_pii_path}")
         writer = csv.writer(house_csv)
         writer.writerow(HOUSEHOLD_PII_HEADERS)
         for output_row in output_rows:
