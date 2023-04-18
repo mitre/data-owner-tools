@@ -1,4 +1,7 @@
+import csv
+import gc
 from datetime import datetime
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -7,7 +10,9 @@ import textdistance
 import usaddress
 from recordlinkage.base import BaseCompareFeature
 
-MATCH_THRESHOLD = 0.8
+from definitions import TIMESTAMP_FMT
+
+MATCH_THRESHOLD = 0.85
 FN_WEIGHT = 0.2
 PHONE_WEIGHT = 0.15
 ADDR_WEIGHT = 0.35
@@ -210,10 +215,13 @@ def address_distance(addr1, addr2):
     # with a 0.6 adjustment is better
     a1 = addr1["household_street_address"]
     a2 = addr2["household_street_address"]
-    score = max(
-        score,
-        textdistance.jaro_winkler(a1, a2) * (weight_number + weight_street_name) * 0.6,
-    ) + (secondary_score * weight_secondary)
+    if a1 and a2:
+        score = max(
+            score,
+            textdistance.jaro_winkler(a1, a2)
+            * (weight_number + weight_street_name)
+            * 0.6,
+        ) + (secondary_score * weight_secondary)
     return score
 
 
@@ -251,7 +259,95 @@ class AddressComparison(BaseCompareFeature):
         return c
 
 
-def get_household_matches(pii_lines, split_factor=4, debug=False):
+def explode_address(row):
+    # this addr_parse function is relatively slow so only run it once per row.
+    # by caching the exploded dict this way we ensure
+    #  that we have it in the right form in all the right places its needed
+    parsed = addr_parse(row.household_street_address)
+    parsed["exploded_address"] = parsed.copy()
+    parsed["exploded_address"][
+        "household_street_address"
+    ] = row.household_street_address
+    return parsed
+
+
+def get_household_matches(pii_lines, split_factor=4, debug=False, pairsfile=None):
+    if pairsfile:
+        if debug:
+            print(f"[{datetime.now()}] Loading matching pairs file")
+
+        matching_pairs = pd.read_csv(pairsfile, index_col=[0, 1], header=None).index
+        gc.collect()
+
+        if debug:
+            print(f"[{datetime.now()}] Done loading matching pairs")
+
+    else:
+        # break out the address into number, street, suffix, etc,
+        # so we can prefilter matches based on those
+        addr_cols = pii_lines.apply(
+            explode_address,
+            axis="columns",
+            result_type="expand",
+        )
+        pii_lines_exploded = pd.concat([pii_lines, addr_cols], axis="columns")
+
+        if debug:
+            print(f"[{datetime.now()}] Done pre-processing PII file")
+
+        candidate_links = get_candidate_links(pii_lines_exploded, split_factor, debug)
+        gc.collect()
+
+        matching_pairs = get_matching_pairs(
+            pii_lines_exploded, candidate_links, split_factor, debug
+        )
+        del candidate_links
+        del pii_lines_exploded
+        gc.collect()
+
+        if debug:
+            timestamp = datetime.now().strftime(TIMESTAMP_FMT)
+            pairs_path = Path("temp-data") / f"households_pairs-{timestamp}.csv"
+            with open(
+                pairs_path,
+                "w",
+                newline="",
+                encoding="utf-8",
+            ) as pairs_csv:
+                print(f"[{datetime.now()}] Dumping matching pairs to file")
+                pairs_writer = csv.writer(pairs_csv)
+                for i in range(len(matching_pairs)):
+                    pairs_writer.writerow(matching_pairs[i])
+                print(f"[{datetime.now()}] Wrote matching pairs to {pairs_path}")
+
+    five_percent = int(len(matching_pairs) / 20)
+    pos_to_pairs = {}
+    # note: "for pair in matching_pairs:" had unexpectedly poor performance here
+    for i in range(len(matching_pairs)):
+        pair = matching_pairs[i]
+        if debug and (i % five_percent) == 0:
+            print(
+                f"[{datetime.now()}] Building dict of matching pairs "
+                f"- {i}/{len(matching_pairs)}"
+            )
+
+        if pair[0] in pos_to_pairs:
+            pos_to_pairs[pair[0]].append(pair)
+        else:
+            pos_to_pairs[pair[0]] = [pair]
+
+        if pair[1] in pos_to_pairs:
+            pos_to_pairs[pair[1]].append(pair)
+        else:
+            pos_to_pairs[pair[1]] = [pair]
+
+    if debug:
+        print(f"[{datetime.now()}] Done building dict")
+
+    return pos_to_pairs
+
+
+def get_candidate_links(pii_lines, split_factor=4, debug=False):
     # indexing step defines the pairs of records for comparison
     # indexer.full() does a full n^2 comparison, but we can do better
     indexer = recordlinkage.Index()
@@ -262,10 +358,11 @@ def get_household_matches(pii_lines, split_factor=4, debug=False):
     # (zip codes in a geographic area will be too similar)
     # but if data is dirty then blocks may discard typos
 
-    indexer.block(["household_zip", "street"])
+    indexer.block(["household_zip", "street", "number"])
     indexer.block(["household_zip", "family_name"])
 
     candidate_links = None
+
     # break up the dataframe into subframes,
     # and iterate over every pair of subframes.
     # we improve performance somewhat by only comparing looking forward,
@@ -292,26 +389,35 @@ def get_household_matches(pii_lines, split_factor=4, debug=False):
                     f"[{subset_B.index.min()}..{subset_B.index.max()}]"
                 )
 
+            # note pairs_subset and candidate_links are MultiIndexes
             pairs_subset = indexer.index(subset_A, subset_B)
+
+            # now we have to remove duplicate and invalid pairs
+            # e.g. (1, 2) and (2, 1) should not both be in the list
+            #      and (1, 1) should not be in the list
+            # the simple approach is just take the items where a < b
+            # unfortunately we have to loop it through a dataframe.
+            # this is done on the subset rather than the entire list
+            # to make sure we don't potentially duplicate a massive list
+            # and crash with OOM
+            pairs_subset = pairs_subset.to_frame()
+            pairs_subset = pairs_subset[pairs_subset[0] < pairs_subset[1]]
+            pairs_subset = pd.MultiIndex.from_frame(pairs_subset)
 
             if candidate_links is None:
                 candidate_links = pairs_subset
             else:
                 candidate_links = candidate_links.append(pairs_subset)
 
-    # now we have to remove duplicate and invalid pairs
-    # e.g. (1, 2) and (2, 1) should not both be in the list
-    #      and (1, 1) should not be in the list
-    # the simple approach is just take the items where a < b
-
-    # unfortunately we have to loop it through a dataframe to drop items
-    clf = candidate_links.to_frame()
-    clf = clf[clf[0] < clf[1]]
-    candidate_links = pd.MultiIndex.from_frame(clf)
+            gc.collect()
 
     if debug:
         print(f"[{datetime.now()}] Found {len(candidate_links)} candidate pairs")
 
+    return candidate_links
+
+
+def get_matching_pairs(pii_lines, candidate_links, split_factor, debug):
     # Comparison step performs the defined comparison algorithms
     # against the candidate pairs
     compare_cl = recordlinkage.Compare()
@@ -339,7 +445,7 @@ def get_household_matches(pii_lines, split_factor=4, debug=False):
     if debug:
         print(f"[{datetime.now()}] Starting detailed comparison of indexed pairs")
 
-    matching_pairs = []
+    matching_pairs = None
     # we know that we could support len(subset_A) in memory above,
     # so use the same amount here
     len_subset_A = int(len(pii_lines) / split_factor)
@@ -372,23 +478,24 @@ def get_household_matches(pii_lines, split_factor=4, debug=False):
         # filter the matches down based on the cumulative score
         matches = features[features.sum(axis=1) > MATCH_THRESHOLD]
 
-        matching_pairs.extend(list(matches.index))
+        if matching_pairs is None:
+            matching_pairs = matches.index
+        else:
+            matching_pairs = matching_pairs.append(matches.index)
         # matching pairs are bi-directional and not duplicated,
         # ex if (1,9) is in the list then (9,1) won't be
 
+        if debug:
+            print(f"[{datetime.now()}]  {len(matching_pairs)} matching pairs so far")
+
+        del features
+        del matches
+        gc.collect()
+
+    # drop exploded address because it's not used past this point
+    pii_lines.drop(columns=["exploded_address"], inplace=True)
+
     if debug:
-        print(f"[{datetime.now()}] Found {len(matching_pairs)} pairs")
+        print(f"[{datetime.now()}] Found {len(matching_pairs)} matching pairs")
 
-    pos_to_pairs = {}
-    for pair in matching_pairs:
-        if pair[0] in pos_to_pairs:
-            pos_to_pairs[pair[0]].append(pair)
-        else:
-            pos_to_pairs[pair[0]] = [pair]
-
-        if pair[1] in pos_to_pairs:
-            pos_to_pairs[pair[1]].append(pair)
-        else:
-            pos_to_pairs[pair[1]] = [pair]
-
-    return pos_to_pairs
+    return matching_pairs
