@@ -209,10 +209,10 @@ def write_pii_and_mapping_file(pos_pid_rows, hid_pat_id_rows, household_time, ar
             lines_processed = 0
             five_percent = int(len(pii_lines) / 20)
             # Match households
-            for position, line in pii_lines.sample(frac=1).iterrows():
+            for position, _line in pii_lines.sample(frac=1).iterrows():
                 # sample(frac=1) shuffles the entire dataframe
                 # note that "position" is the index and still relative to the original
-
+                line = pii_lines.loc[position]
                 lines_processed += 1
 
                 if args.debug and (lines_processed % five_percent) == 0:
@@ -223,7 +223,6 @@ def write_pii_and_mapping_file(pos_pid_rows, hid_pat_id_rows, household_time, ar
 
                 if line["written_to_file"]:
                     continue
-                line["written_to_file"] = True
 
                 if position in pos_to_pairs:
                     pat_positions = bfs_traverse_matches(pos_to_pairs, position)
@@ -231,11 +230,12 @@ def write_pii_and_mapping_file(pos_pid_rows, hid_pat_id_rows, household_time, ar
                     pat_ids = list(
                         map(lambda p: pii_lines.at[p, "record_id"], pat_positions)
                     )
-                    # mark all these rows as written to file
-                    pii_lines.loc[pat_positions, ["written_to_file"]] = True
                 else:
                     pat_positions = [position]
                     pat_ids = [line[0]]
+
+                # mark all these rows as written to file
+                pii_lines.loc[pat_positions, ["written_to_file"]] = True
 
                 string_pat_positions = [str(p) for p in pat_positions]
                 pat_string = ",".join(string_pat_positions)

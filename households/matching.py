@@ -12,11 +12,11 @@ from recordlinkage.base import BaseCompareFeature
 
 from definitions import TIMESTAMP_FMT
 
-MATCH_THRESHOLD = 0.85
+MATCH_THRESHOLD = 0.9
 FN_WEIGHT = 0.2
 PHONE_WEIGHT = 0.15
-ADDR_WEIGHT = 0.35
-ZIP_WEIGHT = 0.3
+ADDR_WEIGHT = 0.4
+ZIP_WEIGHT = 0.25
 
 
 def addr_parse(addr):
@@ -361,7 +361,8 @@ def get_candidate_links(pii_lines, split_factor=4, debug=False):
     indexer.block(["household_zip", "street", "number"])
     indexer.block(["household_zip", "family_name"])
 
-    candidate_links = None
+    # start with an empty index we can append to
+    candidate_links = pd.MultiIndex.from_tuples([], names=[0, 1])
 
     # break up the dataframe into subframes,
     # and iterate over every pair of subframes.
@@ -404,10 +405,7 @@ def get_candidate_links(pii_lines, split_factor=4, debug=False):
             pairs_subset = pairs_subset[pairs_subset[0] < pairs_subset[1]]
             pairs_subset = pd.MultiIndex.from_frame(pairs_subset)
 
-            if candidate_links is None:
-                candidate_links = pairs_subset
-            else:
-                candidate_links = candidate_links.append(pairs_subset)
+            candidate_links = candidate_links.append(pairs_subset)
 
             gc.collect()
 
@@ -445,7 +443,8 @@ def get_matching_pairs(pii_lines, candidate_links, split_factor, debug):
     if debug:
         print(f"[{datetime.now()}] Starting detailed comparison of indexed pairs")
 
-    matching_pairs = None
+    # start with an empty index we can append to
+    matching_pairs = pd.MultiIndex.from_tuples([], names=[0, 1])
     # we know that we could support len(subset_A) in memory above,
     # so use the same amount here
     len_subset_A = int(len(pii_lines) / split_factor)
@@ -478,10 +477,7 @@ def get_matching_pairs(pii_lines, candidate_links, split_factor, debug):
         # filter the matches down based on the cumulative score
         matches = features[features.sum(axis=1) > MATCH_THRESHOLD]
 
-        if matching_pairs is None:
-            matching_pairs = matches.index
-        else:
-            matching_pairs = matching_pairs.append(matches.index)
+        matching_pairs = matching_pairs.append(matches.index)
         # matching pairs are bi-directional and not duplicated,
         # ex if (1,9) is in the list then (9,1) won't be
 
