@@ -53,6 +53,23 @@ def address_distance(addr1, addr2):
     score = 0
     secondary_score = 0
 
+    a1 = addr1["household_street_address"]
+    a2 = addr2["household_street_address"]
+
+    if not a1 or not a2:
+        # if either is blank they get a score of 0
+        # this matches textdistance.jaro_winkler("", x)
+        # but textdistance.jaro_winkler("", "") is normally 1
+        # without this, 2 missing addresses could be a "perfect match"
+        # which is not what we want
+        return 0
+
+    if a1 == a2:
+        # if the strings are exactly identical,
+        #  don't waste time with detailed comparisons
+        #  this matches textdistance.jaro_winkler(x, x)
+        return 1
+
     # Change weights based on existence of second level address
     if (
         not addr1["prefix"]
@@ -213,15 +230,12 @@ def address_distance(addr1, addr2):
 
     # See if simple string compare of all things combined
     # with a 0.6 adjustment is better
-    a1 = addr1["household_street_address"]
-    a2 = addr2["household_street_address"]
-    if a1 and a2:
-        score = max(
-            score,
-            textdistance.jaro_winkler(a1, a2)
-            * (weight_number + weight_street_name)
-            * 0.6,
-        ) + (secondary_score * weight_secondary)
+    score = max(
+        score,
+        textdistance.jaro_winkler(a1, a2)
+        * (weight_number + weight_street_name)
+        * 0.6,
+    ) + (secondary_score * weight_secondary)
     return score
 
 
@@ -271,7 +285,7 @@ def explode_address(row):
     return parsed
 
 
-def get_household_matches(pii_lines, split_factor=4, debug=False, pairsfile=None):
+def get_household_matches(pii_lines, split_factor=4, debug=False, fast_addresses=False, pairsfile=None):
     if pairsfile:
         if debug:
             print(f"[{datetime.now()}] Loading matching pairs file")
@@ -283,26 +297,32 @@ def get_household_matches(pii_lines, split_factor=4, debug=False, pairsfile=None
             print(f"[{datetime.now()}] Done loading matching pairs")
 
     else:
-        # break out the address into number, street, suffix, etc,
-        # so we can prefilter matches based on those
-        addr_cols = pii_lines.apply(
-            explode_address,
-            axis="columns",
-            result_type="expand",
-        )
-        pii_lines_exploded = pd.concat([pii_lines, addr_cols], axis="columns")
+
+        if fast_addresses:
+            pii_lines_exploded = pii_lines
+        else:
+            # break out the address into number, street, suffix, etc,
+            # so we can prefilter matches based on those
+            addr_cols = pii_lines.apply(
+                explode_address,
+                axis="columns",
+                result_type="expand",
+            )
+            pii_lines_exploded = pd.concat([pii_lines, addr_cols], axis="columns")
+
 
         if debug:
             print(f"[{datetime.now()}] Done pre-processing PII file")
 
-        candidate_links = get_candidate_links(pii_lines_exploded, split_factor, debug)
+        candidate_links = get_candidate_links(pii_lines_exploded, split_factor, fast_addresses, debug)
         gc.collect()
 
         matching_pairs = get_matching_pairs(
-            pii_lines_exploded, candidate_links, split_factor, debug
+            pii_lines_exploded, candidate_links, split_factor, fast_addresses, debug
         )
         del candidate_links
-        del pii_lines_exploded
+        if fast_addresses:
+            del pii_lines_exploded
         gc.collect()
 
         if debug:
@@ -347,7 +367,7 @@ def get_household_matches(pii_lines, split_factor=4, debug=False, pairsfile=None
     return pos_to_pairs
 
 
-def get_candidate_links(pii_lines, split_factor=4, debug=False):
+def get_candidate_links(pii_lines, split_factor=4, fast_addresses=False, debug=False):
     # indexing step defines the pairs of records for comparison
     # indexer.full() does a full n^2 comparison, but we can do better
     indexer = recordlinkage.Index()
@@ -358,8 +378,11 @@ def get_candidate_links(pii_lines, split_factor=4, debug=False):
     # (zip codes in a geographic area will be too similar)
     # but if data is dirty then blocks may discard typos
 
-    indexer.block(["household_zip", "street", "number"])
     indexer.block(["household_zip", "family_name"])
+    if fast_addresses:
+        indexer.block(["household_zip", "household_street_address"])
+    else:
+        indexer.block(["household_zip", "street", "number"])
 
     # start with an empty index we can append to
     candidate_links = pd.MultiIndex.from_tuples([], names=[0, 1])
@@ -415,7 +438,7 @@ def get_candidate_links(pii_lines, split_factor=4, debug=False):
     return candidate_links
 
 
-def get_matching_pairs(pii_lines, candidate_links, split_factor, debug):
+def get_matching_pairs(pii_lines, candidate_links, split_factor, fast_addresses, debug):
     # Comparison step performs the defined comparison algorithms
     # against the candidate pairs
     compare_cl = recordlinkage.Compare()
@@ -426,13 +449,22 @@ def get_matching_pairs(pii_lines, candidate_links, split_factor, debug):
     compare_cl.string(
         "phone_number", "phone_number", method="jarowinkler", label="phone_number"
     )
-    compare_cl.add(
-        AddressComparison(
-            "exploded_address",
-            "exploded_address",
+    if fast_addresses:
+        compare_cl.string(
+            "household_street_address",
+            "household_street_address",
+            method="jarowinkler",
             label="household_street_address",
         )
-    )
+    else:
+        compare_cl.add(
+            AddressComparison(
+                "exploded_address",
+                "exploded_address",
+                label="household_street_address",
+            )
+        )
+
     compare_cl.string(
         "household_zip", "household_zip", method="levenshtein", label="household_zip"
     )
@@ -487,9 +519,6 @@ def get_matching_pairs(pii_lines, candidate_links, split_factor, debug):
         del features
         del matches
         gc.collect()
-
-    # drop exploded address because it's not used past this point
-    pii_lines.drop(columns=["exploded_address"], inplace=True)
 
     if debug:
         print(f"[{datetime.now()}] Found {len(matching_pairs)} matching pairs")

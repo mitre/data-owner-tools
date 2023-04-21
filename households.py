@@ -76,6 +76,17 @@ def parse_arguments():
         " may increase runtime. Default is 4",
     )
     parser.add_argument(
+        "--fast_addresses",
+        action="store_true",
+        help="Use a faster but lower quality method for address comparison."
+        " By default the inference process will split up addresses into"
+        " street, number, suffix, etc, but this increases memory & runtime."
+        " Enabling this feature causes the process to use the entire address"
+        " as a single string for comparisons. If addresses have not been"
+        " standardized/validated, this setting will increase false negatives"
+        " (records not being included in households where they should be).",
+    )
+    parser.add_argument(
         "--pairsfile",
         help="Location of matching pairs file",
     )
@@ -179,7 +190,7 @@ def write_pii_and_mapping_file(pos_pid_rows, hid_pat_id_rows, household_time, ar
     # so it can be traversed sort of like a graph from any given patient
     # note the key is patient position within the pii_lines dataframe
     pos_to_pairs = get_household_matches(
-        pii_lines, args.split_factor, args.debug, args.pairsfile
+        pii_lines, args.split_factor, args.debug, args.fast_addresses, args.pairsfile
     )
 
     mapping_file = Path(args.mappingfile)
