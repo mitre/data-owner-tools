@@ -232,9 +232,7 @@ def address_distance(addr1, addr2):
     # with a 0.6 adjustment is better
     score = max(
         score,
-        textdistance.jaro_winkler(a1, a2)
-        * (weight_number + weight_street_name)
-        * 0.6,
+        textdistance.jaro_winkler(a1, a2) * (weight_number + weight_street_name) * 0.6,
     ) + (secondary_score * weight_secondary)
     return score
 
@@ -285,7 +283,9 @@ def explode_address(row):
     return parsed
 
 
-def get_household_matches(pii_lines, split_factor=4, debug=False, fast_addresses=False, pairsfile=None):
+def get_household_matches(
+    pii_lines, split_factor=4, debug=False, fast_addresses=False, pairsfile=None
+):
     if pairsfile:
         if debug:
             print(f"[{datetime.now()}] Loading matching pairs file")
@@ -310,11 +310,12 @@ def get_household_matches(pii_lines, split_factor=4, debug=False, fast_addresses
             )
             pii_lines_exploded = pd.concat([pii_lines, addr_cols], axis="columns")
 
-
         if debug:
             print(f"[{datetime.now()}] Done pre-processing PII file")
 
-        candidate_links = get_candidate_links(pii_lines_exploded, split_factor, fast_addresses, debug)
+        candidate_links = get_candidate_links(
+            pii_lines_exploded, split_factor, fast_addresses, debug
+        )
         gc.collect()
 
         matching_pairs = get_matching_pairs(
