@@ -12,7 +12,7 @@ from recordlinkage.base import BaseCompareFeature
 
 from definitions import TIMESTAMP_FMT
 
-MATCH_THRESHOLD = 0.9
+MATCH_THRESHOLD = 0.85
 FN_WEIGHT = 0.2
 PHONE_WEIGHT = 0.15
 ADDR_WEIGHT = 0.4
