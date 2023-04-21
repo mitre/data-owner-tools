@@ -218,6 +218,7 @@ def write_pii_and_mapping_file(pos_pid_rows, hid_pat_id_rows, household_time, ar
             pii_lines["written_to_file"] = False
             hclk_position = 0
             lines_processed = 0
+            hh_sizes = []
             five_percent = int(len(pii_lines) / 20)
             # Match households
             for position, _line in pii_lines.sample(frac=1).iterrows():
@@ -248,6 +249,8 @@ def write_pii_and_mapping_file(pos_pid_rows, hid_pat_id_rows, household_time, ar
                 # mark all these rows as written to file
                 pii_lines.loc[pat_positions, ["written_to_file"]] = True
 
+                hh_sizes.append(len(pat_positions))
+
                 string_pat_positions = [str(p) for p in pat_positions]
                 pat_string = ",".join(string_pat_positions)
                 mapping_writer.writerow([hclk_position, pat_string])
@@ -269,6 +272,12 @@ def write_pii_and_mapping_file(pos_pid_rows, hid_pat_id_rows, household_time, ar
                 ]
                 hclk_position += 1
                 pii_writer.writerow(output_row)
+
+    hh_sizes_series = pd.Series(hh_sizes, dtype=int)
+
+    print("Household size stats:")
+    print(hh_sizes_series.describe())
+
     return n_households
 
 
