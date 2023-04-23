@@ -13,10 +13,22 @@ from recordlinkage.base import BaseCompareFeature
 from definitions import TIMESTAMP_FMT
 
 MATCH_THRESHOLD = 0.85
-FN_WEIGHT = 0.2
-PHONE_WEIGHT = 0.15
-ADDR_WEIGHT = 0.4
-ZIP_WEIGHT = 0.25
+FN_WEIGHT = 0.25
+PHONE_WEIGHT = 0.2
+ADDR_WEIGHT = 0.55
+# ZIP_WEIGHT = 0.25
+# zip is not used in weighting since all candidate pairs match on zip
+
+# a separate address threshold so that pairs with medium-low scores across all fields
+# don't wind up getting matched anyway
+ADDR_THRESHOLD = 0.95
+# using address_distance() below:
+# "205 GARDEN ST" v "206 GARDEN ST" --> 0.8333
+# "205 GARDEN ST" v "205 GAREDN ST" --> 0.98444
+# "205 GARDEN STREET" v  "205 GAREDN ST" --> 0.9666
+# "205 GARDEN ST APT 5F" v "205 GARDEN ST APT 5J" --> 0.9472
+# so 0.95 should give us a good balance of not linking all apartments together
+# while still allowing some room for typos and variation
 
 
 def addr_parse(addr):
@@ -284,7 +296,7 @@ def explode_address(row):
 
 
 def get_household_matches(
-    pii_lines, split_factor=4, debug=False, fast_addresses=False, pairsfile=None
+    pii_lines, split_factor=4, debug=False, exact_addresses=False, pairsfile=None
 ):
     if pairsfile:
         if debug:
@@ -298,7 +310,7 @@ def get_household_matches(
 
     else:
 
-        if fast_addresses:
+        if exact_addresses:
             pii_lines_exploded = pii_lines
         else:
             # break out the address into number, street, suffix, etc,
@@ -314,17 +326,24 @@ def get_household_matches(
             print(f"[{datetime.now()}] Done pre-processing PII file")
 
         candidate_links = get_candidate_links(
-            pii_lines_exploded, split_factor, fast_addresses, debug
+            pii_lines_exploded, split_factor, exact_addresses, debug
         )
         gc.collect()
 
-        matching_pairs = get_matching_pairs(
-            pii_lines_exploded, candidate_links, split_factor, fast_addresses, debug
-        )
-        del candidate_links
-        if fast_addresses:
+        if exact_addresses:
+            # the candidate links are already all the pairs with matching [address, zip]
+            matching_pairs = candidate_links
+        else:
+            matching_pairs = get_matching_pairs(
+                pii_lines_exploded,
+                candidate_links,
+                split_factor,
+                exact_addresses,
+                debug,
+            )
             del pii_lines_exploded
-        gc.collect()
+            del candidate_links
+            gc.collect()
 
         if debug:
             timestamp = datetime.now().strftime(TIMESTAMP_FMT)
@@ -368,22 +387,22 @@ def get_household_matches(
     return pos_to_pairs
 
 
-def get_candidate_links(pii_lines, split_factor=4, fast_addresses=False, debug=False):
+def get_candidate_links(pii_lines, split_factor=4, exact_addresses=False, debug=False):
     # indexing step defines the pairs of records for comparison
     # indexer.full() does a full n^2 comparison, but we can do better
     indexer = recordlinkage.Index()
-    # use two block indexes to reduce the number of candidates
+    # use block indexes to reduce the number of candidates
     # while still retaining enough candidates to identify real households.
     # a block only on zip could work, but seems to run into memory issues
     # note sortedneighborhood on zip probably doesn't make sense
     # (zip codes in a geographic area will be too similar)
     # but if data is dirty then blocks may discard typos
 
-    indexer.block(["household_zip", "family_name"])
-    if fast_addresses:
+    if exact_addresses:
         indexer.block(["household_zip", "household_street_address"])
     else:
         indexer.block(["household_zip", "street", "number"])
+        indexer.block(["household_zip", "family_name"])
 
     # start with an empty index we can append to
     candidate_links = pd.MultiIndex.from_tuples([], names=[0, 1])
@@ -433,13 +452,22 @@ def get_candidate_links(pii_lines, split_factor=4, fast_addresses=False, debug=F
 
             gc.collect()
 
+    # rows with blank address match ("" == "") so drop those here
+    # TODO: ideally we wouldn't compare blank address lines in the first place
+    #       but the indexing and splitting bits get complicated if we drop them earlier
+    blank_addresses = pii_lines[pii_lines["household_street_address"] == ""].index
+    candidate_links = candidate_links.drop(blank_addresses, level=0, errors="ignore")
+    candidate_links = candidate_links.drop(blank_addresses, level=1, errors="ignore")
+
     if debug:
         print(f"[{datetime.now()}] Found {len(candidate_links)} candidate pairs")
 
     return candidate_links
 
 
-def get_matching_pairs(pii_lines, candidate_links, split_factor, fast_addresses, debug):
+def get_matching_pairs(
+    pii_lines, candidate_links, split_factor, exact_addresses, debug
+):
     # Comparison step performs the defined comparison algorithms
     # against the candidate pairs
     compare_cl = recordlinkage.Compare()
@@ -450,7 +478,7 @@ def get_matching_pairs(pii_lines, candidate_links, split_factor, fast_addresses,
     compare_cl.string(
         "phone_number", "phone_number", method="jarowinkler", label="phone_number"
     )
-    if fast_addresses:
+    if exact_addresses:
         compare_cl.string(
             "household_street_address",
             "household_street_address",
@@ -466,9 +494,10 @@ def get_matching_pairs(pii_lines, candidate_links, split_factor, fast_addresses,
             )
         )
 
-    compare_cl.string(
-        "household_zip", "household_zip", method="levenshtein", label="household_zip"
-    )
+    # NOTE: zip code is DISABLED because our indexes block on zip code
+    # compare_cl.string(
+    #     "household_zip", "household_zip", method="levenshtein", label="household_zip"
+    # )
     # note: hamming distance is not implemented in this library,
     # but levenshtein is. the two metrics are likely similar enough
     # that it's not worth implementing hamming again
@@ -502,10 +531,13 @@ def get_matching_pairs(pii_lines, candidate_links, split_factor, fast_addresses,
 
         features = compare_cl.compute(subset_links, relevant_pii_lines)
 
+        # first filter by address similarity
+        features = features[features["household_street_address"] > ADDR_THRESHOLD]
+
         features["family_name"] *= FN_WEIGHT
         features["phone_number"] *= PHONE_WEIGHT
         features["household_street_address"] *= ADDR_WEIGHT
-        features["household_zip"] *= ZIP_WEIGHT
+        # features["household_zip"] *= ZIP_WEIGHT
 
         # filter the matches down based on the cumulative score
         matches = features[features.sum(axis=1) > MATCH_THRESHOLD]
