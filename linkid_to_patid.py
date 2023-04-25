@@ -61,8 +61,9 @@ def parse_source_file(source_file):
 def write_patid_links(args):
     links_archive = Path(args.linkszip)
     pii_lines = parse_source_file(args.sourcefile)
+    filepath = os.path.join(args.outputdir, "linkid_to_patid.csv")
     with open(
-        os.path.join(args.outputdir, "linkid_to_patid.csv"),
+        filepath,
         "w",
         newline="",
         encoding="utf-8",
@@ -87,13 +88,15 @@ def write_patid_links(args):
                     # The +1 accounts for the header row in spreadsheet index
                     patid = pii_lines[int(row[1]) + 1][0]
                     writer.writerow([link_id, patid])
+    print(f"Wrote {filepath}")
 
 
 def write_hh_links(args):
     hh_links_file = Path(args.hhlinkszip)
     hh_pii_lines = parse_source_file(args.hhsourcefile)
+    filepath = os.path.join(args.outputdir, "householdid_to_patid.csv")
     with open(
-        os.path.join(args.outputdir, "householdid_to_patid.csv"),
+        filepath,
         "w",
         newline="",
         encoding="utf-8",
@@ -126,6 +129,7 @@ def write_hh_links(args):
 
                     for record_id in record_ids_list:
                         writer.writerow([household_id, record_id])
+    print(f"Wrote {filepath}")
 
 
 def translate_linkids(args):
