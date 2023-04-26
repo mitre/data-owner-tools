@@ -76,6 +76,19 @@ def parse_arguments():
         " may increase runtime. Default is 4",
     )
     parser.add_argument(
+        "--exact_addresses",
+        action="store_true",
+        help="Use exact matches on address as the definition of a household."
+        " By default the inference process will split up addresses into"
+        " street, number, suffix, etc, and considers phone # and family name"
+        " when making a determination which records belong to which household."
+        " Enabling this feature causes the process to use the entire address"
+        " as a single string for comparisons, and only the address. "
+        " If addresses have not been standardized/validated, this setting"
+        " will likely increase false negatives  (records not being included "
+        " in households where they should be).",
+    )
+    parser.add_argument(
         "--pairsfile",
         help="Location of matching pairs file",
     )
@@ -179,7 +192,7 @@ def write_pii_and_mapping_file(pos_pid_rows, hid_pat_id_rows, household_time, ar
     # so it can be traversed sort of like a graph from any given patient
     # note the key is patient position within the pii_lines dataframe
     pos_to_pairs = get_household_matches(
-        pii_lines, args.split_factor, args.debug, args.pairsfile
+        pii_lines, args.split_factor, args.debug, args.exact_addresses, args.pairsfile
     )
 
     mapping_file = Path(args.mappingfile)
@@ -207,12 +220,13 @@ def write_pii_and_mapping_file(pos_pid_rows, hid_pat_id_rows, household_time, ar
             pii_lines["written_to_file"] = False
             hclk_position = 0
             lines_processed = 0
+            hh_sizes = []
             five_percent = int(len(pii_lines) / 20)
             # Match households
-            for position, line in pii_lines.sample(frac=1).iterrows():
+            for position, _line in pii_lines.sample(frac=1).iterrows():
                 # sample(frac=1) shuffles the entire dataframe
                 # note that "position" is the index and still relative to the original
-
+                line = pii_lines.loc[position]
                 lines_processed += 1
 
                 if args.debug and (lines_processed % five_percent) == 0:
@@ -223,7 +237,6 @@ def write_pii_and_mapping_file(pos_pid_rows, hid_pat_id_rows, household_time, ar
 
                 if line["written_to_file"]:
                     continue
-                line["written_to_file"] = True
 
                 if position in pos_to_pairs:
                     pat_positions = bfs_traverse_matches(pos_to_pairs, position)
@@ -231,11 +244,14 @@ def write_pii_and_mapping_file(pos_pid_rows, hid_pat_id_rows, household_time, ar
                     pat_ids = list(
                         map(lambda p: pii_lines.at[p, "record_id"], pat_positions)
                     )
-                    # mark all these rows as written to file
-                    pii_lines.loc[pat_positions, ["written_to_file"]] = True
                 else:
                     pat_positions = [position]
                     pat_ids = [line[0]]
+
+                # mark all these rows as written to file
+                pii_lines.loc[pat_positions, ["written_to_file"]] = True
+
+                hh_sizes.append(len(pat_positions))
 
                 string_pat_positions = [str(p) for p in pat_positions]
                 pat_string = ",".join(string_pat_positions)
@@ -258,6 +274,12 @@ def write_pii_and_mapping_file(pos_pid_rows, hid_pat_id_rows, household_time, ar
                 ]
                 hclk_position += 1
                 pii_writer.writerow(output_row)
+
+    hh_sizes_series = pd.Series(hh_sizes, dtype=int)
+
+    print("Household size stats:")
+    print(hh_sizes_series.describe())
+
     return n_households
 
 
