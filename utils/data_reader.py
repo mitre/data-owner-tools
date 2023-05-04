@@ -124,14 +124,18 @@ def map_key(row, key):
                 return row_key
 
 
-def empty_str_from_none(string):
-    if string is None:
+def empty_str_from_none(obj):
+    if obj is None:
         return ""
+    elif isinstance(obj, pd.Series):
+        return obj.fillna("")
     else:
-        return string
+        return obj
 
 
 def case_insensitive_lookup(row, key, version):
+    # IMPORTANT: this function gets called from extract.py and data_analysis.py
+    # with different types for `row`
     data_key = DATA_DICTIONARY[version][key]
     if isinstance(data_key, list):
         first_key = map_key(row, data_key[0])
@@ -141,6 +145,8 @@ def case_insensitive_lookup(row, key, version):
             if mapped_subkey:
                 subdata = empty_str_from_none(row[mapped_subkey])
                 data = data + " " + subdata
+                if isinstance(data, pd.Series):
+                    data.name = key
 
         return data
 
