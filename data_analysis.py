@@ -4,6 +4,7 @@ import re
 import time
 from datetime import datetime
 
+import numpy as np
 import pandas as pd
 
 from utils.data_reader import (
@@ -155,8 +156,8 @@ def top_N(series, N=0, lower_limit=1):
 
 
 def summary(series):
-    # 1. count the number of missing (null) entries
-    missing = series.isna().sum()
+    # 1. count the number of missing (null or blank string) entries
+    missing = series.replace(r"^\s*$", np.nan, regex=True).isna().sum()
 
     # 2. basic descriptive statistics on the length of the values
     length = series.str.len().describe().to_dict()

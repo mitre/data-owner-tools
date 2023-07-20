@@ -360,7 +360,7 @@ def get_household_matches(
                     pairs_writer.writerow(matching_pairs[i])
                 print(f"[{datetime.now()}] Wrote matching pairs to {pairs_path}")
 
-    five_percent = int(len(matching_pairs) / 20)
+    five_percent = max(int(len(matching_pairs) / 20), 1)
     pos_to_pairs = {}
     # note: "for pair in matching_pairs:" had unexpectedly poor performance here
     for i in range(len(matching_pairs)):
@@ -407,23 +407,34 @@ def get_candidate_links(pii_lines, split_factor=4, exact_addresses=False, debug=
     # start with an empty index we can append to
     candidate_links = pd.MultiIndex.from_tuples([], names=[0, 1])
 
+    # only include lines with an address, since otherwise
+    #   missing addresses will be considered a match ("" == "")
+    pii_lines_with_address = pii_lines[pii_lines.household_street_address != ""]
+
+    if len(pii_lines_with_address) == 0:
+        # essentially just a null check
+        # don't bother with the rest if we have no addresses
+        # this should never happen
+        return candidate_links
+
     # break up the dataframe into subframes,
     # and iterate over every pair of subframes.
     # we improve performance somewhat by only comparing looking forward,
     # that is, only comparing a given set of rows
     # against rows with higher indices.
-    for subset_A in np.array_split(pii_lines, split_factor):
+    for subset_A in np.array_split(pii_lines_with_address, split_factor):
         first_item_in_A = subset_A.index.min()
+
         # don't compare against earlier items
         # Note: this assumes that the index is the row number
         # (NOT the record_id/patid) and the df is sequential
         # this is currently the case in households.py#parse_source_file()
-        lines_to_compare = pii_lines[first_item_in_A:]
+        lines_to_compare = pii_lines_with_address[first_item_in_A:]
 
         # pick a sub split factor to give us ~same size subset_A and subset_B.
         # the idea is that there's some implicit overhead to splitting,
         # so don't split more tha necessary
-        sub_split_factor = int(len(lines_to_compare) / len(subset_A))
+        sub_split_factor = max(int(len(lines_to_compare) / len(subset_A)), 1)
         for subset_B in np.array_split(lines_to_compare, sub_split_factor):
             if debug:
                 print(
@@ -431,6 +442,7 @@ def get_candidate_links(pii_lines, split_factor=4, exact_addresses=False, debug=
                     f"[{subset_A.index.min()}..{subset_A.index.max()}]"
                     " against "
                     f"[{subset_B.index.min()}..{subset_B.index.max()}]"
+                    f". {len(candidate_links)} candidates so far"
                 )
 
             # note pairs_subset and candidate_links are MultiIndexes
@@ -451,13 +463,6 @@ def get_candidate_links(pii_lines, split_factor=4, exact_addresses=False, debug=
             candidate_links = candidate_links.append(pairs_subset)
 
             gc.collect()
-
-    # rows with blank address match ("" == "") so drop those here
-    # TODO: ideally we wouldn't compare blank address lines in the first place
-    #       but the indexing and splitting bits get complicated if we drop them earlier
-    blank_addresses = pii_lines[pii_lines["household_street_address"] == ""].index
-    candidate_links = candidate_links.drop(blank_addresses, level=0, errors="ignore")
-    candidate_links = candidate_links.drop(blank_addresses, level=1, errors="ignore")
 
     if debug:
         print(f"[{datetime.now()}] Found {len(candidate_links)} candidate pairs")
@@ -509,7 +514,7 @@ def get_matching_pairs(
     matching_pairs = pd.MultiIndex.from_tuples([], names=[0, 1])
     # we know that we could support len(subset_A) in memory above,
     # so use the same amount here
-    len_subset_A = int(len(pii_lines) / split_factor)
+    len_subset_A = max(int(len(pii_lines) / split_factor), 1)
 
     # note: np.array_split had unexpectedly poor performance here for very large indices
     for i in range(0, len(candidate_links), len_subset_A):
